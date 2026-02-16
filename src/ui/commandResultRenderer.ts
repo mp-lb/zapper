@@ -141,12 +141,12 @@ export function renderCommandResult(
       }
       if (result.pm2.length === 0 && result.containers.length === 0) {
         renderer.log.info(
-          `No PM2 processes or Docker containers found for ${result.prefix}.`,
+          `No PM2 processes or Docker containers found across any instance for project ${result.projectName} (${result.prefix}.).`,
         );
         return;
       }
       renderer.log.info(
-        `Killed ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) for ${result.prefix}.`,
+        `Killed ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) across all instances for project ${result.projectName} (${result.prefix}.).`,
       );
       return;
     case "profiles.picker":

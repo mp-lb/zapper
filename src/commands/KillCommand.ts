@@ -4,11 +4,16 @@ import { confirm } from "../utils/confirm";
 
 export class KillCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
-    const { zapper, options } = context;
-    const targets = await zapper.getProjectKillTargets();
+    const { zapper, options, service } = context;
+    if (Array.isArray(service)) {
+      throw new Error("Kill command accepts a single project name");
+    }
+    const projectName =
+      service && service.trim().length > 0 ? service : undefined;
+    const targets = await zapper.getProjectKillTargets(projectName);
 
     const proceed = await confirm(
-      `This will permanently delete all PM2 processes and Docker containers with prefix "${targets.prefix}.". Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
+      `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${targets.projectName}" (prefix "${targets.prefix}."). Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
       { defaultYes: false, force: options.force },
     );
 

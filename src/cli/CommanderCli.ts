@@ -143,12 +143,16 @@ export class CommanderCli {
     this.program
       .command("kill")
       .description(
-        "Kill all PM2 processes and Docker containers belonging to this project",
+        "Kill all PM2 processes and Docker containers across all instances for a project",
+      )
+      .argument(
+        "[project]",
+        "Project name to kill across all instances (defaults to current config project)",
       )
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
-        await this.executeCommand("kill", undefined, command);
+      .action(async (project, options, command) => {
+        await this.executeCommand("kill", project, command);
       });
 
     this.program
@@ -413,16 +417,24 @@ export class CommanderCli {
       logger.setLevel(LogLevel.WARN);
     }
 
+    const skipConfigLoad =
+      command === "kill" &&
+      typeof service === "string" &&
+      service.trim().length > 0;
+
     const zapper = new Zapper();
-    await zapper.loadConfig(allOptions.config, allOptions, {
-      suppressUnisolatedWorktreeWarning: command === "isolate",
-    });
+    if (!skipConfigLoad) {
+      await zapper.loadConfig(allOptions.config, allOptions, {
+        suppressUnisolatedWorktreeWarning: command === "isolate",
+      });
+    }
 
     const shouldResolveAliases =
       command !== "env" &&
       command !== "environment" &&
       command !== "isolate" &&
-      command !== "launch";
+      command !== "launch" &&
+      command !== "kill";
     const resolvedService =
       service && shouldResolveAliases
         ? Array.isArray(service)

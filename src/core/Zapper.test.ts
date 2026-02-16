@@ -513,6 +513,123 @@ native:
     });
   });
 
+  describe("killProjectResources with explicit project name", () => {
+    it("discovers targets without loading config", async () => {
+      const unloadedZapper = new Zapper();
+
+      (
+        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          name: "zap.legacy.api",
+          pid: 100,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+        {
+          name: "zap.other.api",
+          pid: 102,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+      ]);
+
+      (
+        DockerManager.listContainers as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          id: "1",
+          name: "zap.legacy.redis",
+          status: "Up 1 minute",
+          ports: [],
+          networks: [],
+          created: "",
+        },
+        {
+          id: "2",
+          name: "zap.other.redis",
+          status: "Up 1 minute",
+          ports: [],
+          networks: [],
+          created: "",
+        },
+      ]);
+
+      const targets = await unloadedZapper.getProjectKillTargets("legacy");
+
+      expect(targets).toEqual({
+        projectName: "legacy",
+        prefix: "zap.legacy",
+        pm2: ["zap.legacy.api"],
+        containers: ["zap.legacy.redis"],
+      });
+    });
+
+    it("kills explicit project resources without loading config", async () => {
+      const unloadedZapper = new Zapper();
+      const deleteProcessMock = vi
+        .spyOn(Pm2Manager, "deleteProcess")
+        .mockResolvedValue(undefined);
+      const removeContainerMock = vi
+        .spyOn(DockerManager, "removeContainer")
+        .mockResolvedValue(undefined);
+
+      (
+        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          name: "zap.legacy.api",
+          pid: 100,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+      ]);
+
+      (
+        DockerManager.listContainers as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          id: "1",
+          name: "zap.legacy.redis",
+          status: "Up 1 minute",
+          ports: [],
+          networks: [],
+          created: "",
+        },
+      ]);
+
+      const result = await unloadedZapper.killProjectResources(
+        undefined,
+        "legacy",
+      );
+
+      expect(deleteProcessMock).toHaveBeenCalledWith("zap.legacy.api");
+      expect(removeContainerMock).toHaveBeenCalledWith("zap.legacy.redis");
+      expect(result).toEqual({
+        projectName: "legacy",
+        prefix: "zap.legacy",
+        pm2: ["zap.legacy.api"],
+        containers: ["zap.legacy.redis"],
+      });
+    });
+
+    it("throws when no config is loaded and no project name is provided", async () => {
+      const unloadedZapper = new Zapper();
+      await expect(unloadedZapper.getProjectKillTargets()).rejects.toThrow(
+        "No project name provided. Run from a project with zap.yaml or pass one explicitly: zap kill <project>",
+      );
+    });
+  });
+
   describe("integration scenarios", () => {
     it("should handle complete workflow: loadConfig -> start -> stop", async () => {
       const configPath = createTempConfig({});

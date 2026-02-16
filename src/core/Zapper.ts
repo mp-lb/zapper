@@ -313,10 +313,23 @@ export class Zapper {
     );
   }
 
-  async getProjectKillTargets(): Promise<ProjectKillTargets> {
-    if (!this.context) throw new ContextNotLoadedError();
+  private resolveProjectNameForKill(projectName?: string): string {
+    if (projectName && projectName.trim().length > 0) {
+      return projectName.trim();
+    }
+    if (this.context?.projectName) {
+      return this.context.projectName;
+    }
+    throw new Error(
+      "No project name provided. Run from a project with zap.yaml or pass one explicitly: zap kill <project>",
+    );
+  }
 
-    const prefix = buildPrefix(this.context.projectName);
+  async getProjectKillTargets(
+    projectName?: string,
+  ): Promise<ProjectKillTargets> {
+    const resolvedProjectName = this.resolveProjectNameForKill(projectName);
+    const prefix = buildPrefix(resolvedProjectName);
     const scopedPrefix = `${prefix}.`;
 
     const pm2 = (await Pm2Manager.listProcesses())
@@ -330,7 +343,7 @@ export class Zapper {
       .sort();
 
     return {
-      projectName: this.context.projectName,
+      projectName: resolvedProjectName,
       prefix,
       pm2: Array.from(new Set(pm2)),
       containers: Array.from(new Set(containers)),
@@ -339,9 +352,10 @@ export class Zapper {
 
   async killProjectResources(
     targets?: ProjectKillTargets,
+    projectName?: string,
   ): Promise<ProjectKillTargets> {
-    if (!this.context) throw new ContextNotLoadedError();
-    const resolvedTargets = targets ?? (await this.getProjectKillTargets());
+    const resolvedTargets =
+      targets ?? (await this.getProjectKillTargets(projectName));
 
     for (const processName of resolvedTargets.pm2) {
       await Pm2Manager.deleteProcess(processName);

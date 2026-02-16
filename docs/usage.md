@@ -136,7 +136,8 @@ zap task build --list-params       # Show task parameters as JSON
 ```bash
 zap reset                   # Stop all services and delete .zap folder
 zap reset --json            # Output command result as JSON
-zap kill                    # Kill all PM2 processes and containers for this project
+zap kill                    # Kill all PM2 processes and containers for current project, across all instances
+zap kill my-old-project     # Kill all PM2 processes and containers for a specific project, across all instances
 zap kill --force            # Skip the interactive confirmation
 zap kill --json             # Output kill result as JSON
 zap clone                   # Clone all repos defined in config
@@ -186,6 +187,8 @@ Streaming commands keep stream output and are not JSON-encoded:
 zap logs <service> [more-services...] [--no-follow]
 zap task <name>
 ```
+
+`zap kill <project>` does not require a local `zap.yaml`; it targets resources by prefix (`zap.<project>.*`).
 
 ---
 

@@ -1,0 +1,10 @@
+# Tech Debt
+
+## 1. Split Runtime Model (`ZapperConfig` vs `Context`)
+The most consequential debt is the partial migration from config-shaped data (`ZapperConfig`) to enriched runtime data (`Context`) without fully moving execution code over, which forces repeated conversion back into legacy structures. `Context` now carries augmentation (resolved env state, instance identity, profile/environment state, normalized arrays), but core paths still pass around config-era shapes, so the codebase maintains two competing mental models of "what a service definition is." This increases regression risk, duplicates mapping logic, and makes new features harder because every change must be evaluated in both models instead of one canonical runtime contract.
+
+## 2. Over-centralized Orchestration in Large Entry Classes
+`Zapper` and `CommanderCli` have grown into broad coordination points that combine command dispatch, option wiring, alias resolution, validation branches, planning calls, and execution plumbing, which creates high coupling and weak boundaries. Even when behavior is correct, this structure makes small changes expensive because unrelated concerns live in the same methods and duplicate logic (for example, service resolution and command/setup orchestration) appears in multiple places. The practical debt is change friction: teams must reason across many branches in large files to make routine updates, and that raises the chance of subtle behavior drift between commands.
+
+## 3. E2E Fixture and Test-Hygiene Drift
+The repository shows signs of accumulating generated E2E fixture artifacts and timestamped config files, which is usually a symptom of tests that are not fully self-cleaning or clearly isolated from committed fixtures. When test runs leave mutable files behind, it creates noisy diffs, harder code reviews, and uncertainty about what is source-of-truth test data versus transient run output. Over time this slows delivery because engineers spend time triaging fixture churn and false-positive changes instead of validating behavior, and it can also hide real regressions inside large fixture-only diffs.
