@@ -34,6 +34,14 @@ function toJsonPayload(result: CommandResult): unknown {
       return { services: result.services };
     case "reset":
       return { status: result.status };
+    case "kill":
+      return {
+        status: result.status,
+        projectName: result.projectName,
+        prefix: result.prefix,
+        pm2: result.pm2,
+        containers: result.containers,
+      };
     case "launch.opened":
       return { url: result.url };
     case "git.checkout.completed":
@@ -125,6 +133,21 @@ export function renderCommandResult(
       if (result.status === "aborted") {
         renderer.log.info("Aborted.");
       }
+      return;
+    case "kill":
+      if (result.status === "aborted") {
+        renderer.log.info("Aborted.");
+        return;
+      }
+      if (result.pm2.length === 0 && result.containers.length === 0) {
+        renderer.log.info(
+          `No PM2 processes or Docker containers found for ${result.prefix}.`,
+        );
+        return;
+      }
+      renderer.log.info(
+        `Killed ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) for ${result.prefix}.`,
+      );
       return;
     case "profiles.picker":
       renderer.log.report(

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { Zapper } from "./Zapper";
+import { ProjectKillTargets, Zapper } from "./Zapper";
 import { Planner } from "./Planner";
 import { executeActions } from "./executeActions";
 import { Pm2Manager } from "./process/Pm2Manager";
@@ -408,6 +408,108 @@ native:
           undefined,
         );
       });
+    });
+  });
+
+  describe("killProjectResources", () => {
+    beforeEach(async () => {
+      const configPath = createTempConfig({});
+      await zapper.loadConfig(configPath);
+    });
+
+    it("discovers PM2 processes and containers by project prefix", async () => {
+      (
+        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          name: "zap.test-project.api",
+          pid: 100,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+        {
+          name: "zap.test-project.dev.worker",
+          pid: 101,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+        {
+          name: "zap.other.api",
+          pid: 102,
+          status: "online",
+          uptime: 1000,
+          memory: 100,
+          cpu: 1,
+          restarts: 0,
+        },
+      ]);
+
+      (
+        DockerManager.listContainers as unknown as ReturnType<typeof vi.fn>
+      ).mockResolvedValue([
+        {
+          id: "1",
+          name: "zap.test-project.redis",
+          status: "Up 1 minute",
+          ports: [],
+          networks: [],
+          created: "",
+        },
+        {
+          id: "2",
+          name: "zap.other.redis",
+          status: "Up 1 minute",
+          ports: [],
+          networks: [],
+          created: "",
+        },
+      ]);
+
+      const targets = await zapper.getProjectKillTargets();
+
+      expect(targets).toEqual({
+        projectName: "test-project",
+        prefix: "zap.test-project",
+        pm2: ["zap.test-project.api", "zap.test-project.dev.worker"],
+        containers: ["zap.test-project.redis"],
+      });
+    });
+
+    it("deletes discovered targets from PM2 and Docker", async () => {
+      const deleteProcessMock = vi
+        .spyOn(Pm2Manager, "deleteProcess")
+        .mockResolvedValue(undefined);
+      const removeContainerMock = vi
+        .spyOn(DockerManager, "removeContainer")
+        .mockResolvedValue(undefined);
+
+      const targets: ProjectKillTargets = {
+        projectName: "test-project",
+        prefix: "zap.test-project",
+        pm2: ["zap.test-project.api", "zap.test-project.worker"],
+        containers: ["zap.test-project.redis"],
+      };
+
+      const result = await zapper.killProjectResources(targets);
+
+      expect(deleteProcessMock).toHaveBeenNthCalledWith(
+        1,
+        "zap.test-project.api",
+      );
+      expect(deleteProcessMock).toHaveBeenNthCalledWith(
+        2,
+        "zap.test-project.worker",
+      );
+      expect(removeContainerMock).toHaveBeenCalledWith(
+        "zap.test-project.redis",
+      );
+      expect(result).toEqual(targets);
     });
   });
 

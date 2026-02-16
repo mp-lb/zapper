@@ -2,6 +2,7 @@
 import { parseYamlFile } from "../config/yamlParser";
 import { EnvResolver } from "../config/EnvResolver";
 import { Pm2Executor } from "./process/Pm2Executor";
+import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
 import { Context, Process, Container } from "../types/Context";
@@ -20,8 +21,15 @@ import {
   ServiceNotFoundError,
   ContainerNotRunningError,
 } from "../errors";
-import { buildServiceName } from "../utils/nameBuilder";
+import { buildPrefix, buildServiceName } from "../utils/nameBuilder";
 import { resolveInstance, isolateProject } from "./instanceResolver";
+
+export interface ProjectKillTargets {
+  projectName: string;
+  prefix: string;
+  pm2: string[];
+  containers: string[];
+}
 
 export class Zapper {
   private context: Context | null = null;
@@ -303,6 +311,47 @@ export class Zapper {
       this.context.projectRoot,
       plan,
     );
+  }
+
+  async getProjectKillTargets(): Promise<ProjectKillTargets> {
+    if (!this.context) throw new ContextNotLoadedError();
+
+    const prefix = buildPrefix(this.context.projectName);
+    const scopedPrefix = `${prefix}.`;
+
+    const pm2 = (await Pm2Manager.listProcesses())
+      .map((process) => process.name)
+      .filter((name) => name.startsWith(scopedPrefix))
+      .sort();
+
+    const containers = (await DockerManager.listContainers())
+      .map((container) => container.name)
+      .filter((name) => name.startsWith(scopedPrefix))
+      .sort();
+
+    return {
+      projectName: this.context.projectName,
+      prefix,
+      pm2: Array.from(new Set(pm2)),
+      containers: Array.from(new Set(containers)),
+    };
+  }
+
+  async killProjectResources(
+    targets?: ProjectKillTargets,
+  ): Promise<ProjectKillTargets> {
+    if (!this.context) throw new ContextNotLoadedError();
+    const resolvedTargets = targets ?? (await this.getProjectKillTargets());
+
+    for (const processName of resolvedTargets.pm2) {
+      await Pm2Manager.deleteProcess(processName);
+    }
+
+    for (const containerName of resolvedTargets.containers) {
+      await DockerManager.removeContainer(containerName);
+    }
+
+    return resolvedTargets;
   }
 
   async showLogs(processName: string, follow: boolean = false): Promise<void> {

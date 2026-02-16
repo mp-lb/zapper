@@ -6,6 +6,7 @@ import { renderCommandResult } from "../ui/commandResultRenderer";
 import {
   UpCommand,
   DownCommand,
+  KillCommand,
   RestartCommand,
   StatusCommand,
   LogsCommand,
@@ -83,6 +84,7 @@ export class CommanderCli {
   private setupCommandHandlers(): void {
     this.commandHandlers.set("up", new UpCommand());
     this.commandHandlers.set("down", new DownCommand());
+    this.commandHandlers.set("kill", new KillCommand());
     this.commandHandlers.set("restart", new RestartCommand());
     this.commandHandlers.set("status", new StatusCommand());
     this.commandHandlers.set("logs", new LogsCommand());
@@ -136,6 +138,17 @@ export class CommanderCli {
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (services, options, command) => {
         await this.executeCommand("down", services, command);
+      });
+
+    this.program
+      .command("kill")
+      .description(
+        "Kill all PM2 processes and Docker containers belonging to this project",
+      )
+      .option("-y, --force", "Force the operation")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("kill", undefined, command);
       });
 
     this.program

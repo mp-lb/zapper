@@ -56,6 +56,14 @@ export type CommandResult =
       status: "aborted" | "completed";
     }
   | {
+      kind: "kill";
+      status: "aborted" | "completed";
+      projectName: string;
+      prefix: string;
+      pm2: string[];
+      containers: string[];
+    }
+  | {
       kind: "launch.opened";
       url: string;
     }

@@ -14,6 +14,7 @@ export * from "./Context";
 export type Command =
   | "up"
   | "down"
+  | "kill"
   | "restart"
   | "status"
   | "logs"

@@ -2,6 +2,7 @@ export { CommandHandler, CommandContext, TaskParams } from "./CommandHandler";
 export { CommandResult } from "./CommandResult";
 export { UpCommand } from "./UpCommand";
 export { DownCommand } from "./DownCommand";
+export { KillCommand } from "./KillCommand";
 export { RestartCommand } from "./RestartCommand";
 export { StatusCommand } from "./StatusCommand";
 export { LogsCommand } from "./LogsCommand";

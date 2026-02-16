@@ -136,6 +136,9 @@ zap task build --list-params       # Show task parameters as JSON
 ```bash
 zap reset                   # Stop all services and delete .zap folder
 zap reset --json            # Output command result as JSON
+zap kill                    # Kill all PM2 processes and containers for this project
+zap kill --force            # Skip the interactive confirmation
+zap kill --json             # Output kill result as JSON
 zap clone                   # Clone all repos defined in config
 zap clone api               # Clone one repo
 zap clone api web           # Clone multiple repos
@@ -175,7 +178,7 @@ zap envset prod_dbs
 ### JSON Output
 
 Most non-streaming commands support `--json` and will print machine-readable JSON to stdout.
-Examples: `up`, `down`, `restart`, `clone`, `reset`, `status`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `isolate`, and git subcommands.
+Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `isolate`, and git subcommands.
 
 Streaming commands keep stream output and are not JSON-encoded:
 
