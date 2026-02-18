@@ -74,7 +74,7 @@ export class GlobalCommand extends CommandHandler {
 
   private async handleKill(zapper: any, projectName?: string, all?: boolean, force?: boolean): Promise<CommandResult> {
     if (all) {
-      // Kill all projects (--all flag takes precedence)
+      // Kill all projects
       const projects = await this.getAllProjects();
       if (projects.length === 0) {
         return {

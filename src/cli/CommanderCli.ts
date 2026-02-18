@@ -403,9 +403,11 @@ export class CommanderCli {
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (subcommand, project, options, command) => {
-        // When --all is specified, ignore the project argument
-        const effectiveProject = options.all ? undefined : project;
-        const service = effectiveProject ? [subcommand, effectiveProject] : [subcommand];
+        // Validate mutually exclusive options
+        if (options.all && project) {
+          throw new Error(`Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global ${subcommand} ${project}' or 'zap global ${subcommand} --all'.`);
+        }
+        const service = project ? [subcommand, project] : [subcommand];
         await this.executeCommand("global", service, command);
       });
 
