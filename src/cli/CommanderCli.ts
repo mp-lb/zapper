@@ -486,7 +486,8 @@ export class CommanderCli {
       command !== "environment" &&
       command !== "isolate" &&
       command !== "launch" &&
-      command !== "kill";
+      command !== "kill" &&
+      command !== "profile";
     const resolvedService =
       service && shouldResolveAliases
         ? Array.isArray(service)
