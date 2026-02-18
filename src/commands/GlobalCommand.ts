@@ -33,7 +33,16 @@ export class GlobalCommand extends CommandHandler {
 
   private async handleInfo(zapper: any, projectName?: string): Promise<CommandResult> {
     if (!projectName) {
-      throw new Error("Specify a project name: zap global info <project>");
+      // Try to load config to get current project name
+      try {
+        await zapper.loadConfig();
+        if (!zapper.context?.projectName) {
+          throw new Error("No project name provided and not in a project directory. Specify: zap global info <project>");
+        }
+        projectName = zapper.context.projectName;
+      } catch (error) {
+        throw new Error("No project name provided and not in a project directory. Specify: zap global info <project>");
+      }
     }
 
     const targets = await this.getProjectTargets(projectName!);
