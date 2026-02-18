@@ -108,13 +108,6 @@ export type CommandResult =
       activeEnvironment?: string;
     }
   | {
-      kind: "global.info";
-      projectName: string;
-      prefix: string;
-      pm2: string[];
-      containers: string[];
-    }
-  | {
       kind: "global.list";
       allProjects?: boolean;
       projects: Array<{

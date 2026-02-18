@@ -83,13 +83,6 @@ function toJsonPayload(result: CommandResult): unknown {
         action: "disabled",
         activeEnvironment: result.activeEnvironment,
       };
-    case "global.info":
-      return {
-        projectName: result.projectName,
-        prefix: result.prefix,
-        pm2: result.pm2,
-        containers: result.containers,
-      };
     case "global.list":
       return {
         allProjects: result.allProjects,
@@ -215,23 +208,6 @@ export function renderCommandResult(
         renderer.log.info(
           "Environment reset to default. Restart services to apply new environment variables.",
         );
-      }
-      return;
-    case "global.info":
-      if (result.pm2.length === 0 && result.containers.length === 0) {
-        renderer.log.info(
-          `No PM2 processes or Docker containers found for project ${result.projectName} (${result.prefix}.).`
-        );
-        return;
-      }
-      renderer.log.info(
-        `Found ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) for project ${result.projectName} (${result.prefix}.).`
-      );
-      if (result.pm2.length > 0) {
-        renderer.log.info(`PM2 processes: ${result.pm2.join(", ")}`);
-      }
-      if (result.containers.length > 0) {
-        renderer.log.info(`Docker containers: ${result.containers.join(", ")}`);
       }
       return;
     case "global.list":

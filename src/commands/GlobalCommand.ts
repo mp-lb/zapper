@@ -20,7 +20,6 @@ export class GlobalCommand extends CommandHandler {
 
     switch (subcommand) {
       case "info":
-        return await this.handleInfo(zapper, projectName);
       case "list":
       case "l":
         return await this.handleList(options.all, projectName, zapper);
@@ -31,29 +30,6 @@ export class GlobalCommand extends CommandHandler {
     }
   }
 
-  private async handleInfo(zapper: any, projectName?: string): Promise<CommandResult> {
-    if (!projectName) {
-      // Try to load config to get current project name
-      try {
-        await zapper.loadConfig();
-        if (!zapper.context?.projectName) {
-          throw new Error("No project name provided and not in a project directory. Specify: zap global info <project>");
-        }
-        projectName = zapper.context.projectName;
-      } catch (error) {
-        throw new Error("No project name provided and not in a project directory. Specify: zap global info <project>");
-      }
-    }
-
-    const targets = await this.getProjectTargets(projectName!);
-    return {
-      kind: "global.info",
-      projectName: targets.projectName,
-      prefix: targets.prefix,
-      pm2: targets.pm2,
-      containers: targets.containers,
-    };
-  }
 
   private async handleList(all?: boolean, projectName?: string, zapper?: any): Promise<CommandResult> {
     if (all) {
