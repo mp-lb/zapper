@@ -23,7 +23,7 @@ export class GlobalCommand extends CommandHandler {
         return await this.handleInfo(zapper, projectName);
       case "list":
       case "l":
-        return await this.handleList(options.all);
+        return await this.handleList(options.all, projectName);
       case "kill":
         return await this.handleKill(zapper, projectName, options.all, options.force);
       default:
@@ -50,13 +50,26 @@ export class GlobalCommand extends CommandHandler {
     };
   }
 
-  private async handleList(all?: boolean): Promise<CommandResult> {
+  private async handleList(all?: boolean, projectName?: string): Promise<CommandResult> {
     if (all) {
       const projects = await this.getAllProjects();
       return {
         kind: "global.list",
         allProjects: true,
         projects: projects,
+      };
+    } else if (projectName) {
+      // Show info for specific project (same as global info)
+      const targets = await this.getProjectTargets(projectName);
+      return {
+        kind: "global.list",
+        allProjects: false,
+        projects: [{
+          name: targets.projectName,
+          prefix: targets.prefix,
+          pm2: targets.pm2,
+          containers: targets.containers,
+        }],
       };
     } else {
       // List just current project if in project directory
