@@ -239,17 +239,45 @@ export function renderCommandResult(
         renderer.log.info("No zap projects found.");
         return;
       }
-      if (result.allProjects) {
-        renderer.log.info(`Found ${result.projects.length} project(s):`);
-      } else {
-        renderer.log.info(`Project information:`);
-      }
+
+      // Create a status-like detailed view
+      const sections: string[] = [];
       for (const project of result.projects) {
-        const totalResources = project.pm2.length + project.containers.length;
-        renderer.log.info(
-          `  ${project.name} (${project.prefix}.) - ${totalResources} resource(s) (${project.pm2.length} PM2, ${project.containers.length} containers)`
-        );
+        const projectSections: string[] = [];
+
+        // Project header
+        if (result.allProjects) {
+          const totalResources = project.pm2.length + project.containers.length;
+          projectSections.push(`== ${project.name} (${totalResources} resource${totalResources !== 1 ? 's' : ''}) ==`);
+        } else {
+          projectSections.push(`== ${project.name} ==`);
+        }
+
+        // PM2 processes section
+        if (project.pm2.length > 0) {
+          projectSections.push("\nPM2 PROCESSES");
+          for (const process of project.pm2) {
+            projectSections.push(`  ${process}`);
+          }
+        }
+
+        // Docker containers section
+        if (project.containers.length > 0) {
+          projectSections.push("\nDOCKER CONTAINERS");
+          for (const container of project.containers) {
+            projectSections.push(`  ${container}`);
+          }
+        }
+
+        // Handle empty case
+        if (project.pm2.length === 0 && project.containers.length === 0) {
+          projectSections.push("\nNo resources found");
+        }
+
+        sections.push(projectSections.join("\n"));
       }
+
+      renderer.log.report(sections.join("\n\n"));
       return;
     case "global.kill":
       if (result.status === "aborted") {
