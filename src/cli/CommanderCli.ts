@@ -399,11 +399,13 @@ export class CommanderCli {
       .command("global <subcommand> [project]")
       .alias("g")
       .description("Global operations across projects (info, list, kill)")
-      .option("-a, --all", "Apply to all projects")
+      .option("-a, --all", "Apply to all projects (overrides project argument)")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (subcommand, project, options, command) => {
-        const service = project ? [subcommand, project] : [subcommand];
+        // When --all is specified, ignore the project argument
+        const effectiveProject = options.all ? undefined : project;
+        const service = effectiveProject ? [subcommand, effectiveProject] : [subcommand];
         await this.executeCommand("global", service, command);
       });
 

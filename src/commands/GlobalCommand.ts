@@ -33,11 +33,7 @@ export class GlobalCommand extends CommandHandler {
 
   private async handleInfo(zapper: any, projectName?: string): Promise<CommandResult> {
     if (!projectName) {
-      // Try to get current project name from context
-      if (!zapper.context?.projectName) {
-        throw new Error("No project name provided. Run from a project directory or specify: zap global info <project>");
-      }
-      projectName = zapper.context.projectName;
+      throw new Error("Specify a project name: zap global info <project>");
     }
 
     const targets = await this.getProjectTargets(projectName!);
@@ -59,7 +55,7 @@ export class GlobalCommand extends CommandHandler {
         projects: projects,
       };
     } else if (projectName) {
-      // Show info for specific project (same as global info)
+      // Show info for specific project
       const targets = await this.getProjectTargets(projectName);
       return {
         kind: "global.list",
@@ -72,13 +68,13 @@ export class GlobalCommand extends CommandHandler {
         }],
       };
     } else {
-      // List just current project if in project directory
-      throw new Error("List without --all requires being in a project directory or use --all flag");
+      throw new Error("Specify a project name or use --all flag to list all projects");
     }
   }
 
   private async handleKill(zapper: any, projectName?: string, all?: boolean, force?: boolean): Promise<CommandResult> {
     if (all) {
+      // Kill all projects (--all flag takes precedence)
       const projects = await this.getAllProjects();
       if (projects.length === 0) {
         return {
@@ -126,10 +122,7 @@ export class GlobalCommand extends CommandHandler {
     } else {
       // Kill single project
       if (!projectName) {
-        if (!zapper.context?.projectName) {
-          throw new Error("No project name provided. Run from a project directory or specify: zap global kill <project>");
-        }
-        projectName = zapper.context.projectName;
+        throw new Error("Specify a project name or use --all flag to kill all projects");
       }
 
       const targets = await this.getProjectTargets(projectName!);
