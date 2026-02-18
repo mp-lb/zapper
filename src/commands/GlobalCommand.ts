@@ -23,7 +23,7 @@ export class GlobalCommand extends CommandHandler {
         return await this.handleInfo(zapper, projectName);
       case "list":
       case "l":
-        return await this.handleList(options.all, projectName);
+        return await this.handleList(options.all, projectName, zapper);
       case "kill":
         return await this.handleKill(zapper, projectName, options.all, options.force);
       default:
@@ -55,7 +55,7 @@ export class GlobalCommand extends CommandHandler {
     };
   }
 
-  private async handleList(all?: boolean, projectName?: string): Promise<CommandResult> {
+  private async handleList(all?: boolean, projectName?: string, zapper?: any): Promise<CommandResult> {
     if (all) {
       const projects = await this.getAllProjects();
       return {
@@ -77,7 +77,32 @@ export class GlobalCommand extends CommandHandler {
         }],
       };
     } else {
-      throw new Error("Specify a project name or use --all flag to list all projects");
+      // Try to load config to get current project name
+      if (!zapper) {
+        throw new Error("Specify a project name or use --all flag to list all projects");
+      }
+
+      try {
+        await zapper.loadConfig();
+        if (!zapper.context?.projectName) {
+          throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>");
+        }
+
+        // Show current project
+        const targets = await this.getProjectTargets(zapper.context.projectName);
+        return {
+          kind: "global.list",
+          allProjects: false,
+          projects: [{
+            name: targets.projectName,
+            prefix: targets.prefix,
+            pm2: targets.pm2,
+            containers: targets.containers,
+          }],
+        };
+      } catch (error) {
+        throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>");
+      }
     }
   }
 
