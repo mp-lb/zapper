@@ -23,6 +23,7 @@ import {
   EnvCommand,
   LaunchCommand,
   IsolateCommand,
+  GlobalCommand,
   CommandContext,
   CommandHandler,
   TaskParams,
@@ -102,6 +103,7 @@ export class CommanderCli {
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
     this.commandHandlers.set("isolate", new IsolateCommand());
+    this.commandHandlers.set("global", new GlobalCommand());
   }
 
   private setupProgram(): void {
@@ -392,6 +394,51 @@ export class CommanderCli {
       .action(async (instanceId, options, command) => {
         await this.executeCommand("isolate", instanceId, command);
       });
+
+    this.program
+      .command("global <subcommand> [project]")
+      .alias("g")
+      .description("Global operations across projects (info, list, kill)")
+      .option("-a, --all", "Apply to all projects")
+      .option("-y, --force", "Force the operation")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (subcommand, project, options, command) => {
+        const service = project ? [subcommand, project] : [subcommand];
+        await this.executeCommand("global", service, command);
+      });
+
+    // Additional shortcuts for common global operations
+    this.program
+      .command("ginfo [project]")
+      .description("Show info for a project (shorthand for 'global info')")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (project, options, command) => {
+        const service = project ? ["info", project] : ["info"];
+        await this.executeCommand("global", service, command);
+      });
+
+    this.program
+      .command("glist")
+      .alias("gl")
+      .description("List all projects (shorthand for 'global list --all')")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        const service = ["list"];
+        const allOptions = { ...options, all: true };
+        command.setOptionValue("all", true);
+        await this.executeCommand("global", service, command);
+      });
+
+    this.program
+      .command("gkill [project]")
+      .description("Kill project resources (shorthand for 'global kill')")
+      .option("-a, --all", "Kill all projects")
+      .option("-y, --force", "Force the operation")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (project, options, command) => {
+        const service = project ? ["kill", project] : ["kill"];
+        await this.executeCommand("global", service, command);
+      });
   }
 
   private async executeCommand(
@@ -418,9 +465,10 @@ export class CommanderCli {
     }
 
     const skipConfigLoad =
-      command === "kill" &&
-      typeof service === "string" &&
-      service.trim().length > 0;
+      (command === "kill" &&
+        typeof service === "string" &&
+        service.trim().length > 0) ||
+      command === "global";
 
     const zapper = new Zapper();
     if (!skipConfigLoad) {

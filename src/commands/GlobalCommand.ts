@@ -1,0 +1,234 @@
+import { CommandHandler, CommandContext } from "./CommandHandler";
+import { CommandResult } from "./CommandResult";
+import { confirm } from "../utils/confirm";
+import { ProjectKillTargets } from "../core/Zapper";
+import { buildPrefix, parseServiceName } from "../utils/nameBuilder";
+import { Pm2Manager } from "../core/process/Pm2Manager";
+import { DockerManager } from "../core/docker/DockerManager";
+
+export class GlobalCommand extends CommandHandler {
+  async execute(context: CommandContext): Promise<CommandResult> {
+    const { zapper, options, service } = context;
+
+    // Parse subcommand from service parameter
+    const subcommand = Array.isArray(service) ? service[0] : service;
+    const projectName = Array.isArray(service) && service.length > 1 ? service[1] : undefined;
+
+    if (!subcommand) {
+      throw new Error("Global command requires a subcommand: info, list, or kill");
+    }
+
+    switch (subcommand) {
+      case "info":
+        return await this.handleInfo(zapper, projectName);
+      case "list":
+      case "l":
+        return await this.handleList(options.all);
+      case "kill":
+        return await this.handleKill(zapper, projectName, options.all, options.force);
+      default:
+        throw new Error(`Unknown global subcommand: ${subcommand}. Use info, list, or kill.`);
+    }
+  }
+
+  private async handleInfo(zapper: any, projectName?: string): Promise<CommandResult> {
+    if (!projectName) {
+      // Try to get current project name from context
+      if (!zapper.context?.projectName) {
+        throw new Error("No project name provided. Run from a project directory or specify: zap global info <project>");
+      }
+      projectName = zapper.context.projectName;
+    }
+
+    const targets = await this.getProjectTargets(projectName!);
+    return {
+      kind: "global.info",
+      projectName: targets.projectName,
+      prefix: targets.prefix,
+      pm2: targets.pm2,
+      containers: targets.containers,
+    };
+  }
+
+  private async handleList(all?: boolean): Promise<CommandResult> {
+    if (all) {
+      const projects = await this.getAllProjects();
+      return {
+        kind: "global.list",
+        allProjects: true,
+        projects: projects,
+      };
+    } else {
+      // List just current project if in project directory
+      throw new Error("List without --all requires being in a project directory or use --all flag");
+    }
+  }
+
+  private async handleKill(zapper: any, projectName?: string, all?: boolean, force?: boolean): Promise<CommandResult> {
+    if (all) {
+      const projects = await this.getAllProjects();
+      if (projects.length === 0) {
+        return {
+          kind: "global.kill",
+          status: "completed",
+          allProjects: true,
+          projects: [],
+        };
+      }
+
+      const totalPm2 = projects.reduce((sum, p) => sum + p.pm2.length, 0);
+      const totalContainers = projects.reduce((sum, p) => sum + p.containers.length, 0);
+      const projectNames = projects.map(p => p.name).join(", ");
+
+      const proceed = await confirm(
+        `This will permanently delete ALL PM2 processes and Docker containers for ALL zap projects (${projects.length} projects: ${projectNames}). Found ${totalPm2} PM2 process(es) and ${totalContainers} container(s) total. Continue?`,
+        { defaultYes: false, force }
+      );
+
+      if (!proceed) {
+        return {
+          kind: "global.kill",
+          status: "aborted",
+          allProjects: true,
+          projects,
+        };
+      }
+
+      // Kill all projects
+      for (const project of projects) {
+        await this.killProjectResources({
+          projectName: project.name,
+          prefix: project.prefix,
+          pm2: project.pm2,
+          containers: project.containers,
+        });
+      }
+
+      return {
+        kind: "global.kill",
+        status: "completed",
+        allProjects: true,
+        projects,
+      };
+    } else {
+      // Kill single project
+      if (!projectName) {
+        if (!zapper.context?.projectName) {
+          throw new Error("No project name provided. Run from a project directory or specify: zap global kill <project>");
+        }
+        projectName = zapper.context.projectName;
+      }
+
+      const targets = await this.getProjectTargets(projectName!);
+      const projects = [{
+        name: targets.projectName,
+        prefix: targets.prefix,
+        pm2: targets.pm2,
+        containers: targets.containers,
+      }];
+
+      const proceed = await confirm(
+        `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${targets.projectName}" (prefix "${targets.prefix}."). Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
+        { defaultYes: false, force }
+      );
+
+      if (!proceed) {
+        return {
+          kind: "global.kill",
+          status: "aborted",
+          allProjects: false,
+          projects,
+        };
+      }
+
+      await this.killProjectResources(targets);
+      return {
+        kind: "global.kill",
+        status: "completed",
+        allProjects: false,
+        projects,
+      };
+    }
+  }
+
+  private async getProjectTargets(projectName: string): Promise<ProjectKillTargets> {
+    const prefix = buildPrefix(projectName);
+    const scopedPrefix = `${prefix}.`;
+
+    const pm2 = (await Pm2Manager.listProcesses())
+      .map((process) => process.name)
+      .filter((name) => name.startsWith(scopedPrefix))
+      .sort();
+
+    const containers = (await DockerManager.listContainers())
+      .map((container) => container.name)
+      .filter((name) => name.startsWith(scopedPrefix))
+      .sort();
+
+    return {
+      projectName,
+      prefix,
+      pm2: Array.from(new Set(pm2)),
+      containers: Array.from(new Set(containers)),
+    };
+  }
+
+  private async getAllProjects(): Promise<Array<{ name: string; prefix: string; pm2: string[]; containers: string[]; }>> {
+    const [allPm2, allContainers] = await Promise.all([
+      Pm2Manager.listProcesses(),
+      DockerManager.listContainers()
+    ]);
+
+    const projectMap = new Map<string, { name: string; prefix: string; pm2: string[]; containers: string[]; }>();
+
+    // Process PM2 processes
+    for (const process of allPm2) {
+      const parsed = parseServiceName(process.name);
+      if (parsed) {
+        if (!projectMap.has(parsed.project)) {
+          projectMap.set(parsed.project, {
+            name: parsed.project,
+            prefix: buildPrefix(parsed.project),
+            pm2: [],
+            containers: [],
+          });
+        }
+        projectMap.get(parsed.project)!.pm2.push(process.name);
+      }
+    }
+
+    // Process Docker containers
+    for (const container of allContainers) {
+      const parsed = parseServiceName(container.name);
+      if (parsed) {
+        if (!projectMap.has(parsed.project)) {
+          projectMap.set(parsed.project, {
+            name: parsed.project,
+            prefix: buildPrefix(parsed.project),
+            pm2: [],
+            containers: [],
+          });
+        }
+        projectMap.get(parsed.project)!.containers.push(container.name);
+      }
+    }
+
+    // Sort and dedupe arrays
+    for (const project of projectMap.values()) {
+      project.pm2 = Array.from(new Set(project.pm2)).sort();
+      project.containers = Array.from(new Set(project.containers)).sort();
+    }
+
+    return Array.from(projectMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  private async killProjectResources(targets: ProjectKillTargets): Promise<void> {
+    for (const processName of targets.pm2) {
+      await Pm2Manager.deleteProcess(processName);
+    }
+
+    for (const containerName of targets.containers) {
+      await DockerManager.removeContainer(containerName);
+    }
+  }
+}

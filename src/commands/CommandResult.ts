@@ -106,4 +106,32 @@ export type CommandResult =
   | {
       kind: "environments.disabled";
       activeEnvironment?: string;
+    }
+  | {
+      kind: "global.info";
+      projectName: string;
+      prefix: string;
+      pm2: string[];
+      containers: string[];
+    }
+  | {
+      kind: "global.list";
+      allProjects?: boolean;
+      projects: Array<{
+        name: string;
+        prefix: string;
+        pm2: string[];
+        containers: string[];
+      }>;
+    }
+  | {
+      kind: "global.kill";
+      status: "aborted" | "completed";
+      allProjects: boolean;
+      projects: Array<{
+        name: string;
+        prefix: string;
+        pm2: string[];
+        containers: string[];
+      }>;
     };

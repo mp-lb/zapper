@@ -31,7 +31,8 @@ export type Command =
   | "config"
   | "env"
   | "launch"
-  | "isolate";
+  | "isolate"
+  | "global";
 
 export interface CliOptions {
   command: Command;

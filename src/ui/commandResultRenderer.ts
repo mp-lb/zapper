@@ -83,6 +83,24 @@ function toJsonPayload(result: CommandResult): unknown {
         action: "disabled",
         activeEnvironment: result.activeEnvironment,
       };
+    case "global.info":
+      return {
+        projectName: result.projectName,
+        prefix: result.prefix,
+        pm2: result.pm2,
+        containers: result.containers,
+      };
+    case "global.list":
+      return {
+        allProjects: result.allProjects,
+        projects: result.projects,
+      };
+    case "global.kill":
+      return {
+        status: result.status,
+        allProjects: result.allProjects,
+        projects: result.projects,
+      };
   }
 }
 
@@ -196,6 +214,66 @@ export function renderCommandResult(
         );
         renderer.log.info(
           "Environment reset to default. Restart services to apply new environment variables.",
+        );
+      }
+      return;
+    case "global.info":
+      if (result.pm2.length === 0 && result.containers.length === 0) {
+        renderer.log.info(
+          `No PM2 processes or Docker containers found for project ${result.projectName} (${result.prefix}.).`
+        );
+        return;
+      }
+      renderer.log.info(
+        `Found ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) for project ${result.projectName} (${result.prefix}.).`
+      );
+      if (result.pm2.length > 0) {
+        renderer.log.info(`PM2 processes: ${result.pm2.join(", ")}`);
+      }
+      if (result.containers.length > 0) {
+        renderer.log.info(`Docker containers: ${result.containers.join(", ")}`);
+      }
+      return;
+    case "global.list":
+      if (result.projects.length === 0) {
+        renderer.log.info("No zap projects found.");
+        return;
+      }
+      if (result.allProjects) {
+        renderer.log.info(`Found ${result.projects.length} project(s):`);
+      } else {
+        renderer.log.info(`Project information:`);
+      }
+      for (const project of result.projects) {
+        const totalResources = project.pm2.length + project.containers.length;
+        renderer.log.info(
+          `  ${project.name} (${project.prefix}.) - ${totalResources} resource(s) (${project.pm2.length} PM2, ${project.containers.length} containers)`
+        );
+      }
+      return;
+    case "global.kill":
+      if (result.status === "aborted") {
+        renderer.log.info("Aborted.");
+        return;
+      }
+      if (result.projects.length === 0) {
+        if (result.allProjects) {
+          renderer.log.info("No zap projects found to kill.");
+        } else {
+          renderer.log.info("No resources found to kill.");
+        }
+        return;
+      }
+      const totalPm2 = result.projects.reduce((sum, p) => sum + p.pm2.length, 0);
+      const totalContainers = result.projects.reduce((sum, p) => sum + p.containers.length, 0);
+      if (result.allProjects) {
+        renderer.log.info(
+          `Killed ${totalPm2} PM2 process(es) and ${totalContainers} container(s) across ${result.projects.length} project(s).`
+        );
+      } else {
+        const project = result.projects[0];
+        renderer.log.info(
+          `Killed ${project.pm2.length} PM2 process(es) and ${project.containers.length} container(s) for project ${project.name} (${project.prefix}.).`
         );
       }
       return;
