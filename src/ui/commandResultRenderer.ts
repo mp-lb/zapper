@@ -25,6 +25,14 @@ function toJsonPayload(result: CommandResult): unknown {
       return result.filteredConfig;
     case "isolation.enabled":
       return { instanceId: result.instanceId };
+    case "isolation.info":
+      return {
+        isolated: result.isolated,
+        instanceId: result.instanceId,
+        mode: result.mode,
+        worktree: result.worktree,
+        configPath: result.configPath,
+      };
     case "services.action":
       return {
         action: result.action,
@@ -136,6 +144,15 @@ export function renderCommandResult(
       return;
     case "isolation.enabled":
       renderer.isolation.printEnabled(result.instanceId);
+      return;
+    case "isolation.info":
+      renderer.isolation.printInfo({
+        isolated: result.isolated,
+        instanceId: result.instanceId,
+        mode: result.mode,
+        worktree: result.worktree,
+        configPath: result.configPath,
+      });
       return;
     case "launch.opened":
       renderer.log.info(`Opening ${result.url}`);

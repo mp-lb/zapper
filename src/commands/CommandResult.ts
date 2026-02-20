@@ -43,6 +43,14 @@ export type CommandResult =
       instanceId: string;
     }
   | {
+      kind: "isolation.info";
+      isolated: boolean;
+      instanceId?: string;
+      mode: "normal" | "isolate" | "worktree" | "exclusive";
+      worktree: boolean;
+      configPath?: string;
+    }
+  | {
       kind: "services.action";
       action: "up" | "down" | "restart";
       services?: string[];

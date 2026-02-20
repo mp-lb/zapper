@@ -2,7 +2,7 @@ import { ZapperConfig } from "../utils";
 import { DockerManager } from "./docker";
 import { renderer } from "../ui/renderer";
 import { Pm2Executor } from "./process/Pm2Executor";
-import { Action, ActionPlan } from "../types";
+import { Action, ActionPlan, ExecutionWave } from "../types";
 import { findProcess } from "./findProcess";
 import { findContainer } from "./findContainer";
 import { updateServiceState, clearServiceState } from "../config/stateLoader";
@@ -38,6 +38,36 @@ async function waitForHealth(action: Action): Promise<void> {
   }
 }
 
+/**
+ * Formats wave output as a user-friendly message.
+ * Groups actions by type and sorts alphabetically.
+ * Output format: "Stopped service1, service2" or "Starting service1, service2"
+ */
+function formatWaveOutput(wave: ExecutionWave): string[] {
+  const lines: string[] = [];
+
+  // Group actions by type
+  const startActions = wave.actions
+    .filter((a) => a.type === "start")
+    .map((a) => a.name)
+    .sort();
+
+  const stopActions = wave.actions
+    .filter((a) => a.type === "stop")
+    .map((a) => a.name)
+    .sort();
+
+  if (stopActions.length > 0) {
+    lines.push(`Stopped ${stopActions.join(", ")}`);
+  }
+
+  if (startActions.length > 0) {
+    lines.push(`Starting ${startActions.join(", ")}`);
+  }
+
+  return lines;
+}
+
 async function executeAction(
   action: Action,
   config: ZapperConfig,
@@ -51,10 +81,8 @@ async function executeAction(
 
     if (action.type === "start") {
       await pm2.startProcess(proc, projectName);
-      renderer.log.info(`Started ${proc.name as string}`);
     } else {
       await pm2.stopProcess(proc.name as string);
-      renderer.log.info(`Stopped ${proc.name as string}`);
     }
   } else {
     const pair = findContainer(config, action.name);
@@ -109,12 +137,9 @@ async function executeAction(
         startPid: pid,
         startRequestedAt: new Date().toISOString(),
       });
-
-      renderer.log.info(`Starting ${name}`);
     } else {
       await DockerManager.stopContainer(dockerName);
       clearServiceState(configDir, dockerName);
-      renderer.log.info(`Stopped ${name}`);
     }
   }
 }
@@ -130,6 +155,13 @@ export async function executeActions(
   const pm2 = new Pm2Executor(projectName, configDir || undefined, instanceId);
 
   for (const wave of plan.waves) {
+    // Output wave-level message before executing
+    const messages = formatWaveOutput(wave);
+    for (const msg of messages) {
+      renderer.log.info(msg);
+    }
+
+    // Execute all actions in the wave in parallel
     await Promise.all(
       wave.actions.map((action) =>
         executeAction(
@@ -142,6 +174,7 @@ export async function executeActions(
       ),
     );
 
+    // Wait for health checks in parallel
     await Promise.all(wave.actions.map((action) => waitForHealth(action)));
   }
 }

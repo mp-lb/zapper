@@ -19,4 +19,5 @@ export { ConfigCommand } from "./ConfigCommand";
 export { EnvCommand } from "./EnvCommand";
 export { LaunchCommand } from "./LaunchCommand";
 export { IsolateCommand } from "./IsolateCommand";
+export { IsolateInfoCommand } from "./IsolateInfoCommand";
 export { GlobalCommand } from "./GlobalCommand";

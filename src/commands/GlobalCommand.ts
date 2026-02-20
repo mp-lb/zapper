@@ -60,12 +60,13 @@ export class GlobalCommand extends CommandHandler {
 
       try {
         await zapper.loadConfig();
-        if (!zapper.context?.projectName) {
+        const projectName = zapper.getProject();
+        if (!projectName) {
           throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>");
         }
 
         // Show current project
-        const targets = await this.getProjectTargets(zapper.context.projectName);
+        const targets = await this.getProjectTargets(projectName);
         return {
           kind: "global.list",
           allProjects: false,
@@ -132,7 +133,24 @@ export class GlobalCommand extends CommandHandler {
     } else {
       // Kill single project
       if (!projectName) {
-        throw new Error("Specify a project name or use --all flag to kill all projects");
+        // Try to load config to get current project name
+        if (!zapper) {
+          throw new Error("Specify a project name or use --all flag to kill all projects");
+        }
+
+        try {
+          await zapper.loadConfig();
+          const resolvedProject = zapper.getProject();
+          if (!resolvedProject) {
+            throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>");
+          }
+          projectName = resolvedProject;
+        } catch (error) {
+          if (error instanceof Error && error.message.includes("No project name provided")) {
+            throw error;
+          }
+          throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>");
+        }
       }
 
       const targets = await this.getProjectTargets(projectName!);

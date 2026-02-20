@@ -253,8 +253,19 @@ export class Planner {
     hasPm2Process: (name: string) => boolean,
     isDockerRunning: (name: string) => Promise<boolean>,
   ): Promise<ExecutionWave[]> {
-    const stopActions: ExecutionWave[] = [];
+    // Collect services that need to be stopped (not in active profile but currently running)
+    const servicesToStop = new Set<string>();
+    const graph = new DependencyGraph();
 
+    // Build the full graph for dependency resolution
+    for (const process of allProcesses) {
+      graph.addProcess(process.name as string, process);
+    }
+    for (const [name, container] of allContainers) {
+      graph.addContainer(name, container);
+    }
+
+    // Find services that should be stopped (not in active profile but running)
     for (const process of allProcesses) {
       const shouldRun = this.shouldRunWithProfile(
         process.profiles,
@@ -262,16 +273,7 @@ export class Planner {
       );
 
       if (!shouldRun && hasPm2Process(process.name as string)) {
-        stopActions.push({
-          actions: [
-            {
-              type: "stop",
-              serviceType: "native",
-              name: process.name as string,
-              healthcheck: process.healthcheck ?? 5,
-            },
-          ],
-        });
+        servicesToStop.add(process.name as string);
       }
     }
 
@@ -282,19 +284,15 @@ export class Planner {
       );
 
       if (!shouldRun && (await isDockerRunning(name))) {
-        stopActions.push({
-          actions: [
-            {
-              type: "stop",
-              serviceType: "docker",
-              name,
-              healthcheck: container.healthcheck ?? 5,
-            },
-          ],
-        });
+        servicesToStop.add(name);
       }
     }
 
-    return stopActions;
+    // Use DependencyGraph to compute stop waves with proper dependency ordering
+    if (servicesToStop.size === 0) {
+      return [];
+    }
+
+    return graph.computeStopWaves(servicesToStop);
   }
 }

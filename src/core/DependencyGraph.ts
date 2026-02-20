@@ -121,7 +121,11 @@ export class DependencyGraph {
         remaining.delete(action.name);
       }
 
-      if (wave.length > 0) waves.push({ actions: wave });
+      if (wave.length > 0) {
+        // Sort actions alphabetically by name within each wave
+        wave.sort((a, b) => a.name.localeCompare(b.name));
+        waves.push({ actions: wave });
+      }
     }
 
     return waves;
@@ -174,7 +178,11 @@ export class DependencyGraph {
         remaining.delete(action.name);
       }
 
-      if (wave.length > 0) waves.push({ actions: wave });
+      if (wave.length > 0) {
+        // Sort actions alphabetically by name within each wave
+        wave.sort((a, b) => a.name.localeCompare(b.name));
+        waves.push({ actions: wave });
+      }
     }
 
     return waves;

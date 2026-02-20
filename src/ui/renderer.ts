@@ -267,6 +267,47 @@ export const renderer = {
     printEnabled(instanceId: string): void {
       renderer.log.success(renderer.isolation.enabledText(instanceId));
     },
+
+    infoText(data: {
+      isolated: boolean;
+      instanceId?: string;
+      mode: "normal" | "isolate" | "worktree" | "exclusive";
+      worktree: boolean;
+      configPath?: string;
+    }): string {
+      const lines: string[] = [header("Isolation Status")];
+      lines.push("");
+
+      if (data.isolated) {
+        lines.push(`  Status:     ${color("ok", "Isolated")}`);
+        lines.push(`  Instance:   ${bold(data.instanceId!)}`);
+        lines.push(`  Mode:       ${data.mode}`);
+        lines.push(`  Worktree:   ${data.worktree ? "Yes" : "No"}`);
+        lines.push(`  Config:     ${dim(data.configPath!)}`);
+      } else if (data.worktree) {
+        lines.push(`  Status:     ${color("warn", "Not isolated")}`);
+        lines.push(`  Mode:       ${data.mode}`);
+        lines.push(`  Worktree:   Yes`);
+        lines.push("");
+        lines.push(dim("  Run `zap isolate` to enable isolation"));
+      } else {
+        lines.push(`  Status:     ${color("muted", "Not isolated")}`);
+        lines.push(`  Mode:       ${data.mode}`);
+        lines.push(`  Worktree:   No`);
+      }
+
+      return lines.join("\n");
+    },
+
+    printInfo(data: {
+      isolated: boolean;
+      instanceId?: string;
+      mode: "normal" | "isolate" | "worktree" | "exclusive";
+      worktree: boolean;
+      configPath?: string;
+    }): void {
+      renderer.log.report(renderer.isolation.infoText(data));
+    },
   },
 
   status: {

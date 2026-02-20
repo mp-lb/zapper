@@ -23,6 +23,7 @@ import {
   EnvCommand,
   LaunchCommand,
   IsolateCommand,
+  IsolateInfoCommand,
   GlobalCommand,
   CommandContext,
   CommandHandler,
@@ -103,6 +104,7 @@ export class CommanderCli {
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
     this.commandHandlers.set("isolate", new IsolateCommand());
+    this.commandHandlers.set("isolate:info", new IsolateInfoCommand());
     this.commandHandlers.set("global", new GlobalCommand());
   }
 
@@ -386,13 +388,22 @@ export class CommanderCli {
         await this.executeCommand("launch", service, command);
       });
 
-    this.program
+    const isolateCmd = this.program
       .command("isolate")
-      .description("Enable worktree isolation by creating a local instance ID")
-      .argument("[instanceId]", "Optional instance ID to use as-is")
+      .description("Manage worktree isolation")
+      .argument("[instanceId]", "Optional instance ID to use as-is (enables isolation)")
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (instanceId, options, command) => {
+        // If no subcommand, enable isolation (backward compatible)
         await this.executeCommand("isolate", instanceId, command);
+      });
+
+    isolateCmd
+      .command("info")
+      .description("Show isolation status summary")
+      .option("-j, --json", "Output result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("isolate:info", undefined, command);
       });
 
     this.program
@@ -472,12 +483,14 @@ export class CommanderCli {
       (command === "kill" &&
         typeof service === "string" &&
         service.trim().length > 0) ||
-      command === "global";
+      command === "global" ||
+      command === "isolate:info";
 
     const zapper = new Zapper();
     if (!skipConfigLoad) {
       await zapper.loadConfig(allOptions.config, allOptions, {
-        suppressUnisolatedWorktreeWarning: command === "isolate",
+        suppressUnisolatedWorktreeWarning:
+          command === "isolate" || command === "isolate:info",
       });
     }
 
@@ -485,6 +498,7 @@ export class CommanderCli {
       command !== "env" &&
       command !== "environment" &&
       command !== "isolate" &&
+      command !== "isolate:info" &&
       command !== "launch" &&
       command !== "kill" &&
       command !== "profile";
