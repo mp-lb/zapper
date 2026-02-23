@@ -133,4 +133,71 @@ describe("portsManager", () => {
       expect(portsPath).toBe(path.join(tempDir, ".zap", "ports.json"));
     });
   });
+
+  describe("integration scenarios", () => {
+    it("should handle save after load when ports file doesn't exist", () => {
+      // Load from non-existent file
+      const loaded = loadPorts(tempDir);
+      expect(loaded).toEqual({});
+
+      // Save new ports
+      const newPorts = { PORT_A: "1234" };
+      savePorts(tempDir, newPorts);
+
+      // Load again to verify
+      const reloaded = loadPorts(tempDir);
+      expect(reloaded).toEqual(newPorts);
+    });
+
+    it("should completely replace ports on re-save", () => {
+      // First save
+      savePorts(tempDir, { PORT_A: "1111", PORT_B: "2222" });
+
+      // Second save with different ports
+      savePorts(tempDir, { PORT_C: "3333" });
+
+      // Verify only PORT_C exists
+      const loaded = loadPorts(tempDir);
+      expect(loaded).toEqual({ PORT_C: "3333" });
+      expect(loaded).not.toHaveProperty("PORT_A");
+      expect(loaded).not.toHaveProperty("PORT_B");
+    });
+
+    it("should handle clearPorts when file doesn't exist", () => {
+      // Should not throw
+      clearPorts(tempDir);
+      clearPorts(tempDir); // Call twice to verify idempotency
+    });
+
+    it("should handle savePorts with empty object", () => {
+      savePorts(tempDir, {});
+      const loaded = loadPorts(tempDir);
+      expect(loaded).toEqual({});
+    });
+  });
+
+  describe("clearPorts for reset command", () => {
+    it("should remove ports.json when clearPorts is called", () => {
+      // Create ports file
+      savePorts(tempDir, { PORT_A: "1234", PORT_B: "5678" });
+      const portsPath = path.join(tempDir, ".zap", "ports.json");
+      expect(fs.existsSync(portsPath)).toBe(true);
+
+      // Clear ports
+      clearPorts(tempDir);
+
+      // Verify it's gone
+      expect(fs.existsSync(portsPath)).toBe(false);
+    });
+
+    it("should allow re-creation after clear", () => {
+      // Create, clear, recreate
+      savePorts(tempDir, { PORT_A: "1111" });
+      clearPorts(tempDir);
+      savePorts(tempDir, { PORT_B: "2222" });
+
+      const loaded = loadPorts(tempDir);
+      expect(loaded).toEqual({ PORT_B: "2222" });
+    });
+  });
 });

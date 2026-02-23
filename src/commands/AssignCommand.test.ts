@@ -115,4 +115,35 @@ describe("AssignCommand", () => {
     expect(typeof result?.ports.FRONTEND_PORT).toBe("string");
     expect(typeof result?.ports.BACKEND_PORT).toBe("string");
   });
+
+  it("should overwrite existing ports.json on re-assignment", async () => {
+    // First assignment
+    const ctx1 = createMockContext();
+    const result1 = await command.execute(ctx1);
+
+    // Second assignment
+    const ctx2 = createMockContext();
+    const result2 = await command.execute(ctx2);
+
+    // Ports should be different (very unlikely to get same random ports)
+    expect(result1?.ports).not.toEqual(result2?.ports);
+
+    // Verify the file was overwritten
+    const portsPath = path.join(tempDir, ".zap", "ports.json");
+    const savedPorts = JSON.parse(fs.readFileSync(portsPath, "utf8"));
+    expect(savedPorts).toEqual(result2?.ports);
+  });
+
+  it("should generate ports in valid dynamic range (49152-65535)", async () => {
+    const ctx = createMockContext({
+      ports: ["PORT_A", "PORT_B", "PORT_C", "PORT_D", "PORT_E"],
+    });
+    const result = await command.execute(ctx);
+
+    for (const portValue of Object.values(result?.ports || {})) {
+      const port = parseInt(portValue as string, 10);
+      expect(port).toBeGreaterThanOrEqual(49152);
+      expect(port).toBeLessThanOrEqual(65535);
+    }
+  });
 });

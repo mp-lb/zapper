@@ -1,15 +1,18 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { writeFileSync, unlinkSync } from "fs";
+import { writeFileSync, unlinkSync, mkdirSync, rmSync } from "fs";
 import { EnvResolver } from "./EnvResolver";
 import { ZapperConfig } from "../config/schemas";
 import { Context } from "../types/Context";
 import path from "path";
+import { tmpdir } from "os";
 
 describe("EnvResolver", () => {
   let tempFiles: string[] = [];
+  let tempDirs: string[] = [];
 
   beforeEach(() => {
     tempFiles = [];
+    tempDirs = [];
   });
 
   afterEach(() => {
@@ -17,6 +20,14 @@ describe("EnvResolver", () => {
     tempFiles.forEach((file) => {
       try {
         unlinkSync(file);
+      } catch (e) {
+        // Ignore errors
+      }
+    });
+    // Clean up temporary directories
+    tempDirs.forEach((dir) => {
+      try {
+        rmSync(dir, { recursive: true, force: true });
       } catch (e) {
         // Ignore errors
       }
@@ -32,6 +43,23 @@ describe("EnvResolver", () => {
     writeFileSync(fullPath, content);
     tempFiles.push(fullPath);
     return fullPath;
+  };
+
+  const createTempProjectDir = (ports?: Record<string, string>): string => {
+    const dir = path.join(
+      tmpdir(),
+      `zapper-env-test-${Date.now()}-${Math.random()}`,
+    );
+    mkdirSync(dir, { recursive: true });
+    tempDirs.push(dir);
+
+    if (ports) {
+      const zapDir = path.join(dir, ".zap");
+      mkdirSync(zapDir, { recursive: true });
+      writeFileSync(path.join(zapDir, "ports.json"), JSON.stringify(ports));
+    }
+
+    return dir;
   };
 
   describe("loadAndMergeEnvFiles", () => {
@@ -964,6 +992,137 @@ PORT=3000
       const result = EnvResolver["loadAndMergeEnvFiles"]([envFile], {});
 
       expect(result.PORT).toBe("3000");
+    });
+  });
+
+  describe("resolveContext with ports from filesystem", () => {
+    it("should load assigned ports and use them in env resolution", () => {
+      const projectDir = createTempProjectDir({
+        FRONTEND_PORT: "54321",
+        BACKEND_PORT: "54322",
+      });
+
+      const envContent = `
+FRONTEND_PORT=3000
+BACKEND_PORT=3001
+FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
+BACKEND_URL=http://localhost:\${BACKEND_PORT}/api
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+
+      const context: Context = {
+        projectName: "test",
+        projectRoot: projectDir,
+        envFiles: [envFile],
+        environments: ["default"],
+        processes: [
+          {
+            name: "frontend",
+            cmd: "npm run dev",
+            env: ["FRONTEND_PORT", "FRONTEND_URL"],
+          },
+          {
+            name: "backend",
+            cmd: "npm run server",
+            env: ["BACKEND_PORT", "BACKEND_URL"],
+          },
+        ],
+        containers: [],
+        tasks: [],
+        links: [],
+        profiles: [],
+        state: {
+          activeEnvironment: null,
+          activeProfile: null,
+          services: {},
+        },
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      // Ports should override env file values
+      expect(result.processes[0].resolvedEnv?.FRONTEND_PORT).toBe("54321");
+      expect(result.processes[0].resolvedEnv?.FRONTEND_URL).toBe(
+        "http://localhost:54321",
+      );
+
+      expect(result.processes[1].resolvedEnv?.BACKEND_PORT).toBe("54322");
+      expect(result.processes[1].resolvedEnv?.BACKEND_URL).toBe(
+        "http://localhost:54322/api",
+      );
+    });
+
+    it("should use assigned ports in homepage URL", () => {
+      const projectDir = createTempProjectDir({
+        PORT: "55555",
+      });
+
+      const envContent = `
+PORT=3000
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+
+      const context: Context = {
+        projectName: "test",
+        projectRoot: projectDir,
+        envFiles: [envFile],
+        environments: ["default"],
+        processes: [],
+        containers: [],
+        tasks: [],
+        homepage: "http://localhost:${PORT}",
+        links: [],
+        profiles: [],
+        state: {
+          activeEnvironment: null,
+          activeProfile: null,
+          services: {},
+        },
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      expect(result.homepage).toBe("http://localhost:55555");
+    });
+
+    it("should work without ports.json file", () => {
+      const projectDir = createTempProjectDir(); // No ports
+
+      const envContent = `
+PORT=3000
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+
+      const context: Context = {
+        projectName: "test",
+        projectRoot: projectDir,
+        envFiles: [envFile],
+        environments: ["default"],
+        processes: [
+          {
+            name: "app",
+            cmd: "npm run dev",
+            env: ["PORT"],
+          },
+        ],
+        containers: [],
+        tasks: [],
+        links: [],
+        profiles: [],
+        state: {
+          activeEnvironment: null,
+          activeProfile: null,
+          services: {},
+        },
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      // Should use env file value since no ports.json
+      expect(result.processes[0].resolvedEnv?.PORT).toBe("3000");
     });
   });
 });
