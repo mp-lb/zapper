@@ -135,4 +135,9 @@ export type CommandResult =
         pm2: string[];
         containers: string[];
       }>;
+    }
+  | {
+      kind: "assign";
+      ports: Record<string, string>;
+      path: string;
     };

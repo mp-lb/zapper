@@ -53,12 +53,14 @@ describe("Wave Execution", () => {
     };
 
     mockPm2Executor = {
-      startProcess: vi.fn().mockImplementation(async (process: { name: string }) => {
-        executionOrder.push(`start:${process.name}`);
-        executionTimestamps.set(`start:${process.name}`, Date.now());
-        // Simulate some async work
-        await new Promise((r) => setTimeout(r, 10));
-      }),
+      startProcess: vi
+        .fn()
+        .mockImplementation(async (process: { name: string }) => {
+          executionOrder.push(`start:${process.name}`);
+          executionTimestamps.set(`start:${process.name}`, Date.now());
+          // Simulate some async work
+          await new Promise((r) => setTimeout(r, 10));
+        }),
       stopProcess: vi.fn().mockImplementation(async (name: string) => {
         executionOrder.push(`stop:${name}`);
         executionTimestamps.set(`stop:${name}`, Date.now());
@@ -70,11 +72,13 @@ describe("Wave Execution", () => {
 
     // Mock findProcess to return a process
     const { findProcess } = await import("./findProcess");
-    vi.mocked(findProcess).mockImplementation((config: ZapperConfig, name: string) => {
-      const process = config.native?.[name];
-      if (process) return { ...process, name };
-      return undefined;
-    });
+    vi.mocked(findProcess).mockImplementation(
+      (config: ZapperConfig, name: string) => {
+        const process = config.native?.[name];
+        if (process) return { ...process, name };
+        return undefined;
+      },
+    );
   });
 
   afterEach(() => {
@@ -87,9 +91,24 @@ describe("Wave Execution", () => {
         waves: [
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "scribe", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "mongo", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "mongo",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -117,10 +136,16 @@ describe("Wave Execution", () => {
     it("should execute waves sequentially but actions within waves in parallel", async () => {
       const waveTimings: { wave: number; action: string; time: number }[] = [];
 
-      mockPm2Executor.startProcess.mockImplementation(async (process: { name: string }) => {
-        waveTimings.push({ wave: 1, action: `start:${process.name}`, time: Date.now() });
-        await new Promise((r) => setTimeout(r, 20));
-      });
+      mockPm2Executor.startProcess.mockImplementation(
+        async (process: { name: string }) => {
+          waveTimings.push({
+            wave: 1,
+            action: `start:${process.name}`,
+            time: Date.now(),
+          });
+          await new Promise((r) => setTimeout(r, 20));
+        },
+      );
 
       mockPm2Executor.stopProcess.mockImplementation(async (name: string) => {
         waveTimings.push({ wave: 2, action: `stop:${name}`, time: Date.now() });
@@ -131,13 +156,28 @@ describe("Wave Execution", () => {
         waves: [
           {
             actions: [
-              { type: "start", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "scribe", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "mongo", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "mongo",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -163,8 +203,18 @@ describe("Wave Execution", () => {
         waves: [
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "scribe", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -187,9 +237,24 @@ describe("Wave Execution", () => {
         waves: [
           {
             actions: [
-              { type: "start", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "scribe", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "mongo", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "mongo",
+                healthcheck: 0,
+              },
             ],
           },
         ],

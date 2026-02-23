@@ -85,7 +85,11 @@ function header(title: string, subtitle?: string): string {
   return color("accent", `== ${t} ==`);
 }
 
-function block(kind: "WARN" | "ERROR" | "INFO", title: string, lines: string[]): string {
+function block(
+  kind: "WARN" | "ERROR" | "INFO",
+  title: string,
+  lines: string[],
+): string {
   const kindTone: Tone =
     kind === "ERROR" ? "error" : kind === "WARN" ? "warn" : "info";
 
@@ -119,7 +123,10 @@ function renderName(name: string, enabled: boolean): string {
   return enabled ? name : color("muted", name);
 }
 
-function formatStatusRow(service: ServiceStatus): { name: string; state: string } {
+function formatStatusRow(service: ServiceStatus): {
+  name: string;
+  state: string;
+} {
   return {
     name: renderName(service.service, service.enabled),
     state: renderState(service.status, service.enabled),
@@ -151,13 +158,16 @@ function table(rows: string[][], padding = 2): string {
 }
 
 function formatContextSubtitle(context: Context): string {
-  if (context.instanceId) return `${context.projectName} · ${context.instanceId}`;
+  if (context.instanceId)
+    return `${context.projectName} · ${context.instanceId}`;
   return context.projectName;
 }
 
 function taskAcceptsRest(task: Task, delimiters: [string, string]): boolean {
   const restPattern = `${delimiters[0]}REST${delimiters[1]}`;
-  return task.cmds.some((cmd) => typeof cmd === "string" && cmd.includes(restPattern));
+  return task.cmds.some(
+    (cmd) => typeof cmd === "string" && cmd.includes(restPattern),
+  );
 }
 
 /** Error handling: keep your known error mapping, but output is consistent */
@@ -199,7 +209,7 @@ function renderError(error: unknown, showStackTrace = false): string {
   const msg = error instanceof Error ? error.message : String(error);
 
   let out = `${color("error", "ERROR")}  ${bold("RuntimeError:")} ${msg || "Unexpected failure"}${dim(
-    name && msg ? ` (${name})` : name ? ` (${name})` : ""
+    name && msg ? ` (${name})` : name ? ` (${name})` : "",
   )}`;
   if (showStackTrace && error instanceof Error && error.stack) {
     out += `\n${dim(error.stack)}`;
@@ -251,7 +261,9 @@ export const renderer = {
       for (const text of texts) console.log(text);
     },
     json(data: unknown, pretty = false): void {
-      console.log(pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data));
+      console.log(
+        pretty ? JSON.stringify(data, null, 2) : JSON.stringify(data),
+      );
     },
     envMap(envMap: Record<string, string>): void {
       for (const [key, value] of Object.entries(envMap)) {
@@ -318,22 +330,29 @@ export const renderer = {
     },
 
     toText(statusResult: StatusResult, context?: Context): string {
-      const titleSubtitle = context ? formatContextSubtitle(context) : undefined;
+      const titleSubtitle = context
+        ? formatContextSubtitle(context)
+        : undefined;
       const sections: string[] = [header("Status", titleSubtitle)];
 
-      const addSection = (label: "NATIVE" | "DOCKER", items: ServiceStatus[]) => {
+      const addSection = (
+        label: "NATIVE" | "DOCKER",
+        items: ServiceStatus[],
+      ) => {
         if (items.length === 0) return;
 
         const rows = items.map(formatStatusRow);
 
         const nameWidth = Math.max(
           ...rows.map((r) => stripAnsi(r.name).length),
-          0
+          0,
         );
 
         const lines = rows.map((r) => {
           // align: name padded, state after
-          const pad = " ".repeat(Math.max(0, nameWidth - stripAnsi(r.name).length + 2));
+          const pad = " ".repeat(
+            Math.max(0, nameWidth - stripAnsi(r.name).length + 2),
+          );
           return `  ${r.name}${pad}${r.state}`;
         });
 
@@ -353,7 +372,8 @@ export const renderer = {
 
   tasks: {
     toText(tasks: Task[]): string {
-      if (tasks.length === 0) return `${header("Tasks")}\n\n${dim("No tasks defined")}`;
+      if (tasks.length === 0)
+        return `${header("Tasks")}\n\n${dim("No tasks defined")}`;
 
       const rows: string[][] = [
         [bold("NAME"), bold("DESCRIPTION"), bold("ALIASES")],
@@ -361,7 +381,8 @@ export const renderer = {
 
       for (const t of tasks) {
         const desc = t.desc ?? "";
-        const aliases = t.aliases && t.aliases.length > 0 ? t.aliases.join(", ") : "";
+        const aliases =
+          t.aliases && t.aliases.length > 0 ? t.aliases.join(", ") : "";
         rows.push([t.name, desc, aliases]);
       }
 
@@ -376,7 +397,10 @@ export const renderer = {
       }));
     },
 
-    paramsToJson(task: Task, delimiters: [string, string] = ["{{", "}}"]): TaskParamsOutput {
+    paramsToJson(
+      task: Task,
+      delimiters: [string, string] = ["{{", "}}"],
+    ): TaskParamsOutput {
       const params: TaskParamInfo[] = (task.params || []).map((param) => ({
         name: param.name,
         desc: param.desc,
@@ -394,9 +418,14 @@ export const renderer = {
 
   profiles: {
     toText(profiles: string[]): string {
-      if (profiles.length === 0) return `${header("Profile")}\n\n${dim("No profiles defined")}`;
+      if (profiles.length === 0)
+        return `${header("Profile")}\n\n${dim("No profiles defined")}`;
       // keep this minimal: list only
-      return [header("Profiles"), "", profiles.map((p) => `  ${p}`).join("\n")].join("\n");
+      return [
+        header("Profiles"),
+        "",
+        profiles.map((p) => `  ${p}`).join("\n"),
+      ].join("\n");
     },
 
     toJson(profiles: string[]): string[] {
@@ -404,7 +433,8 @@ export const renderer = {
     },
 
     pickerText(profiles: string[], activeProfile?: string): string {
-      if (profiles.length === 0) return `${header("Profile")}\n\n${dim("No profiles defined")}`;
+      if (profiles.length === 0)
+        return `${header("Profile")}\n\n${dim("No profiles defined")}`;
 
       const lines: string[] = [header("Profile")];
 
@@ -426,8 +456,13 @@ export const renderer = {
 
   environments: {
     toText(environments: string[]): string {
-      if (environments.length === 0) return `${header("Environment")}\n\n${dim("No environments defined")}`;
-      return [header("Environments"), "", environments.map((e) => `  ${e}`).join("\n")].join("\n");
+      if (environments.length === 0)
+        return `${header("Environment")}\n\n${dim("No environments defined")}`;
+      return [
+        header("Environments"),
+        "",
+        environments.map((e) => `  ${e}`).join("\n"),
+      ].join("\n");
     },
 
     toJson(environments: string[]): string[] {
@@ -435,7 +470,8 @@ export const renderer = {
     },
 
     pickerText(environments: string[], activeEnvironment?: string): string {
-      if (environments.length === 0) return `${header("Environment")}\n\n${dim("No environments defined")}`;
+      if (environments.length === 0)
+        return `${header("Environment")}\n\n${dim("No environments defined")}`;
 
       const lines: string[] = [header("Environment")];
 

@@ -12,10 +12,13 @@ export class GlobalCommand extends CommandHandler {
 
     // Parse subcommand from service parameter
     const subcommand = Array.isArray(service) ? service[0] : service;
-    const projectName = Array.isArray(service) && service.length > 1 ? service[1] : undefined;
+    const projectName =
+      Array.isArray(service) && service.length > 1 ? service[1] : undefined;
 
     if (!subcommand) {
-      throw new Error("Global command requires a subcommand: info, list, or kill");
+      throw new Error(
+        "Global command requires a subcommand: info, list, or kill",
+      );
     }
 
     switch (subcommand) {
@@ -24,14 +27,24 @@ export class GlobalCommand extends CommandHandler {
       case "l":
         return await this.handleList(options.all, projectName, zapper);
       case "kill":
-        return await this.handleKill(zapper, projectName, options.all, options.force);
+        return await this.handleKill(
+          zapper,
+          projectName,
+          options.all,
+          options.force,
+        );
       default:
-        throw new Error(`Unknown global subcommand: ${subcommand}. Use info, list, or kill.`);
+        throw new Error(
+          `Unknown global subcommand: ${subcommand}. Use info, list, or kill.`,
+        );
     }
   }
 
-
-  private async handleList(all?: boolean, projectName?: string, zapper?: any): Promise<CommandResult> {
+  private async handleList(
+    all?: boolean,
+    projectName?: string,
+    zapper?: any,
+  ): Promise<CommandResult> {
     if (all) {
       const projects = await this.getAllProjects();
       return {
@@ -45,24 +58,30 @@ export class GlobalCommand extends CommandHandler {
       return {
         kind: "global.list",
         allProjects: false,
-        projects: [{
-          name: targets.projectName,
-          prefix: targets.prefix,
-          pm2: targets.pm2,
-          containers: targets.containers,
-        }],
+        projects: [
+          {
+            name: targets.projectName,
+            prefix: targets.prefix,
+            pm2: targets.pm2,
+            containers: targets.containers,
+          },
+        ],
       };
     } else {
       // Try to load config to get current project name
       if (!zapper) {
-        throw new Error("Specify a project name or use --all flag to list all projects");
+        throw new Error(
+          "Specify a project name or use --all flag to list all projects",
+        );
       }
 
       try {
         await zapper.loadConfig();
         const projectName = zapper.getProject();
         if (!projectName) {
-          throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>");
+          throw new Error(
+            "No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>",
+          );
         }
 
         // Show current project
@@ -70,20 +89,29 @@ export class GlobalCommand extends CommandHandler {
         return {
           kind: "global.list",
           allProjects: false,
-          projects: [{
-            name: targets.projectName,
-            prefix: targets.prefix,
-            pm2: targets.pm2,
-            containers: targets.containers,
-          }],
+          projects: [
+            {
+              name: targets.projectName,
+              prefix: targets.prefix,
+              pm2: targets.pm2,
+              containers: targets.containers,
+            },
+          ],
         };
       } catch (error) {
-        throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>");
+        throw new Error(
+          "No project name provided and not in a project directory. Use --all flag or specify: zap global list <project>",
+        );
       }
     }
   }
 
-  private async handleKill(zapper: any, projectName?: string, all?: boolean, force?: boolean): Promise<CommandResult> {
+  private async handleKill(
+    zapper: any,
+    projectName?: string,
+    all?: boolean,
+    force?: boolean,
+  ): Promise<CommandResult> {
     if (all) {
       // Kill all projects
       const projects = await this.getAllProjects();
@@ -97,12 +125,15 @@ export class GlobalCommand extends CommandHandler {
       }
 
       const totalPm2 = projects.reduce((sum, p) => sum + p.pm2.length, 0);
-      const totalContainers = projects.reduce((sum, p) => sum + p.containers.length, 0);
-      const projectNames = projects.map(p => p.name).join(", ");
+      const totalContainers = projects.reduce(
+        (sum, p) => sum + p.containers.length,
+        0,
+      );
+      const projectNames = projects.map((p) => p.name).join(", ");
 
       const proceed = await confirm(
         `This will permanently delete ALL PM2 processes and Docker containers for ALL zap projects (${projects.length} projects: ${projectNames}). Found ${totalPm2} PM2 process(es) and ${totalContainers} container(s) total. Continue?`,
-        { defaultYes: false, force }
+        { defaultYes: false, force },
       );
 
       if (!proceed) {
@@ -135,35 +166,46 @@ export class GlobalCommand extends CommandHandler {
       if (!projectName) {
         // Try to load config to get current project name
         if (!zapper) {
-          throw new Error("Specify a project name or use --all flag to kill all projects");
+          throw new Error(
+            "Specify a project name or use --all flag to kill all projects",
+          );
         }
 
         try {
           await zapper.loadConfig();
           const resolvedProject = zapper.getProject();
           if (!resolvedProject) {
-            throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>");
+            throw new Error(
+              "No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>",
+            );
           }
           projectName = resolvedProject;
         } catch (error) {
-          if (error instanceof Error && error.message.includes("No project name provided")) {
+          if (
+            error instanceof Error &&
+            error.message.includes("No project name provided")
+          ) {
             throw error;
           }
-          throw new Error("No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>");
+          throw new Error(
+            "No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>",
+          );
         }
       }
 
       const targets = await this.getProjectTargets(projectName!);
-      const projects = [{
-        name: targets.projectName,
-        prefix: targets.prefix,
-        pm2: targets.pm2,
-        containers: targets.containers,
-      }];
+      const projects = [
+        {
+          name: targets.projectName,
+          prefix: targets.prefix,
+          pm2: targets.pm2,
+          containers: targets.containers,
+        },
+      ];
 
       const proceed = await confirm(
         `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${targets.projectName}" (prefix "${targets.prefix}."). Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
-        { defaultYes: false, force }
+        { defaultYes: false, force },
       );
 
       if (!proceed) {
@@ -185,7 +227,9 @@ export class GlobalCommand extends CommandHandler {
     }
   }
 
-  private async getProjectTargets(projectName: string): Promise<ProjectKillTargets> {
+  private async getProjectTargets(
+    projectName: string,
+  ): Promise<ProjectKillTargets> {
     const prefix = buildPrefix(projectName);
     const scopedPrefix = `${prefix}.`;
 
@@ -207,13 +251,18 @@ export class GlobalCommand extends CommandHandler {
     };
   }
 
-  private async getAllProjects(): Promise<Array<{ name: string; prefix: string; pm2: string[]; containers: string[]; }>> {
+  private async getAllProjects(): Promise<
+    Array<{ name: string; prefix: string; pm2: string[]; containers: string[] }>
+  > {
     const [allPm2, allContainers] = await Promise.all([
       Pm2Manager.listProcesses(),
-      DockerManager.listContainers()
+      DockerManager.listContainers(),
     ]);
 
-    const projectMap = new Map<string, { name: string; prefix: string; pm2: string[]; containers: string[]; }>();
+    const projectMap = new Map<
+      string,
+      { name: string; prefix: string; pm2: string[]; containers: string[] }
+    >();
 
     // Process PM2 processes
     for (const process of allPm2) {
@@ -253,10 +302,14 @@ export class GlobalCommand extends CommandHandler {
       project.containers = Array.from(new Set(project.containers)).sort();
     }
 
-    return Array.from(projectMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+    return Array.from(projectMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    );
   }
 
-  private async killProjectResources(targets: ProjectKillTargets): Promise<void> {
+  private async killProjectResources(
+    targets: ProjectKillTargets,
+  ): Promise<void> {
     for (const processName of targets.pm2) {
       await Pm2Manager.deleteProcess(processName);
     }

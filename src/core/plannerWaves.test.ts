@@ -269,7 +269,12 @@ describe("Planner Wave Generation", () => {
 
       const planner = new Planner(config);
       // Start without profile - should stop all profiled services
-      const plan = await planner.plan("start", undefined, "test-project", false);
+      const plan = await planner.plan(
+        "start",
+        undefined,
+        "test-project",
+        false,
+      );
 
       // Find all stop actions
       const stopWaves = plan.waves.filter((w) =>
@@ -306,7 +311,12 @@ describe("Planner Wave Generation", () => {
       );
 
       const planner = new Planner(config);
-      const plan = await planner.plan("start", undefined, "test-project", false);
+      const plan = await planner.plan(
+        "start",
+        undefined,
+        "test-project",
+        false,
+      );
 
       // Should have: wave 1 (stop admin), wave 2 (start api)
       // Note: database is already running, so it won't be started
@@ -381,7 +391,12 @@ describe("Planner Wave Generation", () => {
       ]);
 
       const planner = new Planner(config);
-      const plan = await planner.plan("start", undefined, "test-project", false);
+      const plan = await planner.plan(
+        "start",
+        undefined,
+        "test-project",
+        false,
+      );
 
       expect(plan.waves.length).toBe(0);
     });

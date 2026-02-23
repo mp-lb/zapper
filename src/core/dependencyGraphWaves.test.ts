@@ -35,7 +35,9 @@ describe("DependencyGraph Wave Generation", () => {
       graph.addProcess("worker", { cmd: "npm start" });
       graph.addProcess("scheduler", { cmd: "npm start" });
 
-      const waves = graph.computeStartWaves(new Set(["api", "worker", "scheduler"]));
+      const waves = graph.computeStartWaves(
+        new Set(["api", "worker", "scheduler"]),
+      );
 
       expect(waves.length).toBe(1);
       expect(waves[0].actions.length).toBe(3);
@@ -46,7 +48,9 @@ describe("DependencyGraph Wave Generation", () => {
       graph.addProcess("api", { cmd: "npm start", depends_on: ["database"] });
       graph.addProcess("frontend", { cmd: "npm start", depends_on: ["api"] });
 
-      const waves = graph.computeStartWaves(new Set(["database", "api", "frontend"]));
+      const waves = graph.computeStartWaves(
+        new Set(["database", "api", "frontend"]),
+      );
 
       expect(waves.length).toBe(3);
 
@@ -63,9 +67,14 @@ describe("DependencyGraph Wave Generation", () => {
     it("should place independent dependents in the same wave", () => {
       graph.addContainer("database", { image: "postgres:15" });
       graph.addContainer("redis", { image: "redis:7" });
-      graph.addProcess("api", { cmd: "npm start", depends_on: ["database", "redis"] });
+      graph.addProcess("api", {
+        cmd: "npm start",
+        depends_on: ["database", "redis"],
+      });
 
-      const waves = graph.computeStartWaves(new Set(["database", "redis", "api"]));
+      const waves = graph.computeStartWaves(
+        new Set(["database", "redis", "api"]),
+      );
 
       expect(waves.length).toBe(2);
 
@@ -111,7 +120,10 @@ describe("DependencyGraph Wave Generation", () => {
     });
 
     it("should throw on missing dependency", () => {
-      graph.addProcess("api", { cmd: "npm start", depends_on: ["nonexistent"] });
+      graph.addProcess("api", {
+        cmd: "npm start",
+        depends_on: ["nonexistent"],
+      });
 
       expect(() => graph.computeStartWaves(new Set(["api"]))).toThrow(
         /unknown service/,
@@ -132,7 +144,9 @@ describe("DependencyGraph Wave Generation", () => {
         graph.addProcess(name, proc);
       }
 
-      const waves = graph.computeStopWaves(new Set(["zulu", "alpha", "mike", "bravo"]));
+      const waves = graph.computeStopWaves(
+        new Set(["zulu", "alpha", "mike", "bravo"]),
+      );
 
       expect(waves.length).toBe(1);
       const names = waves[0].actions.map((a) => a.name);
@@ -144,7 +158,9 @@ describe("DependencyGraph Wave Generation", () => {
       graph.addProcess("api", { cmd: "npm start", depends_on: ["database"] });
       graph.addProcess("frontend", { cmd: "npm start", depends_on: ["api"] });
 
-      const waves = graph.computeStopWaves(new Set(["database", "api", "frontend"]));
+      const waves = graph.computeStopWaves(
+        new Set(["database", "api", "frontend"]),
+      );
 
       expect(waves.length).toBe(3);
 
@@ -159,9 +175,14 @@ describe("DependencyGraph Wave Generation", () => {
       // When stopping, both api and worker should stop before database
       graph.addContainer("database", { image: "postgres:15" });
       graph.addProcess("api", { cmd: "npm start", depends_on: ["database"] });
-      graph.addProcess("worker", { cmd: "npm start", depends_on: ["database"] });
+      graph.addProcess("worker", {
+        cmd: "npm start",
+        depends_on: ["database"],
+      });
 
-      const waves = graph.computeStopWaves(new Set(["database", "api", "worker"]));
+      const waves = graph.computeStopWaves(
+        new Set(["database", "api", "worker"]),
+      );
 
       expect(waves.length).toBe(2);
 

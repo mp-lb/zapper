@@ -28,6 +28,7 @@ export interface Context {
   projectRoot: string; // Absolute path to directory containing zap.yaml
   envFiles?: string[]; // Already resolved to absolute paths
   environments: string[]; // Available env file sets
+  ports?: string[]; // Port names from config
   gitMethod?: "http" | "ssh" | "cli";
   taskDelimiters?: [string, string]; // Custom delimiters for task interpolation
   instanceId?: string | null; // Instance ID for worktree isolation

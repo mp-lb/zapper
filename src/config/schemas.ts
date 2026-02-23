@@ -43,6 +43,15 @@ const EnvFilesMapSchema = z.record(validNameSchema, EnvFilesArraySchema);
 
 const EnvFilesSchema = z.union([EnvFilesArraySchema, EnvFilesMapSchema]);
 
+// Port name schema: uppercase letters, numbers, and underscores only
+const PortNameSchema = z
+  .string()
+  .min(1, "Port name cannot be empty")
+  .regex(
+    /^[A-Z0-9_]+$/,
+    "Port name must contain only uppercase letters, numbers, and underscores",
+  );
+
 const HealthcheckSchema = z
   .union([z.number(), z.string().url("Healthcheck must be a valid URL")])
   .optional();
@@ -140,6 +149,7 @@ export const ZapperConfigSchema = processValidation(
       .object({
         project: validNameSchema,
         env_files: EnvFilesSchema.optional(),
+        ports: z.array(PortNameSchema).optional(),
         git_method: z.enum(["http", "ssh", "cli"]).optional(),
         task_delimiters: TaskDelimitersSchema,
         whitelists: z

@@ -900,4 +900,70 @@ DEBUG_VAR=debug_value
       });
     });
   });
+
+  describe("ports precedence", () => {
+    it("should apply ports with highest precedence over env files", () => {
+      const envContent = `
+FRONTEND_PORT=1111
+BACKEND_PORT=2222
+FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+      const ports = {
+        FRONTEND_PORT: "3333",
+        BACKEND_PORT: "4444",
+      };
+
+      const result = EnvResolver["loadAndMergeEnvFiles"]([envFile], ports);
+
+      // Ports should override env file values
+      expect(result.FRONTEND_PORT).toBe("3333");
+      expect(result.BACKEND_PORT).toBe("4444");
+      // Interpolation should use the port values
+      expect(result.FRONTEND_URL).toBe("http://localhost:3333");
+    });
+
+    it("should interpolate ports in env file values", () => {
+      const envContent = `
+API_PORT=3000
+FRONTEND_PORT=3001
+API_URL=http://localhost:\${API_PORT}
+FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+      const ports = {
+        API_PORT: "5000",
+        FRONTEND_PORT: "5001",
+      };
+
+      const result = EnvResolver["loadAndMergeEnvFiles"]([envFile], ports);
+
+      expect(result.API_URL).toBe("http://localhost:5000");
+      expect(result.FRONTEND_URL).toBe("http://localhost:5001");
+    });
+
+    it("should return ports even when no env files provided", () => {
+      const ports = {
+        PORT_A: "1234",
+        PORT_B: "5678",
+      };
+
+      const result = EnvResolver["loadAndMergeEnvFiles"](undefined, ports);
+
+      expect(result).toEqual(ports);
+    });
+
+    it("should handle empty ports", () => {
+      const envContent = `
+PORT=3000
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+      const result = EnvResolver["loadAndMergeEnvFiles"]([envFile], {});
+
+      expect(result.PORT).toBe("3000");
+    });
+  });
 });

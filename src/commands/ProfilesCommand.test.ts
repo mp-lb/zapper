@@ -24,7 +24,7 @@ describe("ProfilesCommand", () => {
 
     // Should throw an error because "admin-app" is not in the profiles list
     await expect(command.execute(context)).rejects.toThrow(
-      "Profile not found: admin-app. Available profiles: admin, production"
+      "Profile not found: admin-app. Available profiles: admin, production",
     );
   });
 
@@ -48,7 +48,7 @@ describe("ProfilesCommand", () => {
     };
 
     await expect(command.execute(context)).rejects.toThrow(
-      "Profile not found: nonexistent. Available profiles: production, development"
+      "Profile not found: nonexistent. Available profiles: production, development",
     );
   });
 });

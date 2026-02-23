@@ -102,6 +102,11 @@ function toJsonPayload(result: CommandResult): unknown {
         allProjects: result.allProjects,
         projects: result.projects,
       };
+    case "assign":
+      return {
+        ports: result.ports,
+        path: result.path,
+      };
   }
 }
 
@@ -241,7 +246,9 @@ export function renderCommandResult(
         // Project header
         if (result.allProjects) {
           const totalResources = project.pm2.length + project.containers.length;
-          projectSections.push(`== ${project.name} (${totalResources} resource${totalResources !== 1 ? 's' : ''}) ==`);
+          projectSections.push(
+            `== ${project.name} (${totalResources} resource${totalResources !== 1 ? "s" : ""}) ==`,
+          );
         } else {
           projectSections.push(`== ${project.name} ==`);
         }
@@ -285,17 +292,35 @@ export function renderCommandResult(
         }
         return;
       }
-      const totalPm2 = result.projects.reduce((sum, p) => sum + p.pm2.length, 0);
-      const totalContainers = result.projects.reduce((sum, p) => sum + p.containers.length, 0);
+      const totalPm2 = result.projects.reduce(
+        (sum, p) => sum + p.pm2.length,
+        0,
+      );
+      const totalContainers = result.projects.reduce(
+        (sum, p) => sum + p.containers.length,
+        0,
+      );
       if (result.allProjects) {
         renderer.log.info(
-          `Killed ${totalPm2} PM2 process(es) and ${totalContainers} container(s) across ${result.projects.length} project(s).`
+          `Killed ${totalPm2} PM2 process(es) and ${totalContainers} container(s) across ${result.projects.length} project(s).`,
         );
       } else {
         const project = result.projects[0];
         renderer.log.info(
-          `Killed ${project.pm2.length} PM2 process(es) and ${project.containers.length} container(s) for project ${project.name} (${project.prefix}.).`
+          `Killed ${project.pm2.length} PM2 process(es) and ${project.containers.length} container(s) for project ${project.name} (${project.prefix}.).`,
         );
+      }
+      return;
+    case "assign":
+      if (Object.keys(result.ports).length === 0) {
+        renderer.log.info("No ports defined in config.");
+        return;
+      }
+      renderer.log.info(
+        `Assigned ${Object.keys(result.ports).length} port(s) to ${result.path}`,
+      );
+      for (const [name, value] of Object.entries(result.ports)) {
+        renderer.log.report(`  ${name}=${value}`);
       }
       return;
     case "services.action":

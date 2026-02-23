@@ -25,6 +25,7 @@ import {
   IsolateCommand,
   IsolateInfoCommand,
   GlobalCommand,
+  AssignCommand,
   CommandContext,
   CommandHandler,
   TaskParams,
@@ -106,6 +107,7 @@ export class CommanderCli {
     this.commandHandlers.set("isolate", new IsolateCommand());
     this.commandHandlers.set("isolate:info", new IsolateInfoCommand());
     this.commandHandlers.set("global", new GlobalCommand());
+    this.commandHandlers.set("assign", new AssignCommand());
   }
 
   private setupProgram(): void {
@@ -200,6 +202,16 @@ export class CommanderCli {
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (options, command) => {
         await this.executeCommand("reset", undefined, command);
+      });
+
+    this.program
+      .command("assign")
+      .description(
+        "Assign random ports to the ports defined in config and save to .zap/ports.json",
+      )
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("assign", undefined, command);
       });
 
     this.program
@@ -391,7 +403,10 @@ export class CommanderCli {
     const isolateCmd = this.program
       .command("isolate")
       .description("Manage worktree isolation")
-      .argument("[instanceId]", "Optional instance ID to use as-is (enables isolation)")
+      .argument(
+        "[instanceId]",
+        "Optional instance ID to use as-is (enables isolation)",
+      )
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (instanceId, options, command) => {
         // If no subcommand, enable isolation (backward compatible)
@@ -416,7 +431,9 @@ export class CommanderCli {
       .action(async (subcommand, project, options, command) => {
         // Validate mutually exclusive options
         if (options.all && project) {
-          throw new Error(`Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global ${subcommand} ${project}' or 'zap global ${subcommand} --all'.`);
+          throw new Error(
+            `Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global ${subcommand} ${project}' or 'zap global ${subcommand} --all'.`,
+          );
         }
         const service = project ? [subcommand, project] : [subcommand];
         await this.executeCommand("global", service, command);
@@ -486,22 +503,26 @@ export class CommanderCli {
       command === "global" ||
       command === "isolate:info";
 
+    const suppressUnisolatedWorktreeWarning =
+      command === "isolate" || command === "isolate:info";
+
     const zapper = new Zapper();
     if (!skipConfigLoad) {
       await zapper.loadConfig(allOptions.config, allOptions, {
-        suppressUnisolatedWorktreeWarning:
-          command === "isolate" || command === "isolate:info",
+        suppressUnisolatedWorktreeWarning,
       });
     }
 
-    const shouldResolveAliases =
-      command !== "env" &&
-      command !== "environment" &&
-      command !== "isolate" &&
-      command !== "isolate:info" &&
-      command !== "launch" &&
-      command !== "kill" &&
-      command !== "profile";
+    const noAliasCommands = new Set([
+      "env",
+      "environment",
+      "isolate",
+      "isolate:info",
+      "launch",
+      "kill",
+      "profile",
+    ]);
+    const shouldResolveAliases = !noAliasCommands.has(command);
     const resolvedService =
       service && shouldResolveAliases
         ? Array.isArray(service)

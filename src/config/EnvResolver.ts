@@ -11,6 +11,7 @@ import {
 } from "../config/schemas";
 import { Context, Process, Task, Container } from "../types/Context";
 import { renderer } from "../ui/renderer";
+import { loadPorts } from "./portsManager";
 
 interface RawEnvFile {
   envs?: Array<Record<string, string>>;
@@ -19,11 +20,15 @@ interface RawEnvFile {
 type InlineEnv = { keys: string[]; pairs: Record<string, string> };
 
 export class EnvResolver {
-  static resolve(config: ZapperConfig): ZapperConfig {
+  static resolve(config: ZapperConfig, projectRoot?: string): ZapperConfig {
     const resolvedConfig = { ...config };
+
+    // Load ports from .zap/ports.json if projectRoot is provided
+    const assignedPorts = projectRoot ? loadPorts(projectRoot) : {};
 
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(
       this.pickDefaultEnvFiles(resolvedConfig.env_files),
+      assignedPorts,
     );
 
     if (resolvedConfig.native) {
@@ -61,8 +66,12 @@ export class EnvResolver {
   static resolveContext(context: Context): Context {
     const resolvedContext = { ...context };
 
+    // Load ports from .zap/ports.json - these have highest precedence
+    const assignedPorts = loadPorts(context.projectRoot);
+
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(
       resolvedContext.envFiles,
+      assignedPorts,
     );
 
     for (const proc of resolvedContext.processes) {
@@ -320,14 +329,17 @@ export class EnvResolver {
 
   private static loadAndMergeEnvFiles(
     files?: string[],
+    ports?: Record<string, string>,
   ): Record<string, string> {
+    // Start with ports - they have highest precedence
+    const merged: Record<string, string> = { ...ports };
+
     if (!Array.isArray(files) || files.length === 0) {
       renderer.log.debug("No env files to load:", { data: files });
-      return {};
+      return merged;
     }
 
     renderer.log.debug("Loading env files:", { data: files });
-    const merged: Record<string, string> = {};
 
     for (const file of files) {
       if (!existsSync(file)) {
@@ -348,11 +360,30 @@ export class EnvResolver {
           // Default: treat all other files as dotenv format (KEY=value pairs with expansion)
           const parsed = dotenvParse(content);
           renderer.log.debug(`Parsed env file ${file}:`, { data: parsed });
-          // Merge previous values with new parsed values, with parsed taking precedence
-          // This allows variable expansion to reference previously loaded vars
-          const combined = { ...merged, ...parsed };
+
+          const hasPorts = ports && Object.keys(ports).length > 0;
+
+          // For expansion: ports should take precedence over env file values
+          // so they're used when interpolating ${VAR} references
+          // Normal case: later env files override earlier ones (parsed wins)
+          // Port case: ports win for interpolation AND final values
+          const combined = hasPorts
+            ? { ...parsed, ...merged } // Ports (in merged) win for interpolation
+            : { ...merged, ...parsed }; // Normal: later files win
+
           const expanded = expand({ parsed: combined, processEnv: {} });
-          Object.assign(merged, expanded.parsed);
+
+          // Merge expanded values back into merged
+          // If ports exist, preserve them at highest precedence
+          if (hasPorts) {
+            for (const [key, value] of Object.entries(expanded.parsed || {})) {
+              if (!(key in ports!)) {
+                merged[key] = value;
+              }
+            }
+          } else {
+            Object.assign(merged, expanded.parsed);
+          }
         }
       } catch (e) {
         renderer.log.debug(`Failed to read env file ${file}: ${e}`);

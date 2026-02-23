@@ -8,18 +8,20 @@ import path from "path";
 export class IsolateInfoCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, options } = context;
-    
+
     // Try to get project root from Zapper context first
     let projectRoot = zapper.getProjectRoot();
-    
+
     // If not available (e.g., config load failed), try to find it from config path
     if (!projectRoot) {
-      const configPath = resolveConfigPath(options.config as string | undefined);
+      const configPath = resolveConfigPath(
+        options.config as string | undefined,
+      );
       if (configPath) {
         projectRoot = path.dirname(path.resolve(configPath));
       }
     }
-    
+
     // If still no project root, check current directory
     if (!projectRoot) {
       projectRoot = process.cwd();
@@ -27,10 +29,10 @@ export class IsolateInfoCommand extends CommandHandler {
 
     // Check for existing instance config
     const instanceConfig = loadInstanceConfig(projectRoot);
-    
+
     // Check worktree status
     const worktreeInfo = detectWorktree(projectRoot);
-    
+
     if (instanceConfig?.instanceId) {
       return {
         kind: "isolation.info",

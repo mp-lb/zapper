@@ -517,4 +517,117 @@ describe("ZodConfigValidator", () => {
       }).not.toThrow();
     });
   });
+
+  describe("ports field", () => {
+    it("should validate ports array with valid names", () => {
+      const config = {
+        project: "myproj",
+        ports: ["FRONTEND_PORT", "BACKEND_PORT", "DB_PORT"],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).not.toThrow();
+    });
+
+    it("should allow ports with numbers and underscores", () => {
+      const config = {
+        project: "myproj",
+        ports: ["PORT_1", "PORT_2", "API_PORT_V2"],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).not.toThrow();
+    });
+
+    it("should reject ports with lowercase letters", () => {
+      const config = {
+        project: "myproj",
+        ports: ["frontend_port"],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).toThrow();
+    });
+
+    it("should reject ports with hyphens", () => {
+      const config = {
+        project: "myproj",
+        ports: ["FRONTEND-PORT"],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).toThrow();
+    });
+
+    it("should reject empty port names", () => {
+      const config = {
+        project: "myproj",
+        ports: [""],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).toThrow();
+    });
+
+    it("should allow empty ports array", () => {
+      const config = {
+        project: "myproj",
+        ports: [],
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).not.toThrow();
+    });
+
+    it("should allow config without ports field", () => {
+      const config = {
+        project: "myproj",
+        native: {
+          test: {
+            cmd: "echo hello",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).not.toThrow();
+    });
+  });
 });

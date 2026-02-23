@@ -134,6 +134,7 @@ export function createContext(
     projectRoot,
     envFiles,
     environments: environmentSetNames,
+    ports: config.ports,
     gitMethod: config.git_method,
     taskDelimiters: config.task_delimiters,
     processes,

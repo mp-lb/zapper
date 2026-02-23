@@ -743,6 +743,56 @@ describe("createContext", () => {
     });
   });
 
+  describe("ports field", () => {
+    it("should include ports from config", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        ports: ["FRONTEND_PORT", "BACKEND_PORT", "DB_PORT"],
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.ports).toEqual([
+        "FRONTEND_PORT",
+        "BACKEND_PORT",
+        "DB_PORT",
+      ]);
+    });
+
+    it("should handle config without ports", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.ports).toBeUndefined();
+    });
+
+    it("should handle empty ports array", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        ports: [],
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.ports).toEqual([]);
+    });
+  });
+
   describe("error cases", () => {
     it("should propagate stateLoader errors", () => {
       const config: ZapperConfig = {

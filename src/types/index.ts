@@ -33,7 +33,8 @@ export type Command =
   | "launch"
   | "isolate"
   | "isolate:info"
-  | "global";
+  | "global"
+  | "assign";
 
 export interface CliOptions {
   command: Command;

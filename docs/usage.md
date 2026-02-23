@@ -50,6 +50,9 @@ project: myapp                    # Required. Used as PM2/Docker namespace
 env_files:                        # Load env vars from these files
   default: [.env.base, .env]
   prod_dbs: [.env.base, .env.prod-dbs]
+ports:                            # Port names to assign random values
+  - FRONTEND_PORT
+  - BACKEND_PORT
 git_method: ssh                   # ssh | http | cli (for repo cloning)
 
 native:
@@ -144,6 +147,8 @@ zap clone                   # Clone all repos defined in config
 zap clone api               # Clone one repo
 zap clone api web           # Clone multiple repos
 zap clone --json            # Output command result as JSON
+zap assign                  # Assign random ports to ports defined in config
+zap assign --json           # Output as JSON
 zap launch                  # Open homepage (if configured)
 zap launch "API Docs"       # Open a configured link by name
 zap launch "API Docs" --json # Output command result as JSON
@@ -416,6 +421,58 @@ native:
       - PORT=3000                    # Hardcoded value
       - DATABASE_URL                  # From env_files
       - DEBUG=true                    # Override
+```
+
+### Port assignment
+
+Define port variable names in your config and assign random values with `zap assign`:
+
+```yaml
+project: myapp
+ports:
+  - FRONTEND_PORT
+  - BACKEND_PORT
+  - DB_PORT
+
+env_files: [.env]
+
+native:
+  frontend:
+    cmd: pnpm dev
+    env:
+      - FRONTEND_PORT
+  backend:
+    cmd: pnpm dev
+    env:
+      - BACKEND_PORT
+      - DB_PORT
+```
+
+Then run:
+
+```bash
+zap assign              # Assigns random ports to .zap/ports.json
+```
+
+The assigned ports have **highest precedence** - they override values from any `.env` files. This is useful for:
+
+- Avoiding port conflicts when running multiple instances
+- Dynamic port assignment in development
+- Sharing configurations with different port needs
+
+**Interpolation works with assigned ports:**
+
+```env
+# .env
+FRONTEND_PORT=3000
+FRONTEND_URL=http://localhost:${FRONTEND_PORT}
+```
+
+After `zap assign`:
+
+```bash
+# If FRONTEND_PORT was assigned 54321
+FRONTEND_URL will be http://localhost:54321
 ```
 
 ### Docker env vars

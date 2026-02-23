@@ -64,9 +64,24 @@ describe("Wave Output Formatting", () => {
     it("should format multiple stop actions as comma-separated list", () => {
       const wave: ExecutionWave = {
         actions: [
-          { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
-          { type: "stop", serviceType: "native", name: "scribe", healthcheck: 0 },
-          { type: "stop", serviceType: "native", name: "mongo", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "admin-app",
+            healthcheck: 0,
+          },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "scribe",
+            healthcheck: 0,
+          },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "mongo",
+            healthcheck: 0,
+          },
         ],
       };
 
@@ -78,10 +93,30 @@ describe("Wave Output Formatting", () => {
     it("should format multiple start actions as comma-separated list", () => {
       const wave: ExecutionWave = {
         actions: [
-          { type: "start", serviceType: "native", name: "mongo", healthcheck: 0 },
-          { type: "start", serviceType: "native", name: "doctract", healthcheck: 0 },
-          { type: "start", serviceType: "native", name: "scribe", healthcheck: 0 },
-          { type: "start", serviceType: "native", name: "admin-app", healthcheck: 0 },
+          {
+            type: "start",
+            serviceType: "native",
+            name: "mongo",
+            healthcheck: 0,
+          },
+          {
+            type: "start",
+            serviceType: "native",
+            name: "doctract",
+            healthcheck: 0,
+          },
+          {
+            type: "start",
+            serviceType: "native",
+            name: "scribe",
+            healthcheck: 0,
+          },
+          {
+            type: "start",
+            serviceType: "native",
+            name: "admin-app",
+            healthcheck: 0,
+          },
         ],
       };
 
@@ -94,9 +129,19 @@ describe("Wave Output Formatting", () => {
       const wave: ExecutionWave = {
         actions: [
           { type: "stop", serviceType: "native", name: "zulu", healthcheck: 0 },
-          { type: "stop", serviceType: "native", name: "alpha", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "alpha",
+            healthcheck: 0,
+          },
           { type: "stop", serviceType: "native", name: "mike", healthcheck: 0 },
-          { type: "stop", serviceType: "native", name: "bravo", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "bravo",
+            healthcheck: 0,
+          },
         ],
       };
 
@@ -108,7 +153,12 @@ describe("Wave Output Formatting", () => {
     it("should format single action without comma", () => {
       const wave: ExecutionWave = {
         actions: [
-          { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "admin-app",
+            healthcheck: 0,
+          },
         ],
       };
 
@@ -120,10 +170,25 @@ describe("Wave Output Formatting", () => {
     it("should handle mixed start/stop actions in a wave", () => {
       const wave: ExecutionWave = {
         actions: [
-          { type: "stop", serviceType: "native", name: "worker", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "worker",
+            healthcheck: 0,
+          },
           { type: "start", serviceType: "native", name: "api", healthcheck: 0 },
-          { type: "stop", serviceType: "native", name: "admin", healthcheck: 0 },
-          { type: "start", serviceType: "native", name: "database", healthcheck: 0 },
+          {
+            type: "stop",
+            serviceType: "native",
+            name: "admin",
+            healthcheck: 0,
+          },
+          {
+            type: "start",
+            serviceType: "native",
+            name: "database",
+            healthcheck: 0,
+          },
         ],
       };
 
@@ -143,16 +208,46 @@ describe("Wave Output Formatting", () => {
         waves: [
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "scribe", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "start", serviceType: "native", name: "mongo", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "doctract", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "scribe", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "admin-app", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "mongo",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "doctract",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -171,14 +266,34 @@ describe("Wave Output Formatting", () => {
         waves: [
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "api", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "worker", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "api",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "worker",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "start", serviceType: "native", name: "api", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "worker", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "api",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "worker",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -186,10 +301,7 @@ describe("Wave Output Formatting", () => {
 
       const output = formatPlanOutput(plan);
 
-      expect(output).toEqual([
-        "Stopped api, worker",
-        "Starting api, worker",
-      ]);
+      expect(output).toEqual(["Stopped api, worker", "Starting api, worker"]);
     });
 
     it("should handle dependency-ordered waves", () => {
@@ -197,18 +309,38 @@ describe("Wave Output Formatting", () => {
         waves: [
           {
             actions: [
-              { type: "start", serviceType: "docker", name: "database", healthcheck: 0 },
-              { type: "start", serviceType: "docker", name: "redis", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "docker",
+                name: "database",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "docker",
+                name: "redis",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "start", serviceType: "native", name: "api", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "api",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "start", serviceType: "native", name: "frontend", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "frontend",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -243,16 +375,46 @@ describe("Wave Output Formatting", () => {
         waves: [
           {
             actions: [
-              { type: "stop", serviceType: "native", name: "admin-app", healthcheck: 0 },
-              { type: "stop", serviceType: "native", name: "scribe", healthcheck: 0 },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
+              {
+                type: "stop",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
             ],
           },
           {
             actions: [
-              { type: "start", serviceType: "native", name: "mongo", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "doctract", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "scribe", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "admin-app", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "mongo",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "doctract",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "scribe",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "admin-app",
+                healthcheck: 0,
+              },
             ],
           },
         ],
@@ -271,10 +433,30 @@ describe("Wave Output Formatting", () => {
         waves: [
           {
             actions: [
-              { type: "start", serviceType: "docker", name: "postgres", healthcheck: 0 },
-              { type: "start", serviceType: "docker", name: "redis", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "api", healthcheck: 0 },
-              { type: "start", serviceType: "native", name: "worker", healthcheck: 0 },
+              {
+                type: "start",
+                serviceType: "docker",
+                name: "postgres",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "docker",
+                name: "redis",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "api",
+                healthcheck: 0,
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "worker",
+                healthcheck: 0,
+              },
             ],
           },
         ],
