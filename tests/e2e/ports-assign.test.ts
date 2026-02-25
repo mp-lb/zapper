@@ -230,4 +230,63 @@ native:
     // Cleanup env file
     fs.unlinkSync(envPath);
   });
+
+  it("should resolve env file variables that reference assigned ports", () => {
+    // Test case: PORT_A is an assigned port, PORT_B in .env references it via ${PORT_A}
+    // Service only exposes PORT_B, which should resolve correctly using the assigned PORT_A value
+    testProjectName = generateTestProjectName();
+    fixtureDir = path.join(FIXTURES_DIR, "ports-project");
+
+    if (!fs.existsSync(fixtureDir)) {
+      fs.mkdirSync(fixtureDir, { recursive: true });
+    }
+
+    // Create .env file where PORT_B references PORT_A (which will be assigned)
+    const envContent = `PORT_B=\${PORT_A}
+`;
+    const envPath = path.join(fixtureDir, ".env");
+    fs.writeFileSync(envPath, envContent);
+
+    const configContent = `
+project: ${testProjectName}
+ports:
+  - PORT_A
+env_files:
+  - .env
+
+native:
+  myservice:
+    cmd: echo "hello"
+    env:
+      - PORT_B
+`;
+    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
+    fs.writeFileSync(tempConfigPath, configContent);
+
+    // First assign ports
+    const assignOutput = runZapCommand(
+      `assign --json --config zap-${testProjectName}.yaml`,
+      fixtureDir,
+    );
+    const assignResult = parseJsonFromOutput(assignOutput);
+    const assignedPorts = assignResult.ports as Record<string, string>;
+
+    // PORT_A should be assigned
+    expect(assignedPorts.PORT_A).toBeDefined();
+    expect(typeof assignedPorts.PORT_A).toBe("string");
+
+    // Then check env resolution - PORT_B should be resolved using the assigned PORT_A
+    const envOutput = runZapCommand(
+      `env --service myservice --json --config zap-${testProjectName}.yaml`,
+      fixtureDir,
+    );
+    const resolvedEnv = parseJsonFromOutput(envOutput);
+
+    // PORT_B should equal PORT_A (not empty string)
+    expect(resolvedEnv.PORT_B).toBe(assignedPorts.PORT_A);
+    expect(resolvedEnv.PORT_B).not.toBe("");
+
+    // Cleanup env file
+    fs.unlinkSync(envPath);
+  });
 });

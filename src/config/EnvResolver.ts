@@ -363,25 +363,26 @@ export class EnvResolver {
 
           const hasPorts = ports && Object.keys(ports).length > 0;
 
-          // For expansion: ports should take precedence over env file values
-          // so they're used when interpolating ${VAR} references
-          // Normal case: later env files override earlier ones (parsed wins)
-          // Port case: ports win for interpolation AND final values
-          const combined = hasPorts
-            ? { ...parsed, ...merged } // Ports (in merged) win for interpolation
-            : { ...merged, ...parsed }; // Normal: later files win
-
-          const expanded = expand({ parsed: combined, processEnv: {} });
-
-          // Merge expanded values back into merged
-          // If ports exist, preserve them at highest precedence
+          // Ports need to be "virtually" present both FIRST and LAST:
+          // - FIRST: so ${PORT_A} references in env files can resolve during expansion
+          // - LAST: so assigned ports override any PORT_A values defined in env files
+          //
+          // To achieve this, we remove overlapping keys from parsed (ports win),
+          // then combine with ports first so they're available for ${} interpolation.
           if (hasPorts) {
-            for (const [key, value] of Object.entries(expanded.parsed || {})) {
-              if (!(key in ports!)) {
-                merged[key] = value;
-              }
+            // Remove keys from parsed that overlap with ports - ports always win
+            const parsedWithoutPorts = { ...parsed };
+            for (const key of Object.keys(ports)) {
+              delete parsedWithoutPorts[key];
             }
+
+            // Combine with ports first for proper expansion order
+            const combined = { ...ports, ...parsedWithoutPorts };
+            const expanded = expand({ parsed: combined, processEnv: {} });
+            Object.assign(merged, expanded.parsed);
           } else {
+            const combined = { ...merged, ...parsed };
+            const expanded = expand({ parsed: combined, processEnv: {} });
             Object.assign(merged, expanded.parsed);
           }
         }
