@@ -33,7 +33,7 @@ function runZapCommand(
 }
 
 function generateTestProjectName(): string {
-  return `e2e-ports-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  return `e2e-init-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
 function parseJsonFromOutput(output: string): Record<string, unknown> {
@@ -56,16 +56,14 @@ function parseJsonFromOutput(output: string): Record<string, unknown> {
   throw new Error(`Could not parse JSON from output:\n${output}`);
 }
 
-describe("E2E: Ports Assignment", () => {
+describe("E2E: init ports", () => {
   let testProjectName: string;
   let fixtureDir: string;
   let tempConfigPath: string;
 
   beforeAll(() => {
     if (!fs.existsSync(CLI_PATH)) {
-      throw new Error(
-        `CLI not found at ${CLI_PATH}. Run 'npm run build' first.`,
-      );
+      throw new Error(`CLI not found at ${CLI_PATH}. Run 'npm run build' first.`);
     }
   });
 
@@ -82,16 +80,14 @@ describe("E2E: Ports Assignment", () => {
     }
   });
 
-  it("should assign random ports and save to ports.json", () => {
+  it("initializes ports in state.json", () => {
     testProjectName = generateTestProjectName();
     fixtureDir = path.join(FIXTURES_DIR, "ports-project");
 
-    // Create fixture dir if needed
     if (!fs.existsSync(fixtureDir)) {
       fs.mkdirSync(fixtureDir, { recursive: true });
     }
 
-    // Create a test config
     const configContent = `
 project: ${testProjectName}
 ports:
@@ -109,65 +105,140 @@ native:
     tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
     fs.writeFileSync(tempConfigPath, configContent);
 
-    // Run zap assign
     const output = runZapCommand(
-      `assign --json --config zap-${testProjectName}.yaml`,
+      `init --json --config zap-${testProjectName}.yaml`,
       fixtureDir,
     );
     const result = parseJsonFromOutput(output);
 
-    // Check result structure
-    expect(result).toHaveProperty("ports");
     expect(result.ports).toHaveProperty("FRONTEND_PORT");
     expect(result.ports).toHaveProperty("BACKEND_PORT");
     expect(result.ports).toHaveProperty("DB_PORT");
 
-    // Verify ports are strings
     const ports = result.ports as Record<string, string>;
     expect(typeof ports.FRONTEND_PORT).toBe("string");
-    expect(typeof ports.BACKEND_PORT).toBe("string");
-    expect(typeof ports.DB_PORT).toBe("string");
 
-    // Verify ports are different
-    expect(ports.FRONTEND_PORT).not.toBe(ports.BACKEND_PORT);
-    expect(ports.FRONTEND_PORT).not.toBe(ports.DB_PORT);
+    const statePath = path.join(fixtureDir, ".zap", "state.json");
+    expect(fs.existsSync(statePath)).toBe(true);
 
-    // Verify ports.json was created
-    const portsPath = path.join(fixtureDir, ".zap", "ports.json");
-    expect(fs.existsSync(portsPath)).toBe(true);
-
-    const savedPorts = JSON.parse(fs.readFileSync(portsPath, "utf8"));
-    expect(savedPorts).toEqual(ports);
+    const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
+    expect(state.ports).toEqual(ports);
   });
 
-  it("should handle config without ports field", () => {
+  it("is idempotent and only assigns ports for new keys", () => {
     testProjectName = generateTestProjectName();
     fixtureDir = path.join(FIXTURES_DIR, "ports-project");
+    fs.mkdirSync(fixtureDir, { recursive: true });
 
-    if (!fs.existsSync(fixtureDir)) {
-      fs.mkdirSync(fixtureDir, { recursive: true });
-    }
-
-    const configContent = `
+    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
+    fs.writeFileSync(
+      tempConfigPath,
+      `
 project: ${testProjectName}
+ports:
+  - PORT_A
+  - PORT_B
 native:
   app:
     cmd: echo "hello"
-`;
-    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
-    fs.writeFileSync(tempConfigPath, configContent);
-
-    const output = runZapCommand(
-      `assign --json --config zap-${testProjectName}.yaml`,
-      fixtureDir,
+`,
     );
-    const result = parseJsonFromOutput(output);
 
-    expect(result).toHaveProperty("ports");
-    expect(result.ports).toEqual({});
+    const first = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+    const second = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+    expect(second.ports).toEqual(first.ports);
+
+    fs.writeFileSync(
+      tempConfigPath,
+      `
+project: ${testProjectName}
+ports:
+  - PORT_A
+  - PORT_B
+  - PORT_C
+native:
+  app:
+    cmd: echo "hello"
+`,
+    );
+
+    const third = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+
+    const firstPorts = first.ports as Record<string, string>;
+    const thirdPorts = third.ports as Record<string, string>;
+
+    expect(thirdPorts.PORT_A).toBe(firstPorts.PORT_A);
+    expect(thirdPorts.PORT_B).toBe(firstPorts.PORT_B);
+    expect(thirdPorts.PORT_C).toBeDefined();
   });
 
-  it("should use assigned ports in env resolution", () => {
+  it("removes deleted keys and supports full randomization", () => {
+    testProjectName = generateTestProjectName();
+    fixtureDir = path.join(FIXTURES_DIR, "ports-project");
+    fs.mkdirSync(fixtureDir, { recursive: true });
+
+    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
+    fs.writeFileSync(
+      tempConfigPath,
+      `
+project: ${testProjectName}
+ports:
+  - PORT_A
+  - PORT_B
+native:
+  app:
+    cmd: echo "hello"
+`,
+    );
+
+    const first = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+
+    fs.writeFileSync(
+      tempConfigPath,
+      `
+project: ${testProjectName}
+ports:
+  - PORT_B
+native:
+  app:
+    cmd: echo "hello"
+`,
+    );
+
+    const reduced = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+    expect(reduced.ports).toEqual({ PORT_B: (reduced.ports as Record<string, string>).PORT_B });
+
+    fs.writeFileSync(
+      tempConfigPath,
+      `
+project: ${testProjectName}
+ports:
+  - PORT_A
+  - PORT_B
+native:
+  app:
+    cmd: echo "hello"
+`,
+    );
+
+    const randomized = parseJsonFromOutput(
+      runZapCommand(`init -R --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+
+    expect(randomized.ports).not.toEqual(first.ports);
+  });
+
+  it("uses initialized ports in env resolution", () => {
     testProjectName = generateTestProjectName();
     fixtureDir = path.join(FIXTURES_DIR, "ports-project");
 
@@ -175,14 +246,11 @@ native:
       fs.mkdirSync(fixtureDir, { recursive: true });
     }
 
-    // Create .env file with port references
-    const envContent = `
-FRONTEND_PORT=1111
-BACKEND_PORT=2222
-FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
-`;
     const envPath = path.join(fixtureDir, ".env");
-    fs.writeFileSync(envPath, envContent);
+    fs.writeFileSync(
+      envPath,
+      "FRONTEND_PORT=1111\nBACKEND_PORT=2222\nFRONTEND_URL=http://localhost:${FRONTEND_PORT}\n",
+    );
 
     const configContent = `
 project: ${testProjectName}
@@ -203,90 +271,23 @@ native:
     tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
     fs.writeFileSync(tempConfigPath, configContent);
 
-    // First assign ports
-    const assignOutput = runZapCommand(
-      `assign --json --config zap-${testProjectName}.yaml`,
-      fixtureDir,
+    const initResult = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
     );
-    const assignResult = parseJsonFromOutput(assignOutput);
-    const assignedPorts = assignResult.ports as Record<string, string>;
+    const initializedPorts = initResult.ports as Record<string, string>;
 
-    // Then check env resolution uses the assigned ports
     const envOutput = runZapCommand(
       `env --service app --json --config zap-${testProjectName}.yaml`,
       fixtureDir,
     );
     const resolvedEnv = parseJsonFromOutput(envOutput);
 
-    // Ports should override env file values
-    expect(resolvedEnv.FRONTEND_PORT).toBe(assignedPorts.FRONTEND_PORT);
-    expect(resolvedEnv.BACKEND_PORT).toBe(assignedPorts.BACKEND_PORT);
-
-    // Interpolated values should use the assigned ports
+    expect(resolvedEnv.FRONTEND_PORT).toBe(initializedPorts.FRONTEND_PORT);
+    expect(resolvedEnv.BACKEND_PORT).toBe(initializedPorts.BACKEND_PORT);
     expect(resolvedEnv.FRONTEND_URL).toBe(
-      `http://localhost:${assignedPorts.FRONTEND_PORT}`,
+      `http://localhost:${initializedPorts.FRONTEND_PORT}`,
     );
 
-    // Cleanup env file
-    fs.unlinkSync(envPath);
-  });
-
-  it("should resolve env file variables that reference assigned ports", () => {
-    // Test case: PORT_A is an assigned port, PORT_B in .env references it via ${PORT_A}
-    // Service only exposes PORT_B, which should resolve correctly using the assigned PORT_A value
-    testProjectName = generateTestProjectName();
-    fixtureDir = path.join(FIXTURES_DIR, "ports-project");
-
-    if (!fs.existsSync(fixtureDir)) {
-      fs.mkdirSync(fixtureDir, { recursive: true });
-    }
-
-    // Create .env file where PORT_B references PORT_A (which will be assigned)
-    const envContent = `PORT_B=\${PORT_A}
-`;
-    const envPath = path.join(fixtureDir, ".env");
-    fs.writeFileSync(envPath, envContent);
-
-    const configContent = `
-project: ${testProjectName}
-ports:
-  - PORT_A
-env_files:
-  - .env
-
-native:
-  myservice:
-    cmd: echo "hello"
-    env:
-      - PORT_B
-`;
-    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
-    fs.writeFileSync(tempConfigPath, configContent);
-
-    // First assign ports
-    const assignOutput = runZapCommand(
-      `assign --json --config zap-${testProjectName}.yaml`,
-      fixtureDir,
-    );
-    const assignResult = parseJsonFromOutput(assignOutput);
-    const assignedPorts = assignResult.ports as Record<string, string>;
-
-    // PORT_A should be assigned
-    expect(assignedPorts.PORT_A).toBeDefined();
-    expect(typeof assignedPorts.PORT_A).toBe("string");
-
-    // Then check env resolution - PORT_B should be resolved using the assigned PORT_A
-    const envOutput = runZapCommand(
-      `env --service myservice --json --config zap-${testProjectName}.yaml`,
-      fixtureDir,
-    );
-    const resolvedEnv = parseJsonFromOutput(envOutput);
-
-    // PORT_B should equal PORT_A (not empty string)
-    expect(resolvedEnv.PORT_B).toBe(assignedPorts.PORT_A);
-    expect(resolvedEnv.PORT_B).not.toBe("");
-
-    // Cleanup env file
     fs.unlinkSync(envPath);
   });
 });

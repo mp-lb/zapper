@@ -1,72 +1,31 @@
-import * as fs from "fs";
 import * as path from "path";
-import { renderer } from "../ui/renderer";
+import { loadState, saveState } from "./stateLoader";
 
-const PORTS_FILE_NAME = "ports.json";
+const STATE_FILE_NAME = "state.json";
 const ZAP_DIR_NAME = ".zap";
 
 /**
- * Load assigned port values from .zap/ports.json
+ * Load assigned port values from .zap/state.json
  */
 export function loadPorts(projectRoot: string): Record<string, string> {
-  const portsPath = path.join(projectRoot, ZAP_DIR_NAME, PORTS_FILE_NAME);
-
-  if (!fs.existsSync(portsPath)) {
-    renderer.log.debug(`No ports file found at ${portsPath}`);
-    return {};
-  }
-
-  try {
-    const content = fs.readFileSync(portsPath, "utf-8");
-    const ports = JSON.parse(content) as Record<string, string>;
-    renderer.log.debug(`Loaded ports from ${portsPath}`, { data: ports });
-    return ports;
-  } catch (error) {
-    renderer.log.warn(`Failed to load ports from ${portsPath}: ${error}`);
-    return {};
-  }
+  return loadState(projectRoot).ports || {};
 }
 
 /**
- * Save assigned port values to .zap/ports.json
+ * Save assigned port values to .zap/state.json
  */
 export function savePorts(
   projectRoot: string,
   ports: Record<string, string>,
 ): void {
-  const zapDir = path.join(projectRoot, ZAP_DIR_NAME);
-  const portsPath = path.join(zapDir, PORTS_FILE_NAME);
-
-  // Ensure .zap directory exists
-  if (!fs.existsSync(zapDir)) {
-    fs.mkdirSync(zapDir, { recursive: true });
-  }
-
-  try {
-    fs.writeFileSync(portsPath, JSON.stringify(ports, null, 2));
-    renderer.log.debug(`Saved ports to ${portsPath}`, { data: ports });
-  } catch (error) {
-    renderer.log.warn(`Failed to save ports to ${portsPath}: ${error}`);
-    throw error;
-  }
+  saveState(projectRoot, { ports });
 }
 
 /**
- * Delete the ports.json file
+ * Clear assigned ports from .zap/state.json
  */
 export function clearPorts(projectRoot: string): void {
-  const portsPath = path.join(projectRoot, ZAP_DIR_NAME, PORTS_FILE_NAME);
-
-  if (fs.existsSync(portsPath)) {
-    try {
-      fs.unlinkSync(portsPath);
-      renderer.log.debug(`Deleted ports file at ${portsPath}`);
-    } catch (error) {
-      renderer.log.warn(
-        `Failed to delete ports file at ${portsPath}: ${error}`,
-      );
-    }
-  }
+  saveState(projectRoot, { ports: {} });
 }
 
 /**
@@ -101,8 +60,51 @@ export function assignRandomPorts(portNames: string[]): Record<string, string> {
 }
 
 /**
- * Get the path to the ports.json file
+ * Incrementally initialize ports while preserving existing assignments.
+ */
+export function initializePorts(
+  projectRoot: string,
+  portNames: string[],
+  options: { randomizeAll?: boolean } = {},
+): Record<string, string> {
+  const normalizedPortNames = Array.from(new Set(portNames));
+  const existingPorts = loadPorts(projectRoot);
+
+  if (options.randomizeAll) {
+    const randomized = assignRandomPorts(normalizedPortNames);
+    savePorts(projectRoot, randomized);
+    return randomized;
+  }
+
+  const nextPorts: Record<string, string> = {};
+  const usedPorts = new Set<number>();
+
+  for (const name of normalizedPortNames) {
+    const existing = existingPorts[name];
+    if (existing) {
+      const existingPort = parseInt(existing, 10);
+      if (!Number.isNaN(existingPort)) {
+        nextPorts[name] = existing;
+        usedPorts.add(existingPort);
+        continue;
+      }
+    }
+
+    let port = generateRandomPort();
+    while (usedPorts.has(port)) {
+      port = generateRandomPort();
+    }
+    usedPorts.add(port);
+    nextPorts[name] = port.toString();
+  }
+
+  savePorts(projectRoot, nextPorts);
+  return nextPorts;
+}
+
+/**
+ * Get the path to the state file that stores assigned ports
  */
 export function getPortsPath(projectRoot: string): string {
-  return path.join(projectRoot, ZAP_DIR_NAME, PORTS_FILE_NAME);
+  return path.join(projectRoot, ZAP_DIR_NAME, STATE_FILE_NAME);
 }

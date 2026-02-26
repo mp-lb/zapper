@@ -178,6 +178,9 @@ export const ServiceStateSchema = z.object({
 export const ZapperStateSchema = z.object({
   activeProfile: z.string().optional(),
   activeEnvironment: z.string().optional(),
+  instanceId: z.string().optional(),
+  mode: z.enum(["normal", "isolate"]).optional(),
+  ports: z.record(z.string(), z.string()).optional(),
   lastUpdated: z.string().optional(),
   services: z.record(z.string(), ServiceStateSchema).optional(),
 });

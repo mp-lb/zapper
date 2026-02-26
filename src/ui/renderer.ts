@@ -301,7 +301,7 @@ export const renderer = {
         lines.push(`  Mode:       ${data.mode}`);
         lines.push(`  Worktree:   Yes`);
         lines.push("");
-        lines.push(dim("  Run `zap isolate` to enable isolation"));
+        lines.push(dim("  Run `zap init -i` to enable isolation"));
       } else {
         lines.push(`  Status:     ${color("muted", "Not isolated")}`);
         lines.push(`  Mode:       ${data.mode}`);
@@ -501,7 +501,7 @@ export const renderer = {
           "Project is running inside a git worktree",
           "No instance isolation is configured for this path",
           "Processes and containers may collide with other copies",
-          "Fix: run `zap isolate` to create a local instance ID",
+          "Fix: run `zap init -i` to create a local instance ID",
         ]),
       ].join("\n");
     },

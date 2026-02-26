@@ -56,7 +56,7 @@ describe("EnvResolver", () => {
     if (ports) {
       const zapDir = path.join(dir, ".zap");
       mkdirSync(zapDir, { recursive: true });
-      writeFileSync(path.join(zapDir, "ports.json"), JSON.stringify(ports));
+      writeFileSync(path.join(zapDir, "state.json"), JSON.stringify({ ports }));
     }
 
     return dir;

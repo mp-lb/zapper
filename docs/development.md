@@ -12,8 +12,8 @@ Guide for contributing to zapper.
 ## Getting Started
 
 ```bash
-npm uninstall --global @maplab/zapper  # Start fresh
-pnpm add --global @maplab/zapper  # Make sure its installed with pnpm
+npm uninstall --global zapper-cli  # Start fresh
+pnpm add --global zapper-cli  # Make sure its installed with pnpm
 pnpm install
 pnpm build
 pnpm link --global
@@ -29,7 +29,7 @@ ls -la $(which zap)       # Should symlink to your dist/index.js
 
 # Unlink when done
 pnpm unlink --global
-npm install --global @maplab/zapper  # Reinstall from npm
+npm install --global zapper-cli  # Reinstall from npm
 ```
 
 ## Testing

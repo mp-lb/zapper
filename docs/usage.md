@@ -29,6 +29,11 @@ npm install -g pm2 @maplab/zapper
 
 For VS Code/Cursor, install the extension: `felixsebastian.zapper-vscode`
 
+Docker-backed services require Docker CLI. On macOS, Zapper now attempts to
+auto-install Docker Desktop via Homebrew (`brew install --cask docker`) when
+Docker is missing. If Homebrew is unavailable or install fails, Zapper exits
+with manual install instructions.
+
 ---
 
 ## Project Configuration
@@ -147,14 +152,15 @@ zap clone                   # Clone all repos defined in config
 zap clone api               # Clone one repo
 zap clone api web           # Clone multiple repos
 zap clone --json            # Output command result as JSON
-zap assign                  # Assign random ports to ports defined in config
-zap assign --json           # Output as JSON
+zap init                    # Initialize local state (ports + main instance mode)
+zap init -i                 # Initialize as isolated instance
+zap init -R                 # Force full port re-randomization
+zap init --json             # Output as JSON
 zap launch                  # Open homepage (if configured)
 zap launch "API Docs"       # Open a configured link by name
 zap launch "API Docs" --json # Output command result as JSON
 zap open                    # Alias for: zap launch
 zap o "API Docs"            # Short alias for: zap launch "API Docs"
-zap isolate --json          # Output isolation result as JSON
 ```
 
 ### Profiles
@@ -184,7 +190,7 @@ zap envset prod_dbs
 ### JSON Output
 
 Most non-streaming commands support `--json` and will print machine-readable JSON to stdout.
-Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `isolate`, and git subcommands.
+Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `init`, and git subcommands.
 
 Streaming commands keep stream output and are not JSON-encoded:
 
@@ -425,7 +431,7 @@ native:
 
 ### Port assignment
 
-Define port variable names in your config and assign random values with `zap assign`:
+Define port variable names in your config and initialize values with `zap init`:
 
 ```yaml
 project: myapp
@@ -451,7 +457,8 @@ native:
 Then run:
 
 ```bash
-zap assign              # Assigns random ports to .zap/ports.json
+zap init                # Initializes ports in .zap/state.json
+zap init -R             # Re-randomizes all configured ports
 ```
 
 The assigned ports have **highest precedence** - they override values from any `.env` files. This is useful for:
@@ -468,7 +475,7 @@ FRONTEND_PORT=3000
 FRONTEND_URL=http://localhost:${FRONTEND_PORT}
 ```
 
-After `zap assign`:
+After `zap init`:
 
 ```bash
 # If FRONTEND_PORT was assigned 54321
@@ -502,12 +509,11 @@ zap env api                        # Works if no environment set named 'api'
 Instances let you run multiple copies of the same project from Git worktrees without process/container name collisions.
 
 ```bash
-zap isolate                           # Create random 6-char local instance ID in .zap/instance.json
-zap isolate my-feature-123            # Provide an explicit instance ID
+zap init -i                           # Create/reuse random 6-char local instance ID in .zap/state.json
 zap up                                # Start with instance-aware names
 ```
 
-If you are in a worktree without isolation, Zapper prints a warning for non-`isolate` commands and still runs commands. See [Instances](instances.md) for full details.
+If you are in a worktree and run `zap init` without `-i`, Zapper prints a warning and keeps the directory in main (non-isolated) mode. See [Instances](instances.md) for full details.
 
 ---
 

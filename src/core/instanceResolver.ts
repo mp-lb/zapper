@@ -1,19 +1,9 @@
 import crypto from "crypto";
-import { detectWorktree } from "../utils/worktreeDetector";
-import { renderer } from "../ui/renderer";
-import {
-  loadInstanceConfig,
-  saveInstanceConfig,
-  InstanceConfig,
-} from "../config/instanceConfig";
+import { loadState, saveState } from "../config/stateLoader";
 
 export interface InstanceResolution {
   instanceId?: string | null;
   mode: "normal" | "isolate";
-}
-
-export interface ResolveInstanceOptions {
-  suppressUnisolatedWorktreeWarning?: boolean;
 }
 
 /**
@@ -30,35 +20,30 @@ function generateInstanceId(): string {
   return instanceId;
 }
 
-function printUnisolatedWorktreeWarning(): void {
-  renderer.warnings.printUnisolatedWorktree();
-}
-
 export function isolateProject(
   projectRoot: string,
-  requestedInstanceId?: string,
 ): string {
-  if (requestedInstanceId) {
-    const config: InstanceConfig = {
-      instanceId: requestedInstanceId,
+  const existingState = loadState(projectRoot);
+  if (existingState.instanceId) {
+    saveState(projectRoot, {
       mode: "isolate",
-    };
-    saveInstanceConfig(projectRoot, config);
-    return requestedInstanceId;
-  }
-
-  const existingConfig = loadInstanceConfig(projectRoot);
-  if (existingConfig?.instanceId) {
-    return existingConfig.instanceId;
+    });
+    return existingState.instanceId;
   }
 
   const instanceId = generateInstanceId();
-  const config: InstanceConfig = {
+  saveState(projectRoot, {
     instanceId,
     mode: "isolate",
-  };
-  saveInstanceConfig(projectRoot, config);
+  });
   return instanceId;
+}
+
+export function clearIsolation(projectRoot: string): void {
+  saveState(projectRoot, {
+    instanceId: undefined,
+    mode: "normal",
+  });
 }
 
 /**
@@ -67,26 +52,13 @@ export function isolateProject(
  */
 export async function resolveInstance(
   projectRoot: string,
-  options: ResolveInstanceOptions = {},
 ): Promise<InstanceResolution> {
-  // 1. Check for existing configuration
-  const existingConfig = loadInstanceConfig(projectRoot);
-  if (existingConfig?.instanceId) {
+  const state = loadState(projectRoot);
+  if (state.instanceId) {
     return {
-      instanceId: existingConfig.instanceId,
+      instanceId: state.instanceId,
       mode: "isolate",
     };
-  }
-
-  // 2. Check if we're in a worktree
-  const worktreeInfo = detectWorktree(projectRoot);
-  if (!worktreeInfo.isWorktree) {
-    return { mode: "normal" };
-  }
-
-  // 3. Warn and continue in non-isolated mode
-  if (!options.suppressUnisolatedWorktreeWarning) {
-    printUnisolatedWorktreeWarning();
   }
 
   return { mode: "normal" };

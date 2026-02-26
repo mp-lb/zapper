@@ -23,16 +23,6 @@ function toJsonPayload(result: CommandResult): unknown {
       return result.state;
     case "config":
       return result.filteredConfig;
-    case "isolation.enabled":
-      return { instanceId: result.instanceId };
-    case "isolation.info":
-      return {
-        isolated: result.isolated,
-        instanceId: result.instanceId,
-        mode: result.mode,
-        worktree: result.worktree,
-        configPath: result.configPath,
-      };
     case "services.action":
       return {
         action: result.action,
@@ -102,10 +92,14 @@ function toJsonPayload(result: CommandResult): unknown {
         allProjects: result.allProjects,
         projects: result.projects,
       };
-    case "assign":
+    case "init":
       return {
+        isolated: result.isolated,
+        instanceId: result.instanceId,
         ports: result.ports,
         path: result.path,
+        randomized: result.randomized,
+        warningShown: result.warningShown,
       };
   }
 }
@@ -146,18 +140,6 @@ export function renderCommandResult(
       return;
     case "config":
       renderer.machine.json(result.filteredConfig, result.pretty);
-      return;
-    case "isolation.enabled":
-      renderer.isolation.printEnabled(result.instanceId);
-      return;
-    case "isolation.info":
-      renderer.isolation.printInfo({
-        isolated: result.isolated,
-        instanceId: result.instanceId,
-        mode: result.mode,
-        worktree: result.worktree,
-        configPath: result.configPath,
-      });
       return;
     case "launch.opened":
       renderer.log.info(`Opening ${result.url}`);
@@ -311,13 +293,14 @@ export function renderCommandResult(
         );
       }
       return;
-    case "assign":
-      if (Object.keys(result.ports).length === 0) {
-        renderer.log.info("No ports defined in config.");
-        return;
-      }
+    case "init":
       renderer.log.info(
-        `Assigned ${Object.keys(result.ports).length} port(s) to ${result.path}`,
+        result.isolated
+          ? `Initialized isolated instance (${result.instanceId})`
+          : "Initialized main instance",
+      );
+      renderer.log.info(
+        `${result.randomized ? "Randomized" : "Initialized"} ${Object.keys(result.ports).length} port(s) in ${result.path}`,
       );
       for (const [name, value] of Object.entries(result.ports)) {
         renderer.log.report(`  ${name}=${value}`);

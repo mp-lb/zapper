@@ -18,7 +18,5 @@ export { GitStashCommand } from "./GitStashCommand";
 export { ConfigCommand } from "./ConfigCommand";
 export { EnvCommand } from "./EnvCommand";
 export { LaunchCommand } from "./LaunchCommand";
-export { IsolateCommand } from "./IsolateCommand";
-export { IsolateInfoCommand } from "./IsolateInfoCommand";
+export { InitCommand } from "./InitCommand";
 export { GlobalCommand } from "./GlobalCommand";
-export { AssignCommand } from "./AssignCommand";

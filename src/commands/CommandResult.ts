@@ -39,18 +39,6 @@ export type CommandResult =
       pretty: boolean;
     }
   | {
-      kind: "isolation.enabled";
-      instanceId: string;
-    }
-  | {
-      kind: "isolation.info";
-      isolated: boolean;
-      instanceId?: string;
-      mode: "normal" | "isolate" | "worktree" | "exclusive";
-      worktree: boolean;
-      configPath?: string;
-    }
-  | {
       kind: "services.action";
       action: "up" | "down" | "restart";
       services?: string[];
@@ -137,7 +125,11 @@ export type CommandResult =
       }>;
     }
   | {
-      kind: "assign";
+      kind: "init";
+      isolated: boolean;
+      instanceId?: string;
       ports: Record<string, string>;
       path: string;
+      randomized: boolean;
+      warningShown: boolean;
     };

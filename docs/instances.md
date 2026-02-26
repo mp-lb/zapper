@@ -4,108 +4,61 @@ When the same project exists in multiple directories (typically via git worktree
 
 ---
 
-## Current Behavior
+## Initialization Behavior
 
-Zapper detects git worktrees automatically by checking if `.git` is a file (with a `gitdir:` pointer) instead of a directory.
+Use `zap init` to initialize local metadata in `.zap/state.json`.
 
-If you run a `zap` command in a worktree (except `zap isolate`) and no instance ID is configured, Zapper:
+- `zap init` initializes the directory as the main (non-isolated) instance.
+- `zap init -i` initializes the directory as an isolated instance.
+- `zap init -R` re-randomizes all configured ports.
 
-1. Prints a large warning
-2. Continues normally (no interactive prompt, no blocking)
-
-The warning is there to make collisions obvious without changing command behavior.
+If you run `zap init` in a git worktree without `-i`, Zapper prints a warning and keeps the directory non-isolated.
 
 ---
 
-## Explicit Isolation
+## Isolation
 
-Use `zap isolate` to enable isolation for the current directory:
-
-```bash
-zap isolate
-```
-
-Or provide your own instance ID (used as-is):
-
-```bash
-zap isolate my-feature-123
-```
-
-By default, this writes `.zap/instance.json` with a generated 6-character alphanumeric instance ID:
-
-```json
-{
-  "instanceId": "a1b2c3",
-  "mode": "isolate"
-}
-```
-
-Once isolated, process/container names are namespaced:
+Use isolated mode for worktrees so process/container names are namespaced:
 
 - PM2: `zap.<project>.<instanceId>.<service>`
 - Docker: `zap.<project>.<instanceId>.<service>`
 
 This prevents collisions with other worktrees of the same project.
 
----
-
-## Port Conflicts
-
-Isolation namespaces service names, but it does not change ports. If two worktrees use the same ports, they will still conflict.
-
-Use environment sets to provide different ports per worktree:
-
-```yaml
-env_files:
-  default: [.env.base, .env]
-  worktree: [.env.base, .env.worktree]
-```
+Example:
 
 ```bash
-# .env.worktree
-PORT=3100
-FRONTEND_PORT=5200
-PG_PORT=5433
-```
-
-Then in the worktree:
-
-```bash
-zap env worktree
-zap isolate
+zap init -i
 zap up
 ```
 
 ---
 
-## Configuration
+## Port Assignment
 
-`instance.json` lives in `.zap/` (already gitignored):
+`zap init` also initializes configured `ports:` values in `.zap/state.json`.
+
+Behavior:
+
+- Existing keys stay unchanged (idempotent).
+- New keys get newly assigned random ports.
+- Removed keys are deleted from saved state.
+- `zap init -R` re-randomizes all configured port keys.
+
+---
+
+## State File
+
+Zapper stores initialization metadata in `.zap/state.json`:
 
 ```json
 {
-  "instanceId": "my-feature-branch"
+  "instanceId": "a1b2c3",
+  "mode": "isolate",
+  "ports": {
+    "FRONTEND_PORT": "54321"
+  }
 }
-```
-
-`instanceId` can be any string matching `[a-zA-Z0-9_-]+`.
-
----
-
-## Automation
-
-Automation tools that create worktrees can preconfigure isolation by writing `.zap/instance.json` before running any `zap` command:
-
-```bash
-git worktree add ../myapp-feature-123 feature-123
-mkdir -p ../myapp-feature-123/.zap
-echo '{"instanceId":"feature-123","mode":"isolate"}' > ../myapp-feature-123/.zap/instance.json
-
-# Optional port overrides
-cp .env.worktree.template ../myapp-feature-123/.env.worktree
-cd ../myapp-feature-123
-zap env worktree
-zap up
 ```
 
 ---
@@ -114,8 +67,8 @@ zap up
 
 | Scenario | What happens |
 |----------|-------------|
-| Normal repo (no worktree) | Nothing changes |
-| Worktree, no isolation (`zap up`, `zap status`, etc.) | Startup warning is shown, command still runs |
-| Worktree, `zap isolate` run | Instance ID is created in `.zap/instance.json` |
-| Worktree, isolated, `zap up` | Processes/containers are namespaced under instance ID |
-| Automation creates worktree | Prewrite `.zap/instance.json` to avoid warning |
+| Normal repo, `zap init` | Main mode initialized; ports initialized |
+| Worktree, `zap init` | Warning shown; stays non-isolated |
+| Worktree, `zap init -i` | Isolated mode enabled in `.zap/state.json` |
+| Re-run `zap init` after port changes | Existing kept, removed deleted, new assigned |
+| `zap init -R` | All configured ports are re-randomized |

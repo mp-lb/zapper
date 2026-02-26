@@ -23,7 +23,7 @@ export class EnvResolver {
   static resolve(config: ZapperConfig, projectRoot?: string): ZapperConfig {
     const resolvedConfig = { ...config };
 
-    // Load ports from .zap/ports.json if projectRoot is provided
+    // Load ports from .zap/state.json if projectRoot is provided
     const assignedPorts = projectRoot ? loadPorts(projectRoot) : {};
 
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(
@@ -66,7 +66,7 @@ export class EnvResolver {
   static resolveContext(context: Context): Context {
     const resolvedContext = { ...context };
 
-    // Load ports from .zap/ports.json - these have highest precedence
+    // Load ports from .zap/state.json - these have highest precedence
     const assignedPorts = loadPorts(context.projectRoot);
 
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(

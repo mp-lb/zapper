@@ -81,14 +81,12 @@ function cleanupFixture(paths: WorktreeFixturePaths | null): void {
   }
 }
 
-describe("E2E: Isolate In Git Worktree", () => {
+describe("E2E: init in git worktree", () => {
   let fixturePaths: WorktreeFixturePaths | null = null;
 
   beforeAll(() => {
     if (!fs.existsSync(CLI_PATH)) {
-      throw new Error(
-        `CLI not found at ${CLI_PATH}. Run 'npm run build' first.`,
-      );
+      throw new Error(`CLI not found at ${CLI_PATH}. Run 'npm run build' first.`);
     }
     if (!fs.existsSync(SETUP_SCRIPT_PATH)) {
       throw new Error(`Setup script not found at ${SETUP_SCRIPT_PATH}.`);
@@ -102,43 +100,34 @@ describe("E2E: Isolate In Git Worktree", () => {
     fixturePaths = null;
   });
 
-  it("creates default and custom instance IDs without warning on isolate", () => {
-    const fixtureName = `isolate-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  it("warns for main init in worktree and creates instance with -i", () => {
+    const fixtureName = `init-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     fixturePaths = setupWorktreeFixture(fixtureName);
 
-    const firstOutput = runZap(
-      ["isolate", "--config", "zap.yaml"],
+    const warningOutput = runZap(["init", "--config", "zap.yaml"], fixturePaths.worktreeDir);
+    expect(warningOutput).toContain("Worktree detected");
+
+    const isolatedOutput = runZap(
+      ["init", "-i", "--json", "--config", "zap.yaml"],
       fixturePaths.worktreeDir,
     );
-    expect(firstOutput).toContain("Isolation enabled with instance ID:");
-    expect(firstOutput).not.toContain("WORKTREE WARNING");
 
-    const instanceConfigPath = path.join(
-      fixturePaths.worktreeDir,
-      ".zap",
-      "instance.json",
-    );
-    const firstConfig = JSON.parse(fs.readFileSync(instanceConfigPath, "utf8"));
+    const lines = isolatedOutput
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const payload = JSON.parse(lines[lines.length - 1]) as {
+      isolated: boolean;
+      instanceId?: string;
+    };
 
-    expect(firstConfig.mode).toBe("isolate");
-    expect(firstConfig.instanceId).toMatch(/^[a-z0-9]{6}$/);
+    expect(payload.isolated).toBe(true);
+    expect(payload.instanceId).toMatch(/^[a-z0-9]{6}$/);
 
-    const customId = "feature-custom-123";
-    const secondOutput = runZap(
-      ["isolate", customId, "--config", "zap.yaml"],
-      fixturePaths.worktreeDir,
-    );
-    expect(secondOutput).toContain(
-      `Isolation enabled with instance ID: ${customId}`,
-    );
-    expect(secondOutput).not.toContain("WORKTREE WARNING");
+    const statePath = path.join(fixturePaths.worktreeDir, ".zap", "state.json");
+    const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
 
-    const secondConfig = JSON.parse(
-      fs.readFileSync(instanceConfigPath, "utf8"),
-    );
-    expect(secondConfig).toEqual({
-      instanceId: customId,
-      mode: "isolate",
-    });
+    expect(state.mode).toBe("isolate");
+    expect(state.instanceId).toBe(payload.instanceId);
   });
 });

@@ -22,10 +22,8 @@ import {
   ConfigCommand,
   EnvCommand,
   LaunchCommand,
-  IsolateCommand,
-  IsolateInfoCommand,
+  InitCommand,
   GlobalCommand,
-  AssignCommand,
   CommandContext,
   CommandHandler,
   TaskParams,
@@ -104,10 +102,8 @@ export class CommanderCli {
     this.commandHandlers.set("config", new ConfigCommand());
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
-    this.commandHandlers.set("isolate", new IsolateCommand());
-    this.commandHandlers.set("isolate:info", new IsolateInfoCommand());
+    this.commandHandlers.set("init", new InitCommand());
     this.commandHandlers.set("global", new GlobalCommand());
-    this.commandHandlers.set("assign", new AssignCommand());
   }
 
   private setupProgram(): void {
@@ -205,13 +201,16 @@ export class CommanderCli {
       });
 
     this.program
-      .command("assign")
-      .description(
-        "Assign random ports to the ports defined in config and save to .zap/ports.json",
+      .command("init")
+      .description("Initialize local zap state (ports and instance mode)")
+      .option("-i, --instance", "Initialize as an isolated instance")
+      .option(
+        "-R, --random",
+        "Randomize all configured ports instead of preserving existing assignments",
       )
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (options, command) => {
-        await this.executeCommand("assign", undefined, command);
+        await this.executeCommand("init", undefined, command);
       });
 
     this.program
@@ -400,27 +399,6 @@ export class CommanderCli {
         await this.executeCommand("launch", service, command);
       });
 
-    const isolateCmd = this.program
-      .command("isolate")
-      .description("Manage worktree isolation")
-      .argument(
-        "[instanceId]",
-        "Optional instance ID to use as-is (enables isolation)",
-      )
-      .option("-j, --json", "Output command result as minified JSON")
-      .action(async (instanceId, options, command) => {
-        // If no subcommand, enable isolation (backward compatible)
-        await this.executeCommand("isolate", instanceId, command);
-      });
-
-    isolateCmd
-      .command("info")
-      .description("Show isolation status summary")
-      .option("-j, --json", "Output result as minified JSON")
-      .action(async (options, command) => {
-        await this.executeCommand("isolate:info", undefined, command);
-      });
-
     this.program
       .command("global <subcommand> [project]")
       .alias("g")
@@ -500,24 +478,17 @@ export class CommanderCli {
       (command === "kill" &&
         typeof service === "string" &&
         service.trim().length > 0) ||
-      command === "global" ||
-      command === "isolate:info";
-
-    const suppressUnisolatedWorktreeWarning =
-      command === "isolate" || command === "isolate:info";
+      command === "global";
 
     const zapper = new Zapper();
     if (!skipConfigLoad) {
-      await zapper.loadConfig(allOptions.config, allOptions, {
-        suppressUnisolatedWorktreeWarning,
-      });
+      await zapper.loadConfig(allOptions.config, allOptions);
     }
 
     const noAliasCommands = new Set([
       "env",
       "environment",
-      "isolate",
-      "isolate:info",
+      "init",
       "launch",
       "kill",
       "profile",

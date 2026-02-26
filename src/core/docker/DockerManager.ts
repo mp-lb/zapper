@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import { runDocker } from "./runDocker";
+import { ensureDockerAvailable } from "./ensureDocker";
 
 interface DockerConfig {
   image: string;
@@ -43,6 +44,8 @@ export class DockerManager {
     name: string,
     config: DockerConfig,
   ): Promise<void> {
+    await ensureDockerAvailable();
+
     try {
       await runDocker(["rm", "-f", name]);
     } catch (e) {
@@ -56,18 +59,27 @@ export class DockerManager {
     name: string,
     config: DockerConfig,
   ): Promise<number> {
+    await ensureDockerAvailable();
+
     try {
       await runDocker(["rm", "-f", name]);
     } catch (e) {
       // ignore if container doesn't exist
     }
     const args = this.buildRunArgs(name, config);
-    const child = spawn("docker", args, {
-      detached: true,
-      stdio: "ignore",
+    return new Promise((resolve, reject) => {
+      const child = spawn("docker", args, {
+        detached: true,
+        stdio: "ignore",
+      });
+      child.once("error", (err) => {
+        reject(new Error(`Failed to run Docker command: ${err.message}`));
+      });
+      child.once("spawn", () => {
+        child.unref();
+        resolve(child.pid || -1);
+      });
     });
-    child.unref();
-    return child.pid!;
   }
 
   static async stopContainer(name: string): Promise<void> {
@@ -144,6 +156,8 @@ export class DockerManager {
   }
 
   static async createNetwork(name: string): Promise<void> {
+    await ensureDockerAvailable();
+
     try {
       await runDocker(["network", "create", name]);
     } catch (error) {
@@ -160,6 +174,8 @@ export class DockerManager {
   }
 
   static async createVolume(name: string): Promise<void> {
+    await ensureDockerAvailable();
+
     try {
       await runDocker(["volume", "create", name]);
     } catch (error) {
@@ -168,6 +184,8 @@ export class DockerManager {
   }
 
   static async showLogs(name: string, follow: boolean = false): Promise<void> {
+    await ensureDockerAvailable();
+
     const args = ["logs"];
     if (follow) args.push("-f");
     args.push(name);
