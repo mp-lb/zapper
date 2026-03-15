@@ -404,6 +404,51 @@ describe("Planner - Profile-based StartAll", () => {
       expect(hasAction(plan, "stop")).toBe(true);
       expect(hasAction(plan, "start")).toBe(true);
     });
+
+    it("should restart targeted services without restarting dependencies", async () => {
+      const dependencyConfig: ZapperConfig = {
+        project: "test-project",
+        native: {
+          api: { cmd: "npm start", depends_on: ["database"] },
+        },
+        docker: {
+          database: { image: "postgres:15" },
+        },
+      };
+      const dependencyPlanner = new Planner(dependencyConfig);
+
+      mockPm2Manager.listProcesses.mockResolvedValue([
+        createMockProcessInfo("zap.test-project.api", "online"),
+      ]);
+      mockDockerManager.getContainerInfo.mockResolvedValue(
+        createMockDockerContainer("zap.test-project.database", "running"),
+      );
+
+      const plan = await dependencyPlanner.plan(
+        "restart",
+        ["api"],
+        "test-project",
+      );
+      const actions = flattenActions(plan);
+
+      expect(actions).toContainEqual({
+        type: "stop",
+        serviceType: "native",
+        name: "api",
+      });
+      expect(actions).toContainEqual({
+        type: "start",
+        serviceType: "native",
+        name: "api",
+      });
+
+      expect(
+        actions.some((a) => a.name === "database" && a.type === "stop"),
+      ).toBe(false);
+      expect(
+        actions.some((a) => a.name === "database" && a.type === "start"),
+      ).toBe(false);
+    });
   });
 
   describe("edge cases", () => {
@@ -585,7 +630,7 @@ describe("Planner - Dependency-aware waves", () => {
     ).rejects.toThrow(/[Cc]ircular/);
   });
 
-  it("should stop dependents before dependencies", async () => {
+  it("should stop all services in one wave regardless of dependencies", async () => {
     const config: ZapperConfig = {
       project: "test-project",
       native: {
@@ -608,12 +653,8 @@ describe("Planner - Dependency-aware waves", () => {
     const planner = new Planner(config);
     const plan = await planner.plan("stop", undefined, "test-project");
 
-    const wave1Names = plan.waves[0].actions.map((a) => a.name);
-    const wave2Names = plan.waves[1].actions.map((a) => a.name);
-    const wave3Names = plan.waves[2].actions.map((a) => a.name);
-
-    expect(wave1Names).toContain("frontend");
-    expect(wave2Names).toContain("api");
-    expect(wave3Names).toContain("database");
+    expect(plan.waves.length).toBe(1);
+    const waveNames = plan.waves[0].actions.map((a) => a.name).sort();
+    expect(waveNames).toEqual(["api", "database", "frontend"]);
   });
 });

@@ -15,6 +15,7 @@ export class ZodConfigValidator {
       const resolvedConfig = WhitelistResolver.resolve(validatedConfig);
 
       this.autoPopulateNames(resolvedConfig);
+      this.validateInitTask(resolvedConfig);
       return resolvedConfig;
     } catch (error) {
       if (error instanceof ZodError) {
@@ -61,6 +62,16 @@ export class ZodConfigValidator {
           task.name = name;
         }
       }
+    }
+  }
+
+  private static validateInitTask(config: ZapperConfig): void {
+    if (!config.init_task) return;
+
+    if (!config.tasks || !config.tasks[config.init_task]) {
+      throw new ConfigValidationError([
+        `init_task references unknown task '${config.init_task}'`,
+      ]);
     }
   }
 }

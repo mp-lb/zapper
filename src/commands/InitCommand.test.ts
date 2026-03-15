@@ -35,12 +35,14 @@ describe("InitCommand", () => {
       links: [],
       profiles: [],
       environments: [],
+      instanceKey: "default",
       state: { lastUpdated: "2024-01-01T00:00:00.000Z" },
       ...overrides,
     };
 
     const mockZapper = {
       getContext: vi.fn().mockReturnValue(mockContext),
+      runTask: vi.fn().mockResolvedValue(undefined),
     } as unknown as Zapper;
 
     return {
@@ -49,13 +51,13 @@ describe("InitCommand", () => {
     };
   };
 
-  it("initializes ports and main instance by default", async () => {
+  it("initializes ports and default instance by default", async () => {
     const ctx = createMockContext();
     const result = await command.execute(ctx);
 
     expect(result.kind).toBe("init");
-    expect(result.isolated).toBe(false);
-    expect(result.instanceId).toBeUndefined();
+    expect(result.isolated).toBe(true);
+    expect(result.instanceId).toMatch(/^[a-z0-9]{6}$/);
     expect(result.ports).toHaveProperty("FRONTEND_PORT");
     expect(result.ports).toHaveProperty("BACKEND_PORT");
   });
@@ -106,13 +108,24 @@ describe("InitCommand", () => {
     expect(second.ports).toEqual({ PORT_A: second.ports.PORT_A });
   });
 
-  it("warns in a git worktree when initialized without -i", async () => {
-    fs.writeFileSync(path.join(tempDir, ".git"), "gitdir: /tmp/main/.git/worktrees/wt");
+  it("does not emit worktree warning", async () => {
+    fs.writeFileSync(
+      path.join(tempDir, ".git"),
+      "gitdir: /tmp/main/.git/worktrees/wt",
+    );
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = await command.execute(createMockContext());
 
-    expect(result.warningShown).toBe(true);
-    expect(warnSpy).toHaveBeenCalled();
+    expect(result.warningShown).toBe(false);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("runs init_task after initialization when configured", async () => {
+    const ctx = createMockContext({ initTask: "seed" });
+
+    await command.execute(ctx);
+
+    expect(ctx.zapper.runTask).toHaveBeenCalledWith("seed");
   });
 });

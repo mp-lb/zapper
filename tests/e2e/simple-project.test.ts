@@ -203,7 +203,9 @@ describe("E2E: Simple Project Flow", () => {
           `status --config zap-${testProjectName}.yaml`,
           fixtureDir,
         );
-        expect(statusAfterDownOutput).toContain("down");
+        expect(normalizeOutput(statusAfterDownOutput).toLowerCase()).toContain(
+          "down",
+        );
 
         // Verify processes are actually gone from PM2
         const pm2ListAfterDown = execSync("pm2 jlist", { encoding: "utf8" });
@@ -256,7 +258,7 @@ describe("E2E: Simple Project Flow", () => {
         );
         expect(psOutput).toBe(statusOutput);
         expect(statusOutput).toContain(testProjectName);
-        expect(statusOutput).toContain("Native");
+        expect(statusOutput).toContain("NATIVE");
         expect(statusOutput).toContain("server");
         expect(statusOutput).toContain("worker");
 
@@ -289,7 +291,7 @@ describe("E2E: Simple Project Flow", () => {
           runZapCommand(`ps --config zap-${testProjectName}.yaml`, fixtureDir),
         );
         expect(psAfterDown).toBe(statusAfterDown);
-        expect(statusAfterDown).toContain("down");
+        expect(statusAfterDown.toLowerCase()).toContain("down");
       } finally {
         if (fs.existsSync(tempConfigPath)) {
           fs.unlinkSync(tempConfigPath);
@@ -390,7 +392,7 @@ describe("E2E: Simple Project Flow", () => {
           `status --config zap-${testProjectName}.yaml`,
           fixtureDir,
         );
-        expect(statusOutput).toContain("down");
+        expect(normalizeOutput(statusOutput).toLowerCase()).toContain("down");
       } finally {
         if (fs.existsSync(tempConfigPath)) {
           fs.unlinkSync(tempConfigPath);

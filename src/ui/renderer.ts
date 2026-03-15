@@ -1,4 +1,5 @@
 import { StatusResult, ServiceStatus } from "../core/getStatus";
+import { ServiceListResult, ServiceListEntry } from "../core/getServiceList";
 import { Context, Task } from "../types/Context";
 import { logger } from "../utils/logger";
 
@@ -131,6 +132,17 @@ function formatStatusRow(service: ServiceStatus): {
     name: renderName(service.service, service.enabled),
     state: renderState(service.status, service.enabled),
   };
+}
+
+function listRow(entry: ServiceListEntry): string[] {
+  return [
+    entry.type,
+    entry.service,
+    entry.status.toUpperCase(),
+    entry.ports.join(", "),
+    entry.cwd || "",
+    entry.cmd,
+  ];
 }
 
 /** Simple table renderer (monospace), supports ANSI in cells */
@@ -367,6 +379,32 @@ export const renderer = {
 
     toJson(statusResult: StatusResult): StatusResult {
       return statusResult;
+    },
+  },
+
+  list: {
+    toText(result: ServiceListResult, context: Context): string {
+      const subtitle = formatContextSubtitle(context);
+      const rows: string[][] = [
+        [
+          bold("TYPE"),
+          bold("SERVICE"),
+          bold("STATUS"),
+          bold("PORTS"),
+          bold("CWD"),
+          bold("CMD"),
+        ],
+      ];
+
+      for (const service of result.services) {
+        rows.push(listRow(service));
+      }
+
+      return [header("Services", subtitle), "", table(rows)].join("\n");
+    },
+
+    toJson(result: ServiceListResult): ServiceListResult {
+      return result;
     },
   },
 

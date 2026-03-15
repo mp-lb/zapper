@@ -141,8 +141,8 @@ Before pushing, verify docs still match current behavior, especially `zap.yaml` 
 Use quick grep checks:
 
 ```bash
-rg -n "project|env_files|git_method|task_delimiters|whitelists|native|docker|tasks|homepage|links" src/config/schemas.ts
-rg -n "project|env_files|git_method|task_delimiters|whitelists|native|docker|tasks|homepage|links" docs/usage.md
+rg -n "project|env_files|git_method|task_delimiters|whitelists|native|docker|tasks|homepage|notes|links" src/config/schemas.ts
+rg -n "project|env_files|git_method|task_delimiters|whitelists|native|docker|tasks|homepage|notes|links" docs/usage.md
 ```
 
 Then do a manual contradiction pass:

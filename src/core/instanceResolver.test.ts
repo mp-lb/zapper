@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdirSync, rmSync, existsSync } from "fs";
 import path from "path";
-import { isolateProject, clearIsolation, resolveInstance } from "./instanceResolver";
-import { loadState } from "../config/stateLoader";
+import {
+  isolateProject,
+  clearIsolation,
+  resolveInstance,
+  DEFAULT_INSTANCE_KEY,
+} from "./instanceResolver";
+import { loadState, saveState } from "../config/stateLoader";
 
 describe("instanceResolver", () => {
   const testDir = path.join(__dirname, "../../test-fixtures/instance-resolver");
@@ -20,20 +25,29 @@ describe("instanceResolver", () => {
     }
   });
 
-  it("returns normal mode when no instance exists", async () => {
-    const result = await resolveInstance(testDir);
-    expect(result).toEqual({ mode: "normal" });
+  it("throws when default instance is missing and autoCreate is false", async () => {
+    await expect(resolveInstance(testDir)).rejects.toThrow(
+      'Instance "default" not found.',
+    );
+  });
+
+  it("creates default instance when autoCreate is true", async () => {
+    const result = await resolveInstance(testDir, undefined, {
+      autoCreate: true,
+    });
+    expect(result.instanceKey).toBe(DEFAULT_INSTANCE_KEY);
+    expect(result.instanceId).toMatch(/^[a-z0-9]{6}$/);
   });
 
   it("creates and resolves isolate mode", async () => {
     const instanceId = isolateProject(testDir);
-    const result = await resolveInstance(testDir);
+    const result = await resolveInstance(testDir, undefined, {
+      autoCreate: true,
+    });
 
     expect(instanceId).toMatch(/^[a-z0-9]{6}$/);
-    expect(result).toEqual({
-      mode: "isolate",
-      instanceId,
-    });
+    expect(result.instanceKey).toBe(DEFAULT_INSTANCE_KEY);
+    expect(result.instanceId).toBe(instanceId);
   });
 
   it("reuses existing instance id", () => {
@@ -48,10 +62,25 @@ describe("instanceResolver", () => {
     clearIsolation(testDir);
 
     const state = loadState(testDir);
-    const result = await resolveInstance(testDir);
+    const result = await resolveInstance(testDir, undefined, {
+      autoCreate: true,
+    });
 
     expect(state.instanceId).toBeUndefined();
-    expect(state.mode).toBe("normal");
-    expect(result).toEqual({ mode: "normal" });
+    expect(state.mode).toBeUndefined();
+    expect(result.instanceKey).toBe(DEFAULT_INSTANCE_KEY);
+    expect(result.instanceId).toMatch(/^[a-z0-9]{6}$/);
+  });
+
+  it("uses defaultInstance from state when --instance is omitted", async () => {
+    saveState(testDir, {
+      defaultInstance: "e-two",
+      instances: {
+        "e-two": { id: "abc123", ports: {} },
+      },
+    });
+
+    const result = await resolveInstance(testDir);
+    expect(result).toEqual({ instanceKey: "e-two", instanceId: "abc123" });
   });
 });

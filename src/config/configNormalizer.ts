@@ -12,6 +12,7 @@ export interface RawConfig {
   project?: string;
   env_files?: string[] | Record<string, string[]>;
   git_method?: "http" | "ssh" | "cli";
+  init_task?: string;
   whitelists?: Record<string, string[]>;
   native?: Record<string, unknown>;
   bare_metal?: Record<string, unknown>;
@@ -20,6 +21,7 @@ export interface RawConfig {
   processes?: unknown[];
   tasks?: Record<string, unknown>;
   homepage?: string;
+  notes?: string;
   links?: Array<{ name: string; url: string }>;
 }
 

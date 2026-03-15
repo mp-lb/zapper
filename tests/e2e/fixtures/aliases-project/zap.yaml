@@ -46,3 +46,18 @@ tasks:
       - echo "Starting web server..."
       - echo "Starting background worker..."
       - echo "All services started!"
+
+  recurse-self:
+    desc: Direct recursive task for cycle detection test
+    cmds:
+      - { task: recurse-self }
+
+  recurse-a:
+    desc: Indirect recursive task A for cycle detection test
+    cmds:
+      - { task: recurse-b }
+
+  recurse-b:
+    desc: Indirect recursive task B for cycle detection test
+    cmds:
+      - { task: recurse-a }

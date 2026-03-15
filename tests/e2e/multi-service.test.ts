@@ -255,7 +255,7 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       expect(statusOutput).toContain("api");
       expect(statusOutput).toContain("frontend");
       expect(statusOutput).toContain("worker");
-      expect(statusOutput).toMatch(/up|running|online/);
+      expect(statusOutput).toMatch(/UP|up|running|online/);
 
       // Check JSON status
       const statusJsonOutput = runZapCommand(
@@ -476,7 +476,7 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       expect(statusOutput).toContain("api");
       expect(statusOutput).toContain("frontend");
       expect(statusOutput).toContain("worker");
-      expect(statusOutput).toMatch(/up|running|online/);
+      expect(statusOutput).toMatch(/UP|up|running|online/);
 
       // 3. Stop all services
       const downOutput = runZapCommand(

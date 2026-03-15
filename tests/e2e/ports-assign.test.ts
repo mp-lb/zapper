@@ -290,4 +290,43 @@ native:
 
     fs.unlinkSync(envPath);
   });
+
+  it("uses initialized ports in docker port mappings", () => {
+    testProjectName = generateTestProjectName();
+    fixtureDir = path.join(FIXTURES_DIR, "ports-project");
+    fs.mkdirSync(fixtureDir, { recursive: true });
+
+    const configContent = `
+project: ${testProjectName}
+ports:
+  - MONGO_PORT
+
+docker:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - \${MONGO_PORT}:27017
+`;
+    tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
+    fs.writeFileSync(tempConfigPath, configContent);
+
+    const initResult = parseJsonFromOutput(
+      runZapCommand(`init --json --config zap-${testProjectName}.yaml`, fixtureDir),
+    );
+    const initializedPorts = initResult.ports as Record<string, string>;
+
+    const configOutput = runZapCommand(
+      `config --config zap-${testProjectName}.yaml`,
+      fixtureDir,
+    );
+    const resolvedConfig = parseJsonFromOutput(configOutput);
+    const containers = resolvedConfig.containers as Array<{
+      name: string;
+      ports?: string[];
+    }>;
+
+    const mongodb = containers.find((container) => container.name === "mongodb");
+    expect(mongodb).toBeDefined();
+    expect(mongodb?.ports).toEqual([`${initializedPorts.MONGO_PORT}:27017`]);
+  });
 });

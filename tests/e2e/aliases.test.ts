@@ -526,6 +526,36 @@ describe("E2E: Aliases Support", () => {
         // No PM2 cleanup needed for task commands
       }
     }, 60000);
+
+    it("should fail with a clear error for recursive task references", () => {
+      testProjectName = generateTestProjectName();
+      fixtureDir = path.join(FIXTURES_DIR, "aliases-project");
+
+      tempConfigPath = path.join(fixtureDir, `zap-${testProjectName}.yaml`);
+      const originalConfig = fs.readFileSync(
+        path.join(fixtureDir, "zap.yaml"),
+        "utf8",
+      );
+      const uniqueConfig = originalConfig.replace(
+        "project: aliases-test",
+        `project: ${testProjectName}`,
+      );
+      fs.writeFileSync(tempConfigPath, uniqueConfig);
+
+      expect(() => {
+        runZapCommand(
+          `task recurse-self --config zap-${testProjectName}.yaml`,
+          fixtureDir,
+          { timeout: 10000 },
+        );
+      }).toThrow("Circular task reference detected");
+
+      expect(() => {
+        runZapCommand(`task recurse-a --config zap-${testProjectName}.yaml`, fixtureDir, {
+          timeout: 10000,
+        });
+      }).toThrow("Circular task reference detected");
+    });
   });
 
   describe("Error Handling with Aliases", () => {

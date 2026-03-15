@@ -3,16 +3,22 @@ import { RestartCommand } from "./RestartCommand";
 import { CloneCommand } from "./CloneCommand";
 import { LogsCommand } from "./LogsCommand";
 import { StatusCommand } from "./StatusCommand";
+import { ListCommand } from "./ListCommand";
 import { renderer } from "../ui/renderer";
 import { getStatus, type StatusResult } from "../core/getStatus";
+import { getServiceList, type ServiceListResult } from "../core/getServiceList";
 import type { Zapper } from "../core/Zapper";
 import type { Context } from "../types/Context";
 
 vi.mock("../core/getStatus", () => ({
   getStatus: vi.fn(),
 }));
+vi.mock("../core/getServiceList", () => ({
+  getServiceList: vi.fn(),
+}));
 
 const mockedGetStatus = vi.mocked(getStatus);
+const mockedGetServiceList = vi.mocked(getServiceList);
 
 describe("Multi-service command targets", () => {
   beforeEach(() => {
@@ -127,6 +133,41 @@ describe("Multi-service command targets", () => {
     expect(result).toEqual({
       kind: "status",
       statusResult,
+      context: zapperContext,
+    });
+  });
+
+  it("passes multiple services to ls filtering", async () => {
+    const listResult: ServiceListResult = { services: [] };
+    const zapperContext: Context = {
+      projectName: "test",
+      projectRoot: "/tmp/test",
+      envFiles: [],
+      environments: [],
+      processes: [],
+      containers: [],
+      tasks: [],
+      links: [],
+      profiles: [],
+      state: {},
+    };
+    const getContext = vi.fn().mockReturnValue(zapperContext);
+    mockedGetServiceList.mockResolvedValue(listResult);
+
+    const command = new ListCommand();
+    const result = await command.execute({
+      zapper: { getContext } as unknown as Zapper,
+      service: ["api", "database"],
+      options: {},
+    });
+
+    expect(mockedGetServiceList).toHaveBeenCalledWith(zapperContext, [
+      "api",
+      "database",
+    ]);
+    expect(result).toEqual({
+      kind: "list",
+      listResult,
       context: zapperContext,
     });
   });

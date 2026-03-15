@@ -2,6 +2,7 @@ import path from "path";
 import { ZapperConfig } from "../config/schemas";
 import { Context, Process, Container, Task, Link } from "../types/Context";
 import { loadState } from "../config/stateLoader";
+import { DEFAULT_INSTANCE_KEY } from "./instanceResolver";
 
 /**
  * Creates a Context object from a ZapperConfig.
@@ -135,12 +136,16 @@ export function createContext(
     envFiles,
     environments: environmentSetNames,
     ports: config.ports,
+    initTask: config.init_task,
     gitMethod: config.git_method,
     taskDelimiters: config.task_delimiters,
+    instanceKey: DEFAULT_INSTANCE_KEY,
+    instance: undefined,
     processes,
     containers,
     tasks,
     homepage: config.homepage,
+    notes: config.notes,
     links,
     profiles,
     state,

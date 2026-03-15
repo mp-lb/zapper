@@ -1,7 +1,7 @@
 import { ZapperConfig, Process, Container } from "../config/schemas";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
-import { ActionPlan, ExecutionWave } from "../types";
+import { ActionPlan, ExecutionWave, Action } from "../types";
 import { DependencyGraph } from "./DependencyGraph";
 import { buildServiceName } from "../utils/nameBuilder";
 
@@ -47,6 +47,31 @@ export class Planner {
       graph.addContainer(name, container);
     }
     return graph;
+  }
+
+  private buildStopWave(servicesToStop: Set<string>): ExecutionWave[] {
+    if (servicesToStop.size === 0) return [];
+
+    const allProcessNames = new Set(
+      this.getProcesses().map((p) => p.name as string),
+    );
+    const allContainerNames = new Set(
+      this.getContainers().map(([name]) => name),
+    );
+
+    const actions: Action[] = [...servicesToStop].map((name) => ({
+      type: "stop",
+      serviceType: allProcessNames.has(name)
+        ? "native"
+        : allContainerNames.has(name)
+          ? "docker"
+          : "native",
+      name,
+      healthcheck: 0,
+    }));
+
+    actions.sort((a, b) => a.name.localeCompare(b.name));
+    return [{ actions }];
   }
 
   private resolveDependencies(
@@ -109,22 +134,32 @@ export class Planner {
     projectName: string,
     forceStart = false,
     activeProfile?: string,
+    resolveTargetDependencies = true,
   ): Promise<ActionPlan> {
     if (op === "restart") {
-      const stopPlan = await this.plan(
-        "stop",
-        targets,
-        projectName,
-        false,
+      const filteredServices = this.filterByProfile(
+        this.getProcesses(),
+        this.getContainers(),
         activeProfile,
       );
+      const selectedTargets =
+        targets && targets.length > 0
+          ? targets
+          : [
+              ...filteredServices.processes.map((p) => p.name as string),
+              ...filteredServices.containers.map(([name]) => name),
+            ];
+
+      const stopPlan = await this.plan("stop", selectedTargets, projectName);
       const startPlan = await this.plan(
         "start",
-        targets,
+        selectedTargets,
         projectName,
         true,
-        activeProfile,
+        undefined,
+        false,
       );
+
       return { waves: [...stopPlan.waves, ...startPlan.waves] };
     }
 
@@ -162,13 +197,22 @@ export class Planner {
       let selectedContainers: Array<[string, Container]>;
 
       if (targets && targets.length > 0) {
-        const resolved = this.resolveDependencies(
-          targets,
-          allProcesses,
-          allContainers,
-        );
-        selectedProcesses = resolved.processes;
-        selectedContainers = resolved.containers;
+        if (resolveTargetDependencies) {
+          const resolved = this.resolveDependencies(
+            targets,
+            allProcesses,
+            allContainers,
+          );
+          selectedProcesses = resolved.processes;
+          selectedContainers = resolved.containers;
+        } else {
+          selectedProcesses = allProcesses.filter((p) =>
+            targets.includes(p.name as string),
+          );
+          selectedContainers = allContainers.filter(([name]) =>
+            targets.includes(name),
+          );
+        }
       } else {
         const filtered = this.filterByProfile(
           allProcesses,
@@ -239,10 +283,7 @@ export class Planner {
       if (await isDockerRunning(name)) servicesToStop.add(name);
     }
 
-    if (servicesToStop.size === 0) return { waves: [] };
-
-    const waves = graph.computeStopWaves(servicesToStop);
-    return { waves };
+    return { waves: this.buildStopWave(servicesToStop) };
   }
 
   private async planProfileStops(
@@ -255,15 +296,6 @@ export class Planner {
   ): Promise<ExecutionWave[]> {
     // Collect services that need to be stopped (not in active profile but currently running)
     const servicesToStop = new Set<string>();
-    const graph = new DependencyGraph();
-
-    // Build the full graph for dependency resolution
-    for (const process of allProcesses) {
-      graph.addProcess(process.name as string, process);
-    }
-    for (const [name, container] of allContainers) {
-      graph.addContainer(name, container);
-    }
 
     // Find services that should be stopped (not in active profile but running)
     for (const process of allProcesses) {
@@ -293,6 +325,6 @@ export class Planner {
       return [];
     }
 
-    return graph.computeStopWaves(servicesToStop);
+    return this.buildStopWave(servicesToStop);
   }
 }

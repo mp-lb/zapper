@@ -1,19 +1,9 @@
 import { Pm2Manager } from "./process";
 import { DockerManager } from "./docker";
 import { Context } from "../types/Context";
-import { clearServiceState } from "../config/stateLoader";
 import { buildServiceName } from "../utils/nameBuilder";
 
 type Status = "down" | "pending" | "up";
-
-function isPidAlive(pid: number): boolean {
-  try {
-    process.kill(pid, 0);
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 function isRunning(rawStatus: string, type: "native" | "docker"): boolean {
   const s = rawStatus.toLowerCase();
@@ -121,7 +111,6 @@ export async function getStatus(
   }
 
   const projectName = context.projectName;
-  const serviceStates = context.state.services || {};
   const activeProfile = context.state.activeProfile;
 
   const native: ServiceStatus[] = [];
@@ -167,24 +156,15 @@ export async function getStatus(
     const containerInfo =
       await DockerManager.getContainerInfo(expectedDockerName);
     const healthcheck = container.healthcheck ?? 5;
-    const serviceState = serviceStates[expectedDockerName];
     const enabled = isServiceEnabled(container.profiles, activeProfile);
 
     let status: Status = "down";
-
-    if (serviceState?.startPid && isPidAlive(serviceState.startPid)) {
-      status = "pending";
-    } else {
-      if (serviceState?.startPid) {
-        clearServiceState(context.projectRoot, expectedDockerName);
-      }
-      if (containerInfo) {
-        const running = isRunning(containerInfo.status, "docker");
-        const startedAtMs = containerInfo.startedAt
-          ? new Date(containerInfo.startedAt).getTime()
-          : undefined;
-        status = await computeStatus(running, startedAtMs, healthcheck);
-      }
+    if (containerInfo) {
+      const running = isRunning(containerInfo.status, "docker");
+      const startedAtMs = containerInfo.startedAt
+        ? new Date(containerInfo.startedAt).getTime()
+        : undefined;
+      status = await computeStatus(running, startedAtMs, healthcheck);
     }
 
     docker.push({

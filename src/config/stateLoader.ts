@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { ZapperStateSchema, ZapperState, ServiceState } from "./schemas";
+import { ZapperStateSchema, ZapperState } from "./schemas";
 import { renderer } from "../ui/renderer";
 
 export function loadState(projectRoot: string): ZapperState {
@@ -68,29 +68,16 @@ export function saveState(
 }
 
 export function updateServiceState(
-  projectRoot: string,
-  serviceName: string,
-  serviceState: Partial<ServiceState>,
+  _projectRoot: string,
+  _serviceName: string,
+  _serviceState: Record<string, unknown>,
 ): void {
-  const existingState = loadState(projectRoot);
-  const services = existingState.services || {};
-  const existing = services[serviceName] || {};
-
-  saveState(projectRoot, {
-    services: {
-      ...services,
-      [serviceName]: { ...existing, ...serviceState },
-    },
-  });
+  // Service lifecycle should not be persisted in state.json.
 }
 
 export function clearServiceState(
-  projectRoot: string,
-  serviceName: string,
+  _projectRoot: string,
+  _serviceName: string,
 ): void {
-  const existingState = loadState(projectRoot);
-  const services = existingState.services || {};
-  delete services[serviceName];
-
-  saveState(projectRoot, { services });
+  // Service lifecycle should not be persisted in state.json.
 }

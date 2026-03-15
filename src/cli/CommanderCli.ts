@@ -9,6 +9,7 @@ import {
   KillCommand,
   RestartCommand,
   StatusCommand,
+  ListCommand,
   LogsCommand,
   ResetCommand,
   CloneCommand,
@@ -22,6 +23,8 @@ import {
   ConfigCommand,
   EnvCommand,
   LaunchCommand,
+  HomeCommand,
+  NotesCommand,
   InitCommand,
   GlobalCommand,
   CommandContext,
@@ -88,6 +91,7 @@ export class CommanderCli {
     this.commandHandlers.set("kill", new KillCommand());
     this.commandHandlers.set("restart", new RestartCommand());
     this.commandHandlers.set("status", new StatusCommand());
+    this.commandHandlers.set("ls", new ListCommand());
     this.commandHandlers.set("logs", new LogsCommand());
     this.commandHandlers.set("reset", new ResetCommand());
     this.commandHandlers.set("clone", new CloneCommand());
@@ -102,6 +106,8 @@ export class CommanderCli {
     this.commandHandlers.set("config", new ConfigCommand());
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
+    this.commandHandlers.set("home", new HomeCommand());
+    this.commandHandlers.set("notes", new NotesCommand());
     this.commandHandlers.set("init", new InitCommand());
     this.commandHandlers.set("global", new GlobalCommand());
   }
@@ -114,6 +120,10 @@ export class CommanderCli {
 
     this.program
       .option("--config <file>", "Use a specific config file")
+      .option(
+        "--instance <name>",
+        "Target a named instance (default: default)",
+      )
       .option("-v, --verbose", "Increase logging verbosity")
       .option("-q, --quiet", "Reduce logging output")
       .option("-d, --debug", "Enable debug logging");
@@ -181,6 +191,17 @@ export class CommanderCli {
       });
 
     this.program
+      .command("ls")
+      .description(
+        "List configured services with details (status, ports, cwd, cmd)",
+      )
+      .argument("[services...]", "Services to list")
+      .option("-j, --json", "Output list as minified JSON")
+      .action(async (services, options, command) => {
+        await this.executeCommand("ls", services, command);
+      });
+
+    this.program
       .command("logs")
       .alias("l")
       .description("Show logs for one or more services")
@@ -202,8 +223,11 @@ export class CommanderCli {
 
     this.program
       .command("init")
-      .description("Initialize local zap state (ports and instance mode)")
-      .option("-i, --instance", "Initialize as an isolated instance")
+      .description("Initialize local zap state (instance + ports)")
+      .option(
+        "-i, --instance [name]",
+        "Create/select an instance for initialization (default: default)",
+      )
       .option(
         "-R, --random",
         "Randomize all configured ports instead of preserving existing assignments",
@@ -400,6 +424,22 @@ export class CommanderCli {
       });
 
     this.program
+      .command("home")
+      .description("Print the configured homepage URL")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("home", undefined, command);
+      });
+
+    this.program
+      .command("notes")
+      .description("Print configured project notes")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("notes", undefined, command);
+      });
+
+    this.program
       .command("global <subcommand> [project]")
       .alias("g")
       .description("Global operations across projects (info, list, kill)")
@@ -457,9 +497,13 @@ export class CommanderCli {
     commandInstance: Command,
   ): Promise<void> {
     const parent = commandInstance.parent!;
-    const globalOpts = parent.opts();
-    const commandOpts = commandInstance.opts();
-    const allOptions = { ...globalOpts, ...commandOpts };
+    const globalOpts = parent.opts() as Record<string, unknown>;
+    const commandOpts = commandInstance.opts() as Record<string, unknown>;
+    const allOptions: Record<string, unknown> = {
+      ...globalOpts,
+      ...commandOpts,
+      __command: command,
+    };
 
     if (allOptions.debug) {
       logger.setLevel(LogLevel.DEBUG);
@@ -482,15 +526,17 @@ export class CommanderCli {
 
     const zapper = new Zapper();
     if (!skipConfigLoad) {
-      await zapper.loadConfig(allOptions.config, allOptions);
+      await zapper.loadConfig(allOptions.config as string | undefined, allOptions);
     }
 
     const noAliasCommands = new Set([
       "env",
       "environment",
+      "home",
       "init",
       "launch",
       "kill",
+      "notes",
       "profile",
     ]);
     const shouldResolveAliases = !noAliasCommands.has(command);

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getStatus } from "./getStatus";
 import { Pm2Manager } from "./process";
 import { DockerManager } from "./docker";
-import { clearServiceState } from "../config/stateLoader";
 import { Context } from "../types/Context";
 import { ProcessInfo } from "../types";
 import type { DockerContainer } from "./docker";
@@ -10,7 +9,6 @@ import type { DockerContainer } from "./docker";
 // Mock external dependencies
 vi.mock("./process");
 vi.mock("./docker");
-vi.mock("../config/stateLoader");
 
 // Mock global fetch for URL healthchecks
 const mockFetch = vi.fn();
@@ -18,11 +16,6 @@ global.fetch = mockFetch;
 
 const mockPm2Manager = vi.mocked(Pm2Manager);
 const mockDockerManager = vi.mocked(DockerManager);
-const mockClearServiceState = vi.mocked(clearServiceState);
-
-// Mock process.kill for PID checking
-const mockProcessKill = vi.fn();
-vi.spyOn(process, "kill").mockImplementation(mockProcessKill);
 
 // Helper functions for creating mock data
 function createMockProcessInfo(
@@ -64,6 +57,7 @@ function createMockContext(
   return {
     projectName,
     projectRoot: "/test/project",
+    instanceKey: "default",
     envFiles: [],
     environments: [],
     processes: [
@@ -109,7 +103,6 @@ function createMockContext(
     profiles: ["dev", "prod", "staging"],
     state: {
       activeProfile,
-      services: {},
     },
   };
 }
@@ -118,7 +111,6 @@ describe("getStatus", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockFetch.mockReset();
-    mockProcessKill.mockReset();
 
     // Default mocks
     mockPm2Manager.listProcesses.mockResolvedValue([]);
@@ -469,15 +461,12 @@ describe("getStatus", () => {
       });
     });
 
-    it("should handle pending Docker containers with startPid", async () => {
+    it("should return down when Docker container is absent", async () => {
       const context = createMockContext("test", "dev"); // Set active profile so database is enabled
-      context.state.services = {
-        "zap.test.database": { startPid: process.pid }, // Use current process PID which is guaranteed to be alive
-      };
 
       // Mock getContainerInfo for each container in order: database, cache, analytics
       mockDockerManager.getContainerInfo
-        .mockResolvedValueOnce(null) // database - will use startPid check
+        .mockResolvedValueOnce(null) // database missing
         .mockResolvedValueOnce(null) // cache
         .mockResolvedValueOnce(null); // analytics
 
@@ -485,18 +474,12 @@ describe("getStatus", () => {
 
       const dbService = result.docker.find((s) => s.service === "database");
 
-      expect(dbService?.status).toBe("pending");
+      expect(dbService?.status).toBe("down");
       expect(dbService?.enabled).toBe(true);
     });
 
-    it("should handle stale startPid behavior", async () => {
+    it("should compute status from container info only", async () => {
       const context = createMockContext("test", "dev"); // Set active profile so database is enabled
-
-      // Use a PID that's highly likely to be dead on most systems
-      const deadPid = 999999; // Very high PID unlikely to exist
-      context.state.services = {
-        "zap.test.database": { startPid: deadPid },
-      };
 
       // Mock getContainerInfo for each container in order: database, cache, analytics
       mockDockerManager.getContainerInfo
@@ -514,19 +497,8 @@ describe("getStatus", () => {
 
       const dbService = result.docker.find((s) => s.service === "database");
 
-      // The key behavior is that if the PID is alive, status should be "pending"
-      // If the PID is dead, status should be based on container info (in this case "up")
-      // We can test this by checking the result rather than the mock calls
-      expect(dbService?.status).toMatch(/^(pending|up)$/);
+      expect(dbService?.status).toBe("up");
       expect(dbService?.enabled).toBe(true);
-
-      // If status is "up", then the PID was considered dead and clearServiceState should have been called
-      if (dbService?.status === "up") {
-        expect(mockClearServiceState).toHaveBeenCalledWith(
-          "/test/project",
-          "zap.test.database",
-        );
-      }
     });
 
     it("should compute Docker status based on delay healthcheck", async () => {

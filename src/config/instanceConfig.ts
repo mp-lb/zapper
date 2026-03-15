@@ -1,4 +1,5 @@
 import { loadState, saveState } from "./stateLoader";
+import { DEFAULT_INSTANCE_KEY } from "../core/instanceResolver";
 
 export interface InstanceConfig {
   instanceId?: string | null;
@@ -10,13 +11,13 @@ export interface InstanceConfig {
  */
 export function loadInstanceConfig(projectRoot: string): InstanceConfig | null {
   const state = loadState(projectRoot);
-  if (!state.instanceId) {
-    return null;
-  }
+  const instanceId =
+    state.instances?.[DEFAULT_INSTANCE_KEY]?.id || state.instanceId;
+  if (!instanceId) return null;
 
   return {
-    instanceId: state.instanceId,
-    mode: state.mode === "isolate" ? "isolate" : "normal",
+    instanceId,
+    mode: "isolate",
   };
 }
 
@@ -27,8 +28,25 @@ export function saveInstanceConfig(
   projectRoot: string,
   config: InstanceConfig,
 ): void {
+  const existing = loadState(projectRoot);
+  const nextInstances = { ...(existing.instances || {}) };
+
+  if (config.instanceId) {
+    nextInstances[DEFAULT_INSTANCE_KEY] = {
+      id: config.instanceId,
+      ports:
+        existing.instances?.[DEFAULT_INSTANCE_KEY]?.ports || existing.ports || {},
+    };
+  } else {
+    delete nextInstances[DEFAULT_INSTANCE_KEY];
+  }
+
   saveState(projectRoot, {
+    instances: nextInstances,
     instanceId: config.instanceId ?? undefined,
     mode: config.instanceId ? "isolate" : "normal",
+    ports: config.instanceId
+      ? nextInstances[DEFAULT_INSTANCE_KEY]?.ports || {}
+      : existing.ports,
   });
 }

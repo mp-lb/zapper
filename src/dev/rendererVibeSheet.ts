@@ -23,6 +23,7 @@ function main(): void {
     environments: ["default", "staging", "sandbox"],
     gitMethod: "ssh",
     taskDelimiters: ["{{", "}}"],
+    instanceKey: "default",
     instanceId: "dev42z",
     processes: [],
     containers: [],

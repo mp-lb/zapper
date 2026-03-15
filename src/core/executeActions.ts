@@ -5,7 +5,6 @@ import { Pm2Executor } from "./process/Pm2Executor";
 import { Action, ActionPlan, ExecutionWave } from "../types";
 import { findProcess } from "./findProcess";
 import { findContainer } from "./findContainer";
-import { updateServiceState, clearServiceState } from "../config/stateLoader";
 import { buildServiceName } from "../utils/nameBuilder";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -73,7 +72,6 @@ async function executeAction(
   config: ZapperConfig,
   projectName: string,
   pm2: Pm2Executor,
-  configDir: string,
 ): Promise<void> {
   if (action.serviceType === "native") {
     const proc = findProcess(config, action.name);
@@ -123,7 +121,7 @@ async function executeAction(
         "com.zapper.service": name,
       } as Record<string, string>;
 
-      const pid = await DockerManager.startContainerAsync(dockerName, {
+      await DockerManager.startContainerAsync(dockerName, {
         image: c.image,
         ports,
         volumes: volumeBindings,
@@ -132,14 +130,8 @@ async function executeAction(
         command: c.command,
         labels,
       });
-
-      updateServiceState(configDir, dockerName, {
-        startPid: pid,
-        startRequestedAt: new Date().toISOString(),
-      });
     } else {
       await DockerManager.stopContainer(dockerName);
-      clearServiceState(configDir, dockerName);
     }
   }
 }
@@ -169,7 +161,6 @@ export async function executeActions(
           config,
           projectName,
           pm2,
-          configDir || process.cwd(),
         ),
       ),
     );

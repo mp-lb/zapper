@@ -17,6 +17,7 @@ export type Command =
   | "kill"
   | "restart"
   | "status"
+  | "ls"
   | "logs"
   | "reset"
   | "clone"
@@ -31,6 +32,8 @@ export type Command =
   | "config"
   | "env"
   | "launch"
+  | "home"
+  | "notes"
   | "init"
   | "global";
 

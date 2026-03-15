@@ -295,6 +295,23 @@ describe("createContext", () => {
     });
   });
 
+  describe("init task", () => {
+    it("should map init_task into context.initTask", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        init_task: "seed",
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.initTask).toBe("seed");
+    });
+  });
+
   describe("env_files resolution", () => {
     describe("array format", () => {
       it("should resolve relative paths to absolute paths", () => {
@@ -578,7 +595,7 @@ describe("createContext", () => {
     });
   });
 
-  describe("homepage and links passthrough", () => {
+  describe("homepage, notes, and links passthrough", () => {
     it("should pass through homepage from config", () => {
       const config: ZapperConfig = {
         project: "test-project",
@@ -612,6 +629,21 @@ describe("createContext", () => {
       const result = createContext(config, testDir);
 
       expect(result.links).toEqual(links);
+    });
+
+    it("should pass through notes from config", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        notes: "Use PORT=${PORT}",
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.notes).toBe("Use PORT=${PORT}");
     });
 
     it("should handle empty links array", () => {
@@ -655,6 +687,20 @@ describe("createContext", () => {
       const result = createContext(config, testDir);
 
       expect(result.homepage).toBeUndefined();
+    });
+
+    it("should handle missing notes", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.notes).toBeUndefined();
     });
   });
 
@@ -718,6 +764,7 @@ describe("createContext", () => {
           build: { cmd: "npm run build" },
         },
         homepage: "http://localhost:3000",
+        notes: "Run migrations after startup",
         links: [{ name: "docs", url: "https://docs.example.com" }],
       };
 
@@ -738,6 +785,7 @@ describe("createContext", () => {
       expect(result.containers).toHaveLength(1);
       expect(result.tasks).toHaveLength(1);
       expect(result.homepage).toBe("http://localhost:3000");
+      expect(result.notes).toBe("Run migrations after startup");
       expect(result.links).toHaveLength(1);
       expect(result.profiles).toEqual(["db", "web"]);
     });

@@ -22,7 +22,12 @@ import {
   ContainerNotRunningError,
 } from "../errors";
 import { buildPrefix, buildServiceName } from "../utils/nameBuilder";
-import { resolveInstance, isolateProject } from "./instanceResolver";
+import {
+  resolveInstance,
+  createInstance,
+  validateInstanceKey,
+} from "./instanceResolver";
+import { initializePorts, loadPortsForInstance } from "../config/portsManager";
 
 export interface ProjectKillTargets {
   projectName: string;
@@ -56,12 +61,46 @@ export class Zapper {
     // Create context from config
     this.context = createContext(configWithOverrides, projectRoot);
 
+    const rawInstanceOpt = cliOptions?.instance;
+    const selectedInstanceKey =
+      typeof rawInstanceOpt === "string" && rawInstanceOpt.trim().length > 0
+        ? rawInstanceOpt.trim()
+        : undefined;
+    if (selectedInstanceKey) {
+      validateInstanceKey(selectedInstanceKey);
+      this.context.instanceKey = selectedInstanceKey;
+    }
+
+    const commandName = cliOptions?.__command;
+    const autoCreate = commandName === "up" || commandName === "init";
+    const instanceResolution = await resolveInstance(
+      projectRoot,
+      selectedInstanceKey,
+      {
+        autoCreate,
+      },
+    );
+    this.context.instanceKey = instanceResolution.instanceKey;
+    this.context.instanceId = instanceResolution.instanceId;
+
+    // Centralized command boot sequence hook:
+    // For `up`, ensure instance-scoped ports exist before env resolution.
+    if (commandName === "up") {
+      initializePorts(
+        projectRoot,
+        this.context.ports || [],
+        instanceResolution.instanceKey,
+      );
+    }
+
+    this.context.instance = {
+      key: instanceResolution.instanceKey,
+      id: instanceResolution.instanceId,
+      ports: loadPortsForInstance(projectRoot, instanceResolution.instanceKey),
+    };
+
     // Resolve environment variables with proper path resolution
     this.context = EnvResolver.resolveContext(this.context);
-
-    // Resolve instance configuration (worktree detection, etc.)
-    const instanceResolution = await resolveInstance(projectRoot);
-    this.context.instanceId = instanceResolution.instanceId;
   }
 
   private applyCliOverrides(
@@ -425,8 +464,16 @@ export class Zapper {
   async isolateInstance(): Promise<string> {
     if (!this.context) throw new ContextNotLoadedError();
 
-    const instanceId = isolateProject(this.context.projectRoot);
+    const instanceId = createInstance(
+      this.context.projectRoot,
+      this.context.instanceKey,
+    );
     this.context.instanceId = instanceId;
+    this.context.instance = {
+      key: this.context.instanceKey,
+      id: instanceId,
+      ports: loadPortsForInstance(this.context.projectRoot, this.context.instanceKey),
+    };
     return instanceId;
   }
 

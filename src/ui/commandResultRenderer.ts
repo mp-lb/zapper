@@ -9,6 +9,8 @@ function toJsonPayload(result: CommandResult): unknown {
   switch (result.kind) {
     case "status":
       return renderer.status.toJson(result.statusResult);
+    case "list":
+      return renderer.list.toJson(result.listResult);
     case "tasks.list":
       return renderer.tasks.toJson(result.tasks);
     case "tasks.params":
@@ -42,6 +44,10 @@ function toJsonPayload(result: CommandResult): unknown {
       };
     case "launch.opened":
       return { url: result.url };
+    case "home.value":
+      return { value: result.value };
+    case "notes.value":
+      return { value: result.value };
     case "git.checkout.completed":
       return { branch: result.branch };
     case "git.pull.completed":
@@ -95,6 +101,7 @@ function toJsonPayload(result: CommandResult): unknown {
     case "init":
       return {
         isolated: result.isolated,
+        instanceKey: result.instanceKey,
         instanceId: result.instanceId,
         ports: result.ports,
         path: result.path,
@@ -126,6 +133,9 @@ export function renderCommandResult(
         renderer.status.toText(result.statusResult, result.context),
       );
       return;
+    case "list":
+      renderer.log.report(renderer.list.toText(result.listResult, result.context));
+      return;
     case "tasks.list":
       renderer.log.report(renderer.tasks.toText(result.tasks));
       return;
@@ -143,6 +153,12 @@ export function renderCommandResult(
       return;
     case "launch.opened":
       renderer.log.info(`Opening ${result.url}`);
+      return;
+    case "home.value":
+      renderer.log.report(result.value);
+      return;
+    case "notes.value":
+      renderer.log.report(result.value);
       return;
     case "reset":
       if (result.status === "aborted") {
@@ -295,9 +311,7 @@ export function renderCommandResult(
       return;
     case "init":
       renderer.log.info(
-        result.isolated
-          ? `Initialized isolated instance (${result.instanceId})`
-          : "Initialized main instance",
+        `Initialized instance "${result.instanceKey}" (${result.instanceId})`,
       );
       renderer.log.info(
         `${result.randomized ? "Randomized" : "Initialized"} ${Object.keys(result.ports).length} port(s) in ${result.path}`,

@@ -1,5 +1,6 @@
 import * as path from "path";
 import { loadState, saveState } from "./stateLoader";
+import { DEFAULT_INSTANCE_KEY, ensureInstance } from "../core/instanceResolver";
 
 const STATE_FILE_NAME = "state.json";
 const ZAP_DIR_NAME = ".zap";
@@ -8,7 +9,18 @@ const ZAP_DIR_NAME = ".zap";
  * Load assigned port values from .zap/state.json
  */
 export function loadPorts(projectRoot: string): Record<string, string> {
-  return loadState(projectRoot).ports || {};
+  return loadPortsForInstance(projectRoot, DEFAULT_INSTANCE_KEY);
+}
+
+export function loadPortsForInstance(
+  projectRoot: string,
+  instanceKey: string = DEFAULT_INSTANCE_KEY,
+): Record<string, string> {
+  const state = loadState(projectRoot);
+  const instancePorts = state.instances?.[instanceKey]?.ports;
+  if (instancePorts) return instancePorts;
+  if (instanceKey === DEFAULT_INSTANCE_KEY) return state.ports || {};
+  return {};
 }
 
 /**
@@ -18,14 +30,42 @@ export function savePorts(
   projectRoot: string,
   ports: Record<string, string>,
 ): void {
-  saveState(projectRoot, { ports });
+  savePortsForInstance(projectRoot, DEFAULT_INSTANCE_KEY, ports);
+}
+
+export function savePortsForInstance(
+  projectRoot: string,
+  instanceKey: string = DEFAULT_INSTANCE_KEY,
+  ports: Record<string, string>,
+): void {
+  const state = loadState(projectRoot);
+  const instance = state.instances?.[instanceKey];
+  const ensured = instance?.id
+    ? { id: instance.id, created: false }
+    : ensureInstance(projectRoot, instanceKey);
+  const refreshed = ensured.created ? loadState(projectRoot) : state;
+  const refreshedInstance = refreshed.instances?.[instanceKey];
+  const refreshedId = refreshedInstance?.id || ensured.id;
+
+  saveState(projectRoot, {
+    instances: {
+      ...(refreshed.instances || {}),
+      [instanceKey]: {
+        ...(refreshedInstance || {}),
+        id: refreshedId,
+        ports,
+      },
+    },
+    // Legacy compatibility for default instance readers.
+    ports: instanceKey === DEFAULT_INSTANCE_KEY ? ports : refreshed.ports,
+  });
 }
 
 /**
  * Clear assigned ports from .zap/state.json
  */
 export function clearPorts(projectRoot: string): void {
-  saveState(projectRoot, { ports: {} });
+  savePortsForInstance(projectRoot, DEFAULT_INSTANCE_KEY, {});
 }
 
 /**
@@ -65,14 +105,21 @@ export function assignRandomPorts(portNames: string[]): Record<string, string> {
 export function initializePorts(
   projectRoot: string,
   portNames: string[],
-  options: { randomizeAll?: boolean } = {},
+  instanceOrOptions: string | { randomizeAll?: boolean } = DEFAULT_INSTANCE_KEY,
+  maybeOptions: { randomizeAll?: boolean } = {},
 ): Record<string, string> {
+  const instanceKey =
+    typeof instanceOrOptions === "string"
+      ? instanceOrOptions
+      : DEFAULT_INSTANCE_KEY;
+  const options =
+    typeof instanceOrOptions === "string" ? maybeOptions : instanceOrOptions;
   const normalizedPortNames = Array.from(new Set(portNames));
-  const existingPorts = loadPorts(projectRoot);
+  const existingPorts = loadPortsForInstance(projectRoot, instanceKey);
 
   if (options.randomizeAll) {
     const randomized = assignRandomPorts(normalizedPortNames);
-    savePorts(projectRoot, randomized);
+    savePortsForInstance(projectRoot, instanceKey, randomized);
     return randomized;
   }
 
@@ -98,7 +145,7 @@ export function initializePorts(
     nextPorts[name] = port.toString();
   }
 
-  savePorts(projectRoot, nextPorts);
+  savePortsForInstance(projectRoot, instanceKey, nextPorts);
   return nextPorts;
 }
 

@@ -1,9 +1,10 @@
 import { CommandHandler, CommandContext } from "./CommandHandler";
 import { CommandResult } from "./CommandResult";
 import { initializePorts, getPortsPath } from "../config/portsManager";
-import { isolateProject, clearIsolation } from "../core/instanceResolver";
-import { detectWorktree } from "../utils/worktreeDetector";
-import { renderer } from "../ui/renderer";
+import {
+  createInstance,
+  DEFAULT_INSTANCE_KEY,
+} from "../core/instanceResolver";
 
 export class InitCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -14,35 +15,43 @@ export class InitCommand extends CommandHandler {
       throw new Error("Context not loaded");
     }
 
-    const asInstance = Boolean(options.instance);
+    const selectedInstanceKey =
+      typeof options.instance === "string" && options.instance.trim().length > 0
+        ? options.instance.trim()
+        : ctx.instanceKey || DEFAULT_INSTANCE_KEY;
     const randomize = Boolean(options.random);
 
-    const ports = initializePorts(ctx.projectRoot, ctx.ports || [], {
-      randomizeAll: randomize,
-    });
+    const instanceId = createInstance(ctx.projectRoot, selectedInstanceKey);
+    ctx.instanceKey = selectedInstanceKey;
+    ctx.instanceId = instanceId;
 
-    let instanceId: string | undefined;
-    if (asInstance) {
-      instanceId = isolateProject(ctx.projectRoot);
-      ctx.instanceId = instanceId;
-    } else {
-      clearIsolation(ctx.projectRoot);
-      ctx.instanceId = undefined;
-    }
+    const scopedPorts = initializePorts(
+      ctx.projectRoot,
+      ctx.ports || [],
+      selectedInstanceKey,
+      {
+        randomizeAll: randomize,
+      },
+    );
+    ctx.instance = {
+      key: selectedInstanceKey,
+      id: instanceId,
+      ports: scopedPorts,
+    };
 
-    const warningShown = !asInstance && detectWorktree(ctx.projectRoot).isWorktree;
-    if (warningShown) {
-      renderer.warnings.printUnisolatedWorktree();
+    if (ctx.initTask) {
+      await zapper.runTask(ctx.initTask);
     }
 
     return {
       kind: "init",
-      isolated: asInstance,
+      isolated: true,
+      instanceKey: selectedInstanceKey,
       instanceId,
-      ports,
+      ports: scopedPorts,
       path: getPortsPath(ctx.projectRoot),
       randomized: randomize,
-      warningShown,
+      warningShown: false,
     };
   }
 }

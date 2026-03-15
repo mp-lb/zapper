@@ -17,6 +17,7 @@ Complete reference for `zap.yaml` syntax and all CLI commands.
 - [Dependencies](#dependencies)
 - [Profiles](#profiles)
 - [Links](#links)
+- [Notes](#notes)
 - [Git Cloning](#git-cloning)
 
 ---
@@ -58,6 +59,7 @@ env_files:                        # Load env vars from these files
 ports:                            # Port names to assign random values
   - FRONTEND_PORT
   - BACKEND_PORT
+init_task: seed                   # Optional task to run after `zap init`
 git_method: ssh                   # ssh | http | cli (for repo cloning)
 
 native:
@@ -70,6 +72,7 @@ tasks:
   # ... task definitions
 
 homepage: http://localhost:3000   # Optional default URL for `zap launch`
+notes: "API: http://localhost:${API_PORT}" # Optional note text for `zap notes`
 
 links:
   # ... quick reference links
@@ -111,7 +114,7 @@ zap down backend            # Stop one service
 zap down api worker db      # Stop multiple services
 zap down backend --json     # Output command result as JSON
 zap restart                 # Restart all services
-zap restart api             # Restart one service
+zap restart api             # Restart one service (does not restart its dependencies)
 zap restart api worker db   # Restart multiple services
 zap r api worker            # Short alias for: zap restart api worker
 ```
@@ -121,6 +124,9 @@ zap r api worker            # Short alias for: zap restart api worker
 ```bash
 zap status                  # Show status of all services
 zap status api db           # Show status for specific services
+zap ls                      # List services/containers with details (status, ports, cwd, cmd)
+zap ls api db               # List details for specific services
+zap ls --json               # Output detailed list as JSON
 zap logs api                # Follow logs for one service
 zap logs api worker --no-follow  # Show logs for multiple services and exit
 ```
@@ -152,13 +158,17 @@ zap clone                   # Clone all repos defined in config
 zap clone api               # Clone one repo
 zap clone api web           # Clone multiple repos
 zap clone --json            # Output command result as JSON
-zap init                    # Initialize local state (ports + main instance mode)
-zap init -i                 # Initialize as isolated instance
+zap init                    # Initialize local state for the default instance (and run init_task if configured)
+zap init --instance e2e     # Initialize/create a named instance
 zap init -R                 # Force full port re-randomization
 zap init --json             # Output as JSON
 zap launch                  # Open homepage (if configured)
 zap launch "API Docs"       # Open a configured link by name
 zap launch "API Docs" --json # Output command result as JSON
+zap home                    # Print homepage URL (if configured)
+zap home --json             # Output homepage value as JSON
+zap notes                   # Print notes (if configured)
+zap notes --json            # Output notes value as JSON
 zap open                    # Alias for: zap launch
 zap o "API Docs"            # Short alias for: zap launch "API Docs"
 ```
@@ -190,7 +200,7 @@ zap envset prod_dbs
 ### JSON Output
 
 Most non-streaming commands support `--json` and will print machine-readable JSON to stdout.
-Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `init`, and git subcommands.
+Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `ls`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `home`, `notes`, `init`, and git subcommands.
 
 Streaming commands keep stream output and are not JSON-encoded:
 
@@ -457,9 +467,13 @@ native:
 Then run:
 
 ```bash
-zap init                # Initializes ports in .zap/state.json
-zap init -R             # Re-randomizes all configured ports
+zap init                        # Initializes ports for default instance
+zap init --instance e2e         # Initializes ports for named instance
+zap init -R                     # Re-randomizes all configured ports in selected instance
 ```
+
+If `init_task` is set, `zap init` runs that task after initialization completes.
+This is equivalent to running `zap init` first and then `zap task <init_task>`.
 
 The assigned ports have **highest precedence** - they override values from any `.env` files. This is useful for:
 
@@ -495,6 +509,19 @@ docker:
       - POSTGRES_DB                   # From env_files
 ```
 
+Docker `ports` mappings also support interpolation, including values initialized by `ports:`:
+
+```yaml
+ports:
+  - MONGO_PORT
+
+docker:
+  mongodb:
+    image: mongo:latest
+    ports:
+      - ${MONGO_PORT}:27017
+```
+
 ### Inspecting resolved env vars
 
 ```bash
@@ -506,14 +533,15 @@ zap env api                        # Works if no environment set named 'api'
 
 ## Instances
 
-Instances let you run multiple copies of the same project from Git worktrees without process/container name collisions.
+Instances let you run multiple stacks for the same project without name or port collisions.
 
 ```bash
-zap init -i                           # Create/reuse random 6-char local instance ID in .zap/state.json
-zap up                                # Start with instance-aware names
+zap up                                # Auto-creates default instance on first run
+zap up --instance e2e                 # Run a named instance
+zap init --instance e2e               # Explicitly create/init named instance
 ```
 
-If you are in a worktree and run `zap init` without `-i`, Zapper prints a warning and keeps the directory in main (non-isolated) mode. See [Instances](instances.md) for full details.
+If you omit `--instance`, Zapper targets `default`. Instance keys must use lowercase letters and hyphens only. See [Instances](instances.md) for full details.
 
 ---
 
@@ -557,6 +585,21 @@ tasks:
 zap task seed
 zap task lint
 ```
+
+### Running a task automatically after init
+
+Set `init_task` to any defined task name:
+
+```yaml
+init_task: seed
+
+tasks:
+  seed:
+    cmds:
+      - pnpm db:seed
+```
+
+When you run `zap init`, Zapper performs normal initialization and then runs that task.
 
 ### Parameters
 
@@ -758,6 +801,12 @@ native:
 
 When you run `zap up frontend`, Zapper starts: postgres → redis → api → frontend.
 
+`depends_on` affects start order only.
+
+- `zap up` / `zap restart` start waves are dependency-aware.
+- `zap down` stops targeted services in a single wave.
+- `zap restart <service>` restarts only the targeted service(s), not their dependencies.
+
 ---
 
 ## Profiles
@@ -813,6 +862,7 @@ Services with a `profiles` field run only when an active profile matches.
 Quick reference links for your project. These are for your own reference and can be displayed by tooling.
 
 You can also set a top-level `homepage` URL as the default target for `zap launch` with no arguments.
+Use `zap home` to print the homepage URL instead of opening a browser.
 
 ### Homepage
 
@@ -851,6 +901,7 @@ links:
 ```bash
 zap launch                     # Open homepage
 zap launch "API Docs"          # Open by link name (quote if spaces)
+zap home                       # Print homepage
 zap open                       # Alias for: zap launch
 zap o "API Docs"               # Short alias for: zap launch "API Docs"
 ```
@@ -861,6 +912,29 @@ zap o "API Docs"               # Short alias for: zap launch "API Docs"
 |----------|----------|-------------|
 | `name` | Yes | Display name (max 100 characters) |
 | `url` | Yes | URL (supports `${VAR}` interpolation) |
+
+---
+
+## Notes
+
+Top-level project notes you can print with `zap notes`.
+The notes string supports `${VAR}` interpolation from your `env_files`.
+
+### Configuration
+
+```yaml
+env_files: [.env]
+notes: |
+  Frontend: http://localhost:${FRONTEND_PORT}
+  API: http://localhost:${API_PORT}
+```
+
+### Usage
+
+```bash
+zap notes                      # Print interpolated notes
+zap notes --json               # JSON output
+```
 
 ---
 
@@ -997,6 +1071,7 @@ tasks:
       - pnpm tsc --noEmit
 
 homepage: http://localhost:5173
+notes: "Docs: http://localhost:3000/docs"
 
 links:
   - name: API Docs

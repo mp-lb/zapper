@@ -11,7 +11,7 @@ import {
 } from "../config/schemas";
 import { Context, Process, Task, Container } from "../types/Context";
 import { renderer } from "../ui/renderer";
-import { loadPorts } from "./portsManager";
+import { loadPorts, loadPortsForInstance } from "./portsManager";
 
 interface RawEnvFile {
   envs?: Array<Record<string, string>>;
@@ -67,7 +67,9 @@ export class EnvResolver {
     const resolvedContext = { ...context };
 
     // Load ports from .zap/state.json - these have highest precedence
-    const assignedPorts = loadPorts(context.projectRoot);
+    const assignedPorts =
+      context.instance?.ports ||
+      loadPortsForInstance(context.projectRoot, context.instanceKey);
 
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(
       resolvedContext.envFiles,
@@ -89,6 +91,13 @@ export class EnvResolver {
     if (resolvedContext.homepage) {
       resolvedContext.homepage = this.expandString(
         resolvedContext.homepage,
+        mergedEnvFromFiles,
+      );
+    }
+
+    if (resolvedContext.notes) {
+      resolvedContext.notes = this.expandString(
+        resolvedContext.notes,
         mergedEnvFromFiles,
       );
     }
@@ -186,6 +195,7 @@ export class EnvResolver {
 
     container.resolvedEnv = { ...envSubset, ...inline.pairs };
     container.env = Array.isArray(container.env) ? container.env : whitelist;
+    container.ports = this.expandPorts(container.ports, mergedEnvFromFiles);
 
     renderer.log.debug(`Final resolved env for docker ${container.name}:`, {
       data: container.resolvedEnv,
@@ -275,6 +285,7 @@ export class EnvResolver {
 
     container.resolvedEnv = { ...envSubset, ...inline.pairs };
     container.env = Array.isArray(container.env) ? container.env : whitelist;
+    container.ports = this.expandPorts(container.ports, mergedEnvFromFiles);
 
     renderer.log.debug(`Final resolved env for docker ${container.name}:`, {
       data: container.resolvedEnv,
@@ -391,6 +402,14 @@ export class EnvResolver {
       }
     }
     return merged;
+  }
+
+  private static expandPorts(
+    ports: string[] | undefined,
+    env: Record<string, string>,
+  ): string[] | undefined {
+    if (!Array.isArray(ports)) return ports;
+    return ports.map((port) => this.expandString(port, env));
   }
 
   private static pickDefaultEnvFiles(

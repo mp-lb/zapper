@@ -150,6 +150,7 @@ export const ZapperConfigSchema = processValidation(
         project: validNameSchema,
         env_files: EnvFilesSchema.optional(),
         ports: z.array(PortNameSchema).optional(),
+        init_task: validNameSchema.optional(),
         git_method: z.enum(["http", "ssh", "cli"]).optional(),
         task_delimiters: TaskDelimitersSchema,
         whitelists: z
@@ -164,6 +165,7 @@ export const ZapperConfigSchema = processValidation(
         processes: z.array(ProcessSchema).optional(),
         tasks: z.record(validNameSchema, TaskSchema).optional(),
         homepage: z.string().min(1).optional(),
+        notes: z.string().min(1).optional(),
         links: z.array(LinkSchema).optional(),
       })
       .strict(),
@@ -178,11 +180,20 @@ export const ServiceStateSchema = z.object({
 export const ZapperStateSchema = z.object({
   activeProfile: z.string().optional(),
   activeEnvironment: z.string().optional(),
+  defaultInstance: z.string().optional(),
+  instances: z
+    .record(
+      z.string(),
+      z.object({
+        id: z.string(),
+        ports: z.record(z.string(), z.string()).optional(),
+      }),
+    )
+    .optional(),
   instanceId: z.string().optional(),
   mode: z.enum(["normal", "isolate"]).optional(),
   ports: z.record(z.string(), z.string()).optional(),
   lastUpdated: z.string().optional(),
-  services: z.record(z.string(), ServiceStateSchema).optional(),
 });
 
 export type Process = z.infer<typeof ProcessSchema>;

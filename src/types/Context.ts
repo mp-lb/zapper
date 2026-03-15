@@ -29,15 +29,23 @@ export interface Context {
   envFiles?: string[]; // Already resolved to absolute paths
   environments: string[]; // Available env file sets
   ports?: string[]; // Port names from config
+  initTask?: string; // Task to run automatically after `zap init`
   gitMethod?: "http" | "ssh" | "cli";
   taskDelimiters?: [string, string]; // Custom delimiters for task interpolation
+  instanceKey: string; // Selected instance key (default if unspecified)
   instanceId?: string | null; // Instance ID for worktree isolation
+  instance?: {
+    key: string;
+    id: string;
+    ports: Record<string, string>;
+  };
 
   // Services organized by type with names included
   processes: Process[]; // Combines native and processes from config
   containers: Container[]; // Combines docker and containers from config
   tasks: Task[]; // Tasks from config
   homepage?: string; // Primary app URL for `zap launch` with no args
+  notes?: string; // Top-level project notes for `zap notes`
   links: Link[]; // Project bookmarks/links
   profiles: string[]; // All unique profiles from processes and containers
   state: ZapperState; // Validated state from state.json

@@ -4,7 +4,7 @@ import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
 import { ProcessInfo } from "../types/index";
-import { ActionPlan, Action } from "../types";
+import { Action } from "../types";
 
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");
@@ -48,13 +48,6 @@ function getSortedNamesFromWave(actions: Action[]): string[] {
  */
 function getActionTypes(wave: { actions: Action[] }): Set<string> {
   return new Set(wave.actions.map((a) => a.type));
-}
-
-/**
- * Helper to flatten all action names in order they appear.
- */
-function flattenActionNames(plan: ActionPlan): string[] {
-  return plan.waves.flatMap((w) => w.actions.map((a) => a.name));
 }
 
 describe("Planner Wave Generation", () => {
@@ -213,7 +206,7 @@ describe("Planner Wave Generation", () => {
       expect(plan.waves[2].actions.map((a) => a.name)).toContain("frontend");
     });
 
-    it("should place dependencies after their dependents for stop", async () => {
+    it("should stop all targeted services in a single wave", async () => {
       const config: ZapperConfig = {
         project: "test-project",
         native: {
@@ -237,12 +230,9 @@ describe("Planner Wave Generation", () => {
       const planner = new Planner(config);
       const plan = await planner.plan("stop", undefined, "test-project");
 
-      // Stop order should be reverse: frontend, api, database
-      expect(plan.waves.length).toBe(3);
-
-      expect(plan.waves[0].actions.map((a) => a.name)).toContain("frontend");
-      expect(plan.waves[1].actions.map((a) => a.name)).toContain("api");
-      expect(plan.waves[2].actions.map((a) => a.name)).toContain("database");
+      expect(plan.waves.length).toBe(1);
+      const stopNames = getSortedNamesFromWave(plan.waves[0].actions);
+      expect(stopNames).toEqual(["api", "database", "frontend"]);
     });
   });
 

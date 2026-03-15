@@ -597,6 +597,32 @@ PORT=3000
 
       expect(result.links[0].url).toBe("http://localhost:");
     });
+
+    it("should interpolate ${VAR} in notes", () => {
+      const envContent = `
+API_PORT=3000
+ENV_NAME=staging
+      `;
+      const envFile = createTempFile(envContent, ".env");
+
+      const context = {
+        projectName: "test",
+        projectRoot: process.cwd(),
+        envFiles: [envFile],
+        processes: [],
+        containers: [],
+        tasks: [],
+        notes: "App: http://localhost:${API_PORT} (${ENV_NAME})",
+        links: [],
+        environments: ["default"],
+        profiles: [],
+        state: {},
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      expect(result.notes).toBe("App: http://localhost:3000 (staging)");
+    });
   });
 
   describe("named environment sets", () => {
@@ -1085,6 +1111,79 @@ PORT=3000
       const result = EnvResolver.resolveContext(context);
 
       expect(result.homepage).toBe("http://localhost:55555");
+    });
+
+    it("should use assigned ports in notes", () => {
+      const projectDir = createTempProjectDir({
+        PORT: "55555",
+      });
+
+      const envContent = `
+PORT=3000
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+
+      const context: Context = {
+        projectName: "test",
+        projectRoot: projectDir,
+        envFiles: [envFile],
+        environments: ["default"],
+        processes: [],
+        containers: [],
+        tasks: [],
+        notes: "Use http://localhost:${PORT}",
+        links: [],
+        profiles: [],
+        state: {
+          activeEnvironment: null,
+          activeProfile: null,
+          services: {},
+        },
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      expect(result.notes).toBe("Use http://localhost:55555");
+    });
+
+    it("should use assigned ports in docker port mappings", () => {
+      const projectDir = createTempProjectDir({
+        MONGO_PORT: "56123",
+      });
+
+      const envContent = `
+MONGO_PORT=27018
+      `;
+
+      const envFile = createTempFile(envContent, ".env");
+
+      const context: Context = {
+        projectName: "test",
+        projectRoot: projectDir,
+        envFiles: [envFile],
+        environments: ["default"],
+        processes: [],
+        containers: [
+          {
+            name: "mongodb",
+            image: "mongo:latest",
+            ports: ["${MONGO_PORT}:27017"],
+          },
+        ],
+        tasks: [],
+        links: [],
+        profiles: [],
+        state: {
+          activeEnvironment: null,
+          activeProfile: null,
+          services: {},
+        },
+      };
+
+      const result = EnvResolver.resolveContext(context);
+
+      expect(result.containers[0].ports).toEqual(["56123:27017"]);
     });
 
     it("should work without ports.json file", () => {

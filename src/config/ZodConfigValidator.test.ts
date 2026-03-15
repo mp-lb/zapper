@@ -95,7 +95,7 @@ describe("ZodConfigValidator", () => {
     }).not.toThrow();
   });
 
-  it("should validate top-level homepage and links", () => {
+  it("should validate top-level homepage, notes, and links", () => {
     const config = {
       project: "myproj",
       native: {
@@ -104,6 +104,7 @@ describe("ZodConfigValidator", () => {
         },
       },
       homepage: "http://localhost:3000",
+      notes: "Use API at ${API_URL}",
       links: [
         {
           name: "Docs",
@@ -345,6 +346,48 @@ describe("ZodConfigValidator", () => {
       tasks: {
         test: {
           cmds: ["echo hello", { task: "other-task" }],
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).not.toThrow();
+  });
+
+  it("should reject config when init_task references unknown task", () => {
+    const config = {
+      project: "myproj",
+      native: {
+        app: {
+          cmd: "echo hello",
+        },
+      },
+      init_task: "seed",
+      tasks: {
+        build: {
+          cmds: ["echo build"],
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).toThrow("init_task references unknown task 'seed'");
+  });
+
+  it("should accept config when init_task references a defined task", () => {
+    const config = {
+      project: "myproj",
+      native: {
+        app: {
+          cmd: "echo hello",
+        },
+      },
+      init_task: "seed",
+      tasks: {
+        seed: {
+          cmds: ["echo seed"],
         },
       },
     };

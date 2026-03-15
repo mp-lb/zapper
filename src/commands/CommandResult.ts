@@ -1,5 +1,6 @@
 import { ZapperState } from "../config/schemas";
 import { StatusResult } from "../core/getStatus";
+import { ServiceListResult } from "../core/getServiceList";
 import { Context, Task } from "../types/Context";
 
 export type CommandResult =
@@ -7,6 +8,11 @@ export type CommandResult =
       kind: "status";
       statusResult: StatusResult;
       context?: Context;
+    }
+  | {
+      kind: "list";
+      listResult: ServiceListResult;
+      context: Context;
     }
   | {
       kind: "tasks.list";
@@ -62,6 +68,14 @@ export type CommandResult =
   | {
       kind: "launch.opened";
       url: string;
+    }
+  | {
+      kind: "home.value";
+      value: string;
+    }
+  | {
+      kind: "notes.value";
+      value: string;
     }
   | {
       kind: "git.checkout.completed";
@@ -127,6 +141,7 @@ export type CommandResult =
   | {
       kind: "init";
       isolated: boolean;
+      instanceKey: string;
       instanceId?: string;
       ports: Record<string, string>;
       path: string;
