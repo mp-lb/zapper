@@ -35,6 +35,10 @@
     "cli",
     "typescript"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mp-lb/zapper.git"
+  },
   "author": "",
   "license": "MIT",
   "devDependencies": {

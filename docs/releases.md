@@ -15,6 +15,20 @@ Step-by-step runbook for cutting releases of Zapper CLI.
 
 Zapper CLI is published to npm as `@mp-lb/zapper`. We use [Changesets](https://github.com/changesets/changesets) for versioning and automated publishing via GitHub Actions.
 
+## Release Auth Prerequisite
+
+Before attempting a release, make sure npm publishing auth is configured correctly for CI. As of March 25, 2026, npm recommends trusted publishing for GitHub Actions and requires one of these for non-interactive publishes:
+
+- Preferred: npm trusted publishing configured for `mp-lb/zapper` and `.github/workflows/release.yml`
+- Fallback: `NPM_TOKEN` must be a granular write token created with **Bypass two-factor authentication** enabled
+
+Important details:
+
+- A regular token that still requires 2FA will fail in CI with `EOTP This operation requires a one-time password`.
+- npm trusted publishing currently requires Node `22.14.0+` and npm CLI `11.5.1+`.
+- For GitHub-based trusted publishing, npm also requires `package.json` `repository.url` to exactly match the GitHub repository URL.
+- Once trusted publishing is working, remove or revoke old write tokens when possible.
+
 ## 1. Create release branch
 
 ```bash
@@ -163,7 +177,7 @@ git push origin release/$(date +%Y-%m-%d):main
 This triggers the GitHub Actions workflow which will:
 1. Run verification checks
 2. Create a "Version Packages" PR (if there are changesets)
-3. Automatically publish to npm when the Version Packages PR is merged
+3. Automatically publish to npm when the Version Packages PR is merged using GitHub Actions OIDC trusted publishing when configured on npm
 
 Immediately monitor the push with GitHub CLI:
 
@@ -273,6 +287,12 @@ npm publish         # Publish to npm
 - Verify package.json has correct name and version
 - Ensure no duplicate version exists on npm
 - Check if there are publishing restrictions
+- If CI shows `EOTP`, replace `NPM_TOKEN` with a granular write token that has **Bypass two-factor authentication** enabled, or finish migrating to npm trusted publishing for `.github/workflows/release.yml`
+- If trusted publishing is configured but publish still fails, confirm these values match exactly on npm:
+  - GitHub org/user: `mp-lb`
+  - Repository: `zapper`
+  - Workflow filename: `release.yml`
+  - `package.json` `repository.url`: `git+https://github.com/mp-lb/zapper.git`
 
 **If the Version Packages PR doesn't appear:**
 - Verify you committed changeset files (should be in `.changeset/` directory)

@@ -57,3 +57,13 @@ Notes:
 - Base VM name defaults to `zapper-e2e-base` (override with `ZAP_E2E_BASE_VM_NAME`).
 - Keep a failed run VM for debugging: `ZAP_E2E_KEEP_VM=1 pnpm test:e2e`.
 - By default, `pnpm test:e2e` is strict and fails if VM setup is missing.
+
+## Release CI Auth
+
+Release publishing runs through `.github/workflows/release.yml`.
+
+- The workflow is now prepared for npm trusted publishing via GitHub Actions OIDC.
+- npm trusted publishing currently requires Node `22.14.0+` and npm CLI `11.5.1+`; the release workflow upgrades npm explicitly before publishing.
+- npm currently requires either trusted publishing or a granular write token with **Bypass two-factor authentication** enabled for non-interactive package publishes.
+- If release CI fails with `EOTP`, the configured `NPM_TOKEN` is not suitable for package publishing and must be replaced or removed after trusted publishing is set up on npm.
+- Keep `package.json` `repository.url` aligned with the canonical GitHub repo because npm checks it for GitHub trusted publishing.
