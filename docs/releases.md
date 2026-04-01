@@ -288,11 +288,15 @@ npm publish         # Publish to npm
 - Ensure no duplicate version exists on npm
 - Check if there are publishing restrictions
 - If CI shows `EOTP`, replace `NPM_TOKEN` with a granular write token that has **Bypass two-factor authentication** enabled, or finish migrating to npm trusted publishing for `.github/workflows/release.yml`
+- If you are using trusted publishing, remove `NPM_TOKEN` from the release workflow and repository secrets for this job; otherwise `changesets/action` will create `.npmrc` and force token-based publish instead of OIDC
 - If trusted publishing is configured but publish still fails, confirm these values match exactly on npm:
   - GitHub org/user: `mp-lb`
   - Repository: `zapper`
   - Workflow filename: `release.yml`
   - `package.json` `repository.url`: `git+https://github.com/mp-lb/zapper.git`
+- If publish fails with `E404 Not Found - PUT https://registry.npmjs.org/@mp-lb%2fzapper`, verify the npm scope owner exists and the publishing identity has rights to it:
+  - `mp-lb` must exist on npm as the owning user or organization
+  - the account connected to the trusted publisher, or the fallback token's owner, must have publish access to the `@mp-lb` scope
 
 **If the Version Packages PR doesn't appear:**
 - Verify you committed changeset files (should be in `.changeset/` directory)
