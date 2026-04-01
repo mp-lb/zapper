@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { RestartCommand } from "./RestartCommand";
 import { CloneCommand } from "./CloneCommand";
 import { LogsCommand } from "./LogsCommand";
+import { StartupLogCommand } from "./StartupLogCommand";
 import { StatusCommand } from "./StatusCommand";
 import { ListCommand } from "./ListCommand";
 import { renderer } from "../ui/renderer";
@@ -99,6 +100,23 @@ describe("Multi-service command targets", () => {
       "Cannot follow logs for multiple services. Use --no-follow or request a single service.",
     );
     expect(showLogs).not.toHaveBeenCalled();
+  });
+
+  it("supports multiple services for startup-log", async () => {
+    const showStartupLog = vi.fn().mockResolvedValue(undefined);
+    const command = new StartupLogCommand();
+    const infoSpy = vi.spyOn(renderer.log, "info").mockImplementation(() => {});
+
+    await command.execute({
+      zapper: { showStartupLog } as unknown as Zapper,
+      service: ["api", "worker"],
+      options: {},
+    });
+
+    expect(showStartupLog).toHaveBeenNthCalledWith(1, "api");
+    expect(showStartupLog).toHaveBeenNthCalledWith(2, "worker");
+    expect(infoSpy).toHaveBeenCalledWith("Showing startup log for api");
+    expect(infoSpy).toHaveBeenCalledWith("Showing startup log for worker");
   });
 
   it("passes multiple services to status filtering", async () => {

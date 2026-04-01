@@ -24,7 +24,7 @@ describe("instanceConfig", () => {
     expect(loadInstanceConfig(testDir)).toBeNull();
   });
 
-  it("saves and loads isolated instance config via state.json", () => {
+  it("saves and loads default instance config via state.json", () => {
     saveInstanceConfig(testDir, { instanceId: "wt-abc123", mode: "isolate" });
 
     expect(loadInstanceConfig(testDir)).toEqual({
@@ -34,7 +34,7 @@ describe("instanceConfig", () => {
     expect(loadState(testDir).instanceId).toBe("wt-abc123");
   });
 
-  it("clears isolation when instanceId is null", () => {
+  it("clears the default instance id when instanceId is null", () => {
     saveInstanceConfig(testDir, { instanceId: "foo", mode: "isolate" });
     saveInstanceConfig(testDir, { instanceId: null, mode: "normal" });
 

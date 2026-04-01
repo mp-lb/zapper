@@ -4,6 +4,11 @@ import { Planner } from "./Planner";
 import { executeActions } from "./executeActions";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
+import {
+  createInstance,
+  resolveInstance,
+  validateInstanceKey,
+} from "./instanceResolver";
 import { ContextNotLoadedError, ServiceNotFoundError } from "../errors";
 import * as fs from "fs";
 import * as path from "path";
@@ -15,6 +20,15 @@ vi.mock("./Planner");
 vi.mock("./executeActions");
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");
+vi.mock("./instanceResolver", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./instanceResolver")>();
+  return {
+    ...actual,
+    resolveInstance: vi.fn(),
+    createInstance: vi.fn(),
+    validateInstanceKey: vi.fn(),
+  };
+});
 vi.mock("../config/yamlParser");
 
 const mockPlanner = vi.mocked(Planner);
@@ -23,6 +37,9 @@ const mockExecuteActions = vi.mocked(executeActions);
 const _mockPm2Manager = vi.mocked(Pm2Manager);
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const _mockDockerManager = vi.mocked(DockerManager);
+const mockResolveInstance = vi.mocked(resolveInstance);
+const mockCreateInstance = vi.mocked(createInstance);
+const mockValidateInstanceKey = vi.mocked(validateInstanceKey);
 
 // Mock parseYamlFile
 const mockParseYamlFile = vi.mocked(parseYamlFile);
@@ -49,6 +66,12 @@ describe("Zapper", () => {
         database: { image: "postgres:15" },
       },
     });
+    mockResolveInstance.mockResolvedValue({
+      instanceKey: "default",
+      instanceId: "inst123",
+    });
+    mockCreateInstance.mockReturnValue("inst123");
+    mockValidateInstanceKey.mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -171,6 +194,16 @@ native:
       const context = zapper.getContext();
       expect(context?.gitMethod).toBeUndefined();
     });
+
+    it("auto-creates instance state for non-up commands too", async () => {
+      const configPath = createMinimalTempConfig();
+
+      await zapper.loadConfig(configPath, { __command: "status" });
+
+      expect(mockResolveInstance).toHaveBeenCalledWith(tempDir, undefined, {
+        autoCreate: true,
+      });
+    });
   });
 
   describe("getter methods before loadConfig", () => {
@@ -226,6 +259,7 @@ native:
       { name: "stopProcesses", args: [] },
       { name: "restartProcesses", args: [] },
       { name: "showLogs", args: ["api"] },
+      { name: "showStartupLog", args: ["api"] },
       { name: "reset", args: [] },
       { name: "cloneRepos", args: [] },
       { name: "runTask", args: ["task1"] },
@@ -408,6 +442,34 @@ native:
           undefined,
         );
       });
+    });
+  });
+
+  describe("showStartupLog", () => {
+    beforeEach(async () => {
+      const configPath = createTempConfig({});
+      await zapper.loadConfig(configPath);
+    });
+
+    it("shows saved startup output for a service", async () => {
+      vi.mocked(DockerManager.startupLogExists).mockReturnValue(true);
+      vi.mocked(DockerManager.showStartupLog).mockResolvedValue(undefined);
+
+      await zapper.showStartupLog("database");
+
+      expect(DockerManager.showStartupLog).toHaveBeenCalledWith({
+        projectName: "test-project",
+        serviceName: "database",
+        configDir: tempDir,
+      });
+    });
+
+    it("throws when no startup log exists", async () => {
+      vi.mocked(DockerManager.startupLogExists).mockReturnValue(false);
+
+      await expect(zapper.showStartupLog("database")).rejects.toThrow(
+        "No startup log found for service: database",
+      );
     });
   });
 

@@ -37,10 +37,10 @@ describe("KillCommand", () => {
     });
 
     expect(getProjectKillTargets).toHaveBeenCalledWith(undefined);
-    expect(mockedConfirm).toHaveBeenCalledWith(
-      expect.stringContaining("across ALL instances"),
-      { defaultYes: false, force: undefined },
-    );
+    expect(mockedConfirm).toHaveBeenCalledWith("Delete these resources?", {
+      defaultYes: false,
+      force: undefined,
+    });
     expect(killProjectResources).not.toHaveBeenCalled();
     expect(result).toEqual({
       kind: "kill",
@@ -75,7 +75,7 @@ describe("KillCommand", () => {
     });
 
     expect(getProjectKillTargets).toHaveBeenCalledWith(undefined);
-    expect(mockedConfirm).toHaveBeenCalledWith(expect.any(String), {
+    expect(mockedConfirm).toHaveBeenCalledWith("Delete these resources?", {
       defaultYes: false,
       force: true,
     });

@@ -17,6 +17,8 @@ export function loadInstanceConfig(projectRoot: string): InstanceConfig | null {
 
   return {
     instanceId,
+    // Keep the legacy state value for compatibility; semantically this is just
+    // "the default instance has an explicit id".
     mode: "isolate",
   };
 }
@@ -35,7 +37,9 @@ export function saveInstanceConfig(
     nextInstances[DEFAULT_INSTANCE_KEY] = {
       id: config.instanceId,
       ports:
-        existing.instances?.[DEFAULT_INSTANCE_KEY]?.ports || existing.ports || {},
+        existing.instances?.[DEFAULT_INSTANCE_KEY]?.ports ||
+        existing.ports ||
+        {},
     };
   } else {
     delete nextInstances[DEFAULT_INSTANCE_KEY];

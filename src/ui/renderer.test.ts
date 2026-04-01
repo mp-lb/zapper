@@ -39,13 +39,13 @@ function createStatusResult(): StatusResult {
 }
 
 describe("renderer", () => {
-  it("builds isolation enabled text", () => {
+  it("builds instance ready text", () => {
     const text = renderer.isolation.enabledText("inst123");
-    expect(text).toContain("Isolation enabled");
+    expect(text).toContain("Instance ready");
     expect(text).toContain("inst123");
   });
 
-  it("prints isolation enabled through success logging", () => {
+  it("prints instance ready through success logging", () => {
     const successSpy = vi
       .spyOn(renderer.log, "success")
       .mockImplementation(() => {});
@@ -61,10 +61,50 @@ describe("renderer", () => {
       createContext("inst123"),
     );
 
-    expect(renderer.status.contextHeaderText(createContext("inst123"))).toContain(
-      "demo",
-    );
+    expect(
+      renderer.status.contextHeaderText(createContext("inst123")),
+    ).toContain("demo");
     expect(text).toContain("demo");
     expect(text).toContain("inst123");
+  });
+
+  it("builds confirmation prompts through renderer", () => {
+    expect(renderer.confirm.resetPromptText()).toContain(".zap");
+    expect(renderer.confirm.promptText("Continue?", false)).toBe(
+      "Continue? [y/N] ",
+    );
+    expect(renderer.confirm.promptText("Line 1\nContinue?", false)).toBe(
+      "Line 1\nContinue?\n[y/N] ",
+    );
+    expect(
+      renderer.confirm.globalKillAllPromptText({
+        projectCount: 2,
+        projectNames: ["alpha", "beta"],
+        pm2Count: 4,
+        containerCount: 1,
+      }),
+    ).toContain("\n  - alpha\n  - beta\n");
+    expect(renderer.confirm.deleteResourcesPromptText()).toBe(
+      "Delete these resources?",
+    );
+  });
+
+  it("formats links with homepage labeling", () => {
+    const text = renderer.links.toText([
+      {
+        name: "Home",
+        url: "http://localhost:3000",
+        isHomepage: true,
+      },
+      {
+        name: "API Docs",
+        url: "http://localhost:3001/docs",
+        isHomepage: false,
+      },
+    ]);
+
+    expect(text).toContain("Home");
+    expect(text).toContain("homepage");
+    expect(text).toContain("http://localhost:3001/docs");
   });
 });

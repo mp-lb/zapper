@@ -72,6 +72,7 @@ async function executeAction(
   config: ZapperConfig,
   projectName: string,
   pm2: Pm2Executor,
+  configDir?: string | null,
 ): Promise<void> {
   if (action.serviceType === "native") {
     const proc = findProcess(config, action.name);
@@ -121,15 +122,23 @@ async function executeAction(
         "com.zapper.service": name,
       } as Record<string, string>;
 
-      await DockerManager.startContainerAsync(dockerName, {
-        image: c.image,
-        ports,
-        volumes: volumeBindings,
-        networks: c.networks,
-        environment: envMap,
-        command: c.command,
-        labels,
-      });
+      await DockerManager.startContainerAsync(
+        dockerName,
+        {
+          image: c.image,
+          ports,
+          volumes: volumeBindings,
+          networks: c.networks,
+          environment: envMap,
+          command: c.command,
+          labels,
+        },
+        {
+          projectName,
+          serviceName: name,
+          configDir: configDir || undefined,
+        },
+      );
     } else {
       await DockerManager.stopContainer(dockerName);
     }
@@ -156,12 +165,7 @@ export async function executeActions(
     // Execute all actions in the wave in parallel
     await Promise.all(
       wave.actions.map((action) =>
-        executeAction(
-          action,
-          config,
-          projectName,
-          pm2,
-        ),
+        executeAction(action, config, projectName, pm2, configDir),
       ),
     );
 

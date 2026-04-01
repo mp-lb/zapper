@@ -3,6 +3,12 @@ import { StatusResult } from "../core/getStatus";
 import { ServiceListResult } from "../core/getServiceList";
 import { Context, Task } from "../types/Context";
 
+export interface ProjectLinkResult {
+  name: string;
+  url: string;
+  isHomepage: boolean;
+}
+
 export type CommandResult =
   | {
       kind: "status";
@@ -68,6 +74,10 @@ export type CommandResult =
   | {
       kind: "launch.opened";
       url: string;
+    }
+  | {
+      kind: "links.list";
+      links: ProjectLinkResult[];
     }
   | {
       kind: "home.value";

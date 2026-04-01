@@ -78,6 +78,22 @@ export class ContainerNotRunningError extends Error {
   }
 }
 
+export class ContainerStartError extends Error {
+  constructor(
+    public serviceName: string,
+    public dockerName: string,
+    public summary: string,
+    message?: string,
+  ) {
+    super(
+      message ||
+        `Failed to start Docker service: ${serviceName} (${dockerName}). ${summary}` +
+          ` Run \`zap startup-log ${serviceName}\` for details.`,
+    );
+    this.name = "ContainerStartError";
+  }
+}
+
 export class ContextNotLoadedError extends Error {
   constructor(message?: string) {
     super(message || "Context not loaded");

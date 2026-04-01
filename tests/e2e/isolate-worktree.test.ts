@@ -81,12 +81,14 @@ function cleanupFixture(paths: WorktreeFixturePaths | null): void {
   }
 }
 
-describe("E2E: init in git worktree", () => {
+describe("E2E: instances in a git worktree checkout", () => {
   let fixturePaths: WorktreeFixturePaths | null = null;
 
   beforeAll(() => {
     if (!fs.existsSync(CLI_PATH)) {
-      throw new Error(`CLI not found at ${CLI_PATH}. Run 'npm run build' first.`);
+      throw new Error(
+        `CLI not found at ${CLI_PATH}. Run 'npm run build' first.`,
+      );
     }
     if (!fs.existsSync(SETUP_SCRIPT_PATH)) {
       throw new Error(`Setup script not found at ${SETUP_SCRIPT_PATH}.`);
@@ -100,19 +102,22 @@ describe("E2E: init in git worktree", () => {
     fixturePaths = null;
   });
 
-  it("warns for main init in worktree and creates instance with -i", () => {
+  it("treats a git worktree like any other checkout and initializes normally", () => {
     const fixtureName = `init-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     fixturePaths = setupWorktreeFixture(fixtureName);
 
-    const warningOutput = runZap(["init", "--config", "zap.yaml"], fixturePaths.worktreeDir);
-    expect(warningOutput).toContain("Worktree detected");
+    const initOutput = runZap(
+      ["init", "--config", "zap.yaml"],
+      fixturePaths.worktreeDir,
+    );
+    expect(initOutput).toContain('Initialized instance "default"');
 
-    const isolatedOutput = runZap(
+    const selectedInstanceOutput = runZap(
       ["init", "-i", "--json", "--config", "zap.yaml"],
       fixturePaths.worktreeDir,
     );
 
-    const lines = isolatedOutput
+    const lines = selectedInstanceOutput
       .split("\n")
       .map((line) => line.trim())
       .filter(Boolean);
@@ -127,7 +132,6 @@ describe("E2E: init in git worktree", () => {
     const statePath = path.join(fixturePaths.worktreeDir, ".zap", "state.json");
     const state = JSON.parse(fs.readFileSync(statePath, "utf8"));
 
-    expect(state.mode).toBe("isolate");
-    expect(state.instanceId).toBe(payload.instanceId);
+    expect(state.instances.default.id).toBe(payload.instanceId);
   });
 });

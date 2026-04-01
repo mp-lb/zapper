@@ -1,6 +1,7 @@
 import { CommandHandler, CommandContext } from "./CommandHandler";
 import { CommandResult } from "./CommandResult";
 import { confirm } from "../utils/confirm";
+import { renderer } from "../ui/renderer";
 
 export class KillCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -12,8 +13,29 @@ export class KillCommand extends CommandHandler {
       service && service.trim().length > 0 ? service : undefined;
     const targets = await zapper.getProjectKillTargets(projectName);
 
+    renderer.log.report(
+      renderer.command.globalListText(
+        [
+          {
+            name: targets.projectName,
+            pm2: targets.pm2,
+            containers: targets.containers,
+          },
+        ],
+        false,
+      ),
+    );
+    renderer.log.info(
+      renderer.confirm.killProjectPromptText({
+        projectName: targets.projectName,
+        prefix: targets.prefix,
+        pm2Count: targets.pm2.length,
+        containerCount: targets.containers.length,
+      }),
+    );
+
     const proceed = await confirm(
-      `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${targets.projectName}" (prefix "${targets.prefix}."). Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
+      renderer.confirm.deleteResourcesPromptText(),
       { defaultYes: false, force: options.force },
     );
 

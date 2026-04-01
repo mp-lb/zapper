@@ -7,7 +7,7 @@ if [[ $# -lt 1 ]]; then
 fi
 
 OUTPUT_ROOT="$1"
-FIXTURE_NAME="${2:-worktree-fixture}"
+FIXTURE_NAME="${2:-checkout-fixture}"
 MAIN_DIR="${OUTPUT_ROOT}/${FIXTURE_NAME}-main"
 WORKTREE_DIR="${OUTPUT_ROOT}/${FIXTURE_NAME}-worktree"
 
@@ -19,18 +19,18 @@ git -C "$MAIN_DIR" config user.name "Zapper E2E"
 git -C "$MAIN_DIR" config user.email "zapper-e2e@example.com"
 
 cat > "$MAIN_DIR/zap.yaml" <<'YAML'
-project: worktree-isolate-test
+project: instance-checkout-test
 native:
   app:
-    cmd: node -e "setInterval(() => console.log('worktree isolate fixture'), 1000)"
+    cmd: node -e "setInterval(() => console.log('instance checkout fixture'), 1000)"
 YAML
 
 cat > "$MAIN_DIR/README.md" <<'TXT'
-Worktree isolate e2e fixture
+Instance checkout e2e fixture
 TXT
 
 git -C "$MAIN_DIR" add README.md zap.yaml
-git -C "$MAIN_DIR" commit -m "Initialize worktree isolate fixture" >/dev/null
+git -C "$MAIN_DIR" commit -m "Initialize instance checkout fixture" >/dev/null
 git -C "$MAIN_DIR" worktree add "$WORKTREE_DIR" HEAD >/dev/null
 
 echo "MAIN_DIR=$MAIN_DIR"

@@ -1,12 +1,13 @@
 import { renderer } from "../ui/renderer";
 import type { StatusResult } from "../core/getStatus";
 import type { Context, Task } from "../types/Context";
+import type { ServiceListResult } from "../core/getServiceList";
 import { logger, LogLevel } from "../utils/logger";
 import { ConfigValidationError, ServiceNotFoundError } from "../errors";
 
 function section(title: string): void {
   renderer.machine.line("");
-  renderer.machine.line(`==================== ${title} ====================`);
+  renderer.heading.print(title);
 }
 
 function main(): void {
@@ -75,6 +76,41 @@ function main(): void {
     ],
   };
 
+  const serviceList: ServiceListResult = {
+    services: [
+      {
+        type: "native",
+        service: "api",
+        status: "up",
+        ports: ["API_PORT=3000", "METRICS_PORT=9090"],
+        cwd: "/workspace/apps/api",
+        cmd: "pnpm dev",
+      },
+      {
+        type: "native",
+        service: "worker",
+        status: "pending",
+        ports: [],
+        cwd: "/workspace/apps/worker",
+        cmd: "pnpm worker",
+      },
+      {
+        type: "docker",
+        service: "postgres",
+        status: "up",
+        ports: ["5432:5432"],
+        cmd: "postgres:16",
+      },
+      {
+        type: "docker",
+        service: "redis",
+        status: "down",
+        ports: ["6379:6379"],
+        cmd: "redis:7",
+      },
+    ],
+  };
+
   const tasks: Task[] = [
     {
       name: "dev",
@@ -110,24 +146,112 @@ function main(): void {
     data: { wave: 2, actions: ["api", "worker"] },
   });
 
-  section("Status Report");
+  section("Status");
   renderer.log.report(renderer.status.toText(statusResult, contextHeader));
 
-  section("Task Report");
+  section("Services (zap ls)");
+  renderer.log.report(renderer.list.toText(serviceList, contextHeader));
+
+  section("Tasks");
   renderer.log.report(renderer.tasks.toText(tasks));
 
-  section("Profile Report");
+  section("Profiles");
   renderer.log.report(renderer.profiles.toText(profiles));
   renderer.log.report(renderer.profiles.pickerText(profiles, "dev"));
 
-  section("Environment Report");
+  section("Environments");
   renderer.log.report(renderer.environments.toText(environments));
   renderer.log.report(
     renderer.environments.pickerText(environments, "staging"),
   );
 
-  section("Warnings");
-  renderer.warnings.printUnisolatedWorktree();
+  section("Resource List View");
+  renderer.log.report(
+    renderer.command.globalListText(
+      [
+        {
+          name: "zapper-playground",
+          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          containers: ["zap.zapper-playground.postgres"],
+        },
+        {
+          name: "hyperstore",
+          pm2: ["zap.hyperstore.web"],
+          containers: ["zap.hyperstore.redis"],
+        },
+      ],
+      true,
+    ),
+  );
+
+  section("Confirmation Question");
+  renderer.machine.line(
+    renderer.confirm.promptText(renderer.confirm.deleteResourcesPromptText()),
+  );
+
+  section("Confirmation Flow");
+  renderer.log.info(
+    renderer.confirm.globalKillAllPromptText({
+      projectCount: 3,
+      projectNames: ["zapper-playground", "hyperstore", "newbird"],
+      pm2Count: 7,
+      containerCount: 2,
+    }),
+  );
+  renderer.log.report(
+    renderer.command.globalListText(
+      [
+        {
+          name: "zapper-playground",
+          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          containers: ["zap.zapper-playground.postgres"],
+        },
+        {
+          name: "hyperstore",
+          pm2: ["zap.hyperstore.web"],
+          containers: ["zap.hyperstore.redis"],
+        },
+        {
+          name: "newbird",
+          pm2: [],
+          containers: [],
+        },
+      ],
+      true,
+    ),
+  );
+  renderer.machine.line(
+    renderer.confirm.promptText(renderer.confirm.deleteResourcesPromptText()),
+  );
+
+  section("Command Messages");
+  renderer.log.info(renderer.command.abortedText());
+  renderer.log.info(renderer.command.openingText("https://example.com/docs"));
+  renderer.log.info(
+    renderer.command.killCompletedText({
+      projectName: "zapper-playground",
+      prefix: "zap.zapper-playground",
+      pm2Count: 3,
+      containerCount: 2,
+    }),
+  );
+  renderer.log.report(
+    renderer.command.globalListText(
+      [
+        {
+          name: "zapper-playground",
+          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          containers: ["zap.zapper-playground.postgres"],
+        },
+        {
+          name: "old-sandbox",
+          pm2: [],
+          containers: [],
+        },
+      ],
+      true,
+    ),
+  );
 
   section("Errors");
   renderer.errors.print(

@@ -28,6 +28,7 @@ import {
   validateInstanceKey,
 } from "./instanceResolver";
 import { initializePorts, loadPortsForInstance } from "../config/portsManager";
+import { loadState } from "../config/stateLoader";
 
 export interface ProjectKillTargets {
   projectName: string;
@@ -72,26 +73,30 @@ export class Zapper {
     }
 
     const commandName = cliOptions?.__command;
-    const autoCreate = commandName === "up" || commandName === "init";
     const instanceResolution = await resolveInstance(
       projectRoot,
       selectedInstanceKey,
       {
-        autoCreate,
+        autoCreate: true,
       },
     );
     this.context.instanceKey = instanceResolution.instanceKey;
     this.context.instanceId = instanceResolution.instanceId;
 
     // Centralized command boot sequence hook:
-    // For `up`, ensure instance-scoped ports exist before env resolution.
-    if (commandName === "up") {
+    // Ensure instance-scoped ports exist before env resolution for any
+    // config-backed command so startup does not depend on `up` running first.
+    if (commandName || !this.context.instance) {
       initializePorts(
         projectRoot,
         this.context.ports || [],
         instanceResolution.instanceKey,
       );
     }
+
+    // Refresh state after any implicit initialization so commands like `state`
+    // observe the latest persisted instance/port data on first run.
+    this.context.state = loadState(projectRoot);
 
     this.context.instance = {
       key: instanceResolution.instanceKey,
@@ -436,17 +441,40 @@ export class Zapper {
     }
   }
 
+  async showStartupLog(serviceName: string): Promise<void> {
+    if (!this.context) throw new ContextNotLoadedError();
+
+    const resolvedName = this.resolveServiceName(serviceName);
+    const isKnownService =
+      this.context.containers.some((c) => c.name === resolvedName) ||
+      this.context.processes.some((p) => p.name === resolvedName);
+
+    if (!isKnownService) {
+      throw new ServiceNotFoundError(serviceName);
+    }
+
+    const startupLogContext = {
+      projectName: this.context.projectName,
+      serviceName: resolvedName,
+      configDir: this.context.projectRoot,
+    };
+
+    if (!DockerManager.startupLogExists(startupLogContext)) {
+      throw new Error(`No startup log found for service: ${resolvedName}`);
+    }
+
+    await DockerManager.showStartupLog(startupLogContext);
+  }
+
   async reset(force = false): Promise<void> {
     if (!this.context) throw new ContextNotLoadedError();
 
     const proceed = force
       ? true
-      : await confirm(
-          "This will stop all processes and remove the .zap directory. Continue?",
-        );
+      : await confirm(renderer.confirm.zapperResetPromptText());
 
     if (!proceed) {
-      renderer.log.info("Aborted.");
+      renderer.log.info(renderer.command.abortedText());
       return;
     }
 
@@ -455,9 +483,9 @@ export class Zapper {
 
     if (fs.existsSync(zapDir)) {
       fs.rmSync(zapDir, { recursive: true, force: true });
-      renderer.log.info("Removed .zap directory.");
+      renderer.log.info(renderer.command.removedZapDirText());
     } else {
-      renderer.log.info(".zap directory does not exist.");
+      renderer.log.info(renderer.command.missingZapDirText());
     }
   }
 
@@ -472,7 +500,10 @@ export class Zapper {
     this.context.instance = {
       key: this.context.instanceKey,
       id: instanceId,
-      ports: loadPortsForInstance(this.context.projectRoot, this.context.instanceKey),
+      ports: loadPortsForInstance(
+        this.context.projectRoot,
+        this.context.instanceKey,
+      ),
     };
     return instanceId;
   }

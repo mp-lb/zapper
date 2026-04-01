@@ -62,7 +62,7 @@ describe("InitCommand", () => {
     expect(result.ports).toHaveProperty("BACKEND_PORT");
   });
 
-  it("initializes isolated mode with generated instance id", async () => {
+  it("initializes the selected instance with a generated id", async () => {
     const ctx = createMockContext({}, { instance: true });
     const result = await command.execute(ctx);
 
@@ -88,7 +88,9 @@ describe("InitCommand", () => {
     const first = await command.execute(createMockContext());
 
     const second = await command.execute(
-      createMockContext({ ports: ["FRONTEND_PORT", "BACKEND_PORT", "API_PORT"] }),
+      createMockContext({
+        ports: ["FRONTEND_PORT", "BACKEND_PORT", "API_PORT"],
+      }),
     );
 
     expect(second.ports.FRONTEND_PORT).toBe(first.ports.FRONTEND_PORT);
@@ -108,7 +110,7 @@ describe("InitCommand", () => {
     expect(second.ports).toEqual({ PORT_A: second.ports.PORT_A });
   });
 
-  it("does not emit worktree warning", async () => {
+  it("does not emit any git-location-specific warning", async () => {
     fs.writeFileSync(
       path.join(tempDir, ".git"),
       "gitdir: /tmp/main/.git/worktrees/wt",

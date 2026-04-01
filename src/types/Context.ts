@@ -33,7 +33,7 @@ export interface Context {
   gitMethod?: "http" | "ssh" | "cli";
   taskDelimiters?: [string, string]; // Custom delimiters for task interpolation
   instanceKey: string; // Selected instance key (default if unspecified)
-  instanceId?: string | null; // Instance ID for worktree isolation
+  instanceId?: string | null; // Instance ID used to namespace this stack
   instance?: {
     key: string;
     id: string;

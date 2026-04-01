@@ -1,7 +1,7 @@
 {
-  "name": "zapper-cli",
+  "name": "@mp-lb/zapper",
   "version": "0.13.0",
-  "description": "A minimal TypeScript CLI project",
+  "description": "A lightweight dev environment runner for local multi-service projects",
   "type": "commonjs",
   "main": "dist/index.js",
   "bin": {

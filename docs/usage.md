@@ -25,7 +25,7 @@ Complete reference for `zap.yaml` syntax and all CLI commands.
 ## Installation
 
 ```bash
-npm install -g pm2 @maplab/zapper
+npm install -g pm2 @mp-lb/zapper
 ```
 
 For VS Code/Cursor, install the extension: `felixsebastian.zapper-vscode`
@@ -129,9 +129,14 @@ zap ls api db               # List details for specific services
 zap ls --json               # Output detailed list as JSON
 zap logs api                # Follow logs for one service
 zap logs api worker --no-follow  # Show logs for multiple services and exit
+zap startup-log api         # Show saved startup output for one service
 ```
 
 When passing multiple services to `zap logs`, use `--no-follow`.
+
+If a service fails during startup, Zapper saves the last startup attempt output
+under `.zap/logs/`. Use `zap startup-log <service>` to inspect that saved
+startup output.
 
 ### Tasks
 
@@ -158,13 +163,15 @@ zap clone                   # Clone all repos defined in config
 zap clone api               # Clone one repo
 zap clone api web           # Clone multiple repos
 zap clone --json            # Output command result as JSON
-zap init                    # Initialize local state for the default instance (and run init_task if configured)
+zap init                    # Ensure local state exists for the default instance (and run init_task if configured)
 zap init --instance e2e     # Initialize/create a named instance
 zap init -R                 # Force full port re-randomization
 zap init --json             # Output as JSON
 zap launch                  # Open homepage (if configured)
 zap launch "API Docs"       # Open a configured link by name
 zap launch "API Docs" --json # Output command result as JSON
+zap links                   # List homepage and configured links
+zap links --json            # Output links as JSON
 zap home                    # Print homepage URL (if configured)
 zap home --json             # Output homepage value as JSON
 zap notes                   # Print notes (if configured)
@@ -200,12 +207,13 @@ zap envset prod_dbs
 ### JSON Output
 
 Most non-streaming commands support `--json` and will print machine-readable JSON to stdout.
-Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `ls`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `home`, `notes`, `init`, and git subcommands.
+Examples: `up`, `down`, `restart`, `clone`, `reset`, `kill`, `status`, `ls`, `task` (list/params), `profile`, `env`, `state`, `config`, `launch`, `links`, `home`, `notes`, `init`, and git subcommands.
 
 Streaming commands keep stream output and are not JSON-encoded:
 
 ```bash
 zap logs <service> [more-services...] [--no-follow]
+zap startup-log <service> [more-services...]
 zap task <name>
 ```
 
@@ -467,10 +475,12 @@ native:
 Then run:
 
 ```bash
-zap init                        # Initializes ports for default instance
-zap init --instance e2e         # Initializes ports for named instance
+zap init                        # Ensures ports/state exist for default instance
+zap init --instance e2e         # Ensures ports/state exist for named instance
 zap init -R                     # Re-randomizes all configured ports in selected instance
 ```
+
+Most config-backed commands now perform this initialization step automatically if the target instance has not been created yet, so your first command no longer needs to be `zap up`.
 
 If `init_task` is set, `zap init` runs that task after initialization completes.
 This is equivalent to running `zap init` first and then `zap task <init_task>`.
@@ -489,7 +499,7 @@ FRONTEND_PORT=3000
 FRONTEND_URL=http://localhost:${FRONTEND_PORT}
 ```
 
-After `zap init`:
+After initialization:
 
 ```bash
 # If FRONTEND_PORT was assigned 54321
@@ -536,7 +546,7 @@ zap env api                        # Works if no environment set named 'api'
 Instances let you run multiple stacks for the same project without name or port collisions.
 
 ```bash
-zap up                                # Auto-creates default instance on first run
+zap up                                # Ensures default instance exists on first run
 zap up --instance e2e                 # Run a named instance
 zap init --instance e2e               # Explicitly create/init named instance
 ```
@@ -862,7 +872,7 @@ Services with a `profiles` field run only when an active profile matches.
 Quick reference links for your project. These are for your own reference and can be displayed by tooling.
 
 You can also set a top-level `homepage` URL as the default target for `zap launch` with no arguments.
-Use `zap home` to print the homepage URL instead of opening a browser.
+Use `zap home` to print just the homepage URL, or `zap links` to list the homepage alongside your configured links.
 
 ### Homepage
 
@@ -901,6 +911,7 @@ links:
 ```bash
 zap launch                     # Open homepage
 zap launch "API Docs"          # Open by link name (quote if spaces)
+zap links                      # List homepage + configured links
 zap home                       # Print homepage
 zap open                       # Alias for: zap launch
 zap o "API Docs"               # Short alias for: zap launch "API Docs"

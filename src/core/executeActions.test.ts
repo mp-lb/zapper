@@ -232,6 +232,11 @@ describe("executeActions", () => {
             "com.zapper.service": "database",
           },
         },
+        {
+          projectName: "test-project",
+          serviceName: "database",
+          configDir: "/config/dir",
+        },
       );
     });
 
@@ -271,6 +276,11 @@ describe("executeActions", () => {
             "com.zapper.project": "test-project",
             "com.zapper.service": "redis",
           },
+        },
+        {
+          projectName: "test-project",
+          serviceName: "redis",
+          configDir: "/config/dir",
         },
       );
     });
@@ -364,6 +374,11 @@ describe("executeActions", () => {
         expect.objectContaining({
           volumes: ["simple_volume:/data", "complex_volume:/app/data"],
         }),
+        {
+          projectName: "test-project",
+          serviceName: "test",
+          configDir: "/config/dir",
+        },
       );
     });
   });
@@ -409,6 +424,11 @@ describe("executeActions", () => {
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
         "zap.test-project.redis",
         expect.any(Object),
+        {
+          projectName: "test-project",
+          serviceName: "redis",
+          configDir: "/config/dir",
+        },
       );
     });
   });

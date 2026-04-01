@@ -13,7 +13,7 @@ Step-by-step runbook for cutting releases of Zapper CLI.
 
 ## Overview
 
-Zapper CLI is published to npm as `zapper-cli`. We use [Changesets](https://github.com/changesets/changesets) for versioning and automated publishing via GitHub Actions.
+Zapper CLI is published to npm as `@mp-lb/zapper`. We use [Changesets](https://github.com/changesets/changesets) for versioning and automated publishing via GitHub Actions.
 
 ## 1. Create release branch
 
@@ -193,7 +193,7 @@ git branch -d release/$(date +%Y-%m-%d)  # Clean up release branch
 Check npm directly with npm CLI:
 
 ```bash
-npm view zapper-cli version
+npm view @mp-lb/zapper version
 ```
 
 Confirm this matches your just-released version from `package.json`.
@@ -201,12 +201,12 @@ Confirm this matches your just-released version from `package.json`.
 Then test the published package:
 
 ```bash
-npm install -g zapper-cli@latest
+npm install -g @mp-lb/zapper@latest
 zap --version
 zap --help
 ```
 
-Check npm to verify the new version was published: https://www.npmjs.com/package/zapper-cli
+Check npm to verify the new version was published: https://www.npmjs.com/package/@mp-lb/zapper
 
 ## Wait and Recheck After Push
 
@@ -232,7 +232,7 @@ Check npm to verify the new version was published: https://www.npmjs.com/package
 4. After release is complete and npm shows the new version, wait 5 more minutes and verify npm again:
    ```bash
    sleep 300
-   npm view zapper-cli version
+   npm view @mp-lb/zapper version
    ```
    This confirms the published version is still resolvable via npm registry APIs.
 

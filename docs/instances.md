@@ -5,7 +5,7 @@ Zapper is instance-first. A project can have multiple stack instances, and each 
 - Its own random `id` (used in PM2/Docker names)
 - Its own assigned `ports` map
 
-This prevents collisions across worktrees and also supports multiple stacks from one repo (for example, E2E runs).
+This prevents collisions across separate checkouts and also supports multiple stacks from one repo (for example, E2E runs).
 
 ## Defaults
 
@@ -14,14 +14,14 @@ This prevents collisions across worktrees and also supports multiple stacks from
 
 ## Initialization
 
-- `zap up` auto-creates the target instance if missing.
-- `zap init` creates/updates the selected instance idempotently.
+- Any config-backed command ensures the target instance exists before running.
+- `zap init` is the explicit/idempotent way to force that setup and then run `init_task` if configured.
 - `zap init -R` re-randomizes all configured ports for the selected instance.
-- Commands other than `zap up` fail if the target/default instance does not exist yet.
 
 Examples:
 
 ```bash
+zap status
 zap up
 zap up --instance e2e
 zap init --instance e2e

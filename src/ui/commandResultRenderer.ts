@@ -44,6 +44,8 @@ function toJsonPayload(result: CommandResult): unknown {
       };
     case "launch.opened":
       return { url: result.url };
+    case "links.list":
+      return renderer.links.toJson(result.links);
     case "home.value":
       return { value: result.value };
     case "notes.value":
@@ -134,7 +136,9 @@ export function renderCommandResult(
       );
       return;
     case "list":
-      renderer.log.report(renderer.list.toText(result.listResult, result.context));
+      renderer.log.report(
+        renderer.list.toText(result.listResult, result.context),
+      );
       return;
     case "tasks.list":
       renderer.log.report(renderer.tasks.toText(result.tasks));
@@ -152,7 +156,10 @@ export function renderCommandResult(
       renderer.machine.json(result.filteredConfig, result.pretty);
       return;
     case "launch.opened":
-      renderer.log.info(`Opening ${result.url}`);
+      renderer.log.info(renderer.command.openingText(result.url));
+      return;
+    case "links.list":
+      renderer.log.report(renderer.links.toText(result.links));
       return;
     case "home.value":
       renderer.log.report(result.value);
@@ -162,22 +169,30 @@ export function renderCommandResult(
       return;
     case "reset":
       if (result.status === "aborted") {
-        renderer.log.info("Aborted.");
+        renderer.log.info(renderer.command.abortedText());
       }
       return;
     case "kill":
       if (result.status === "aborted") {
-        renderer.log.info("Aborted.");
+        renderer.log.info(renderer.command.abortedText());
         return;
       }
       if (result.pm2.length === 0 && result.containers.length === 0) {
         renderer.log.info(
-          `No PM2 processes or Docker containers found across any instance for project ${result.projectName} (${result.prefix}.).`,
+          renderer.command.killNoResourcesText(
+            result.projectName,
+            result.prefix,
+          ),
         );
         return;
       }
       renderer.log.info(
-        `Killed ${result.pm2.length} PM2 process(es) and ${result.containers.length} container(s) across all instances for project ${result.projectName} (${result.prefix}.).`,
+        renderer.command.killCompletedText({
+          projectName: result.projectName,
+          prefix: result.prefix,
+          pm2Count: result.pm2.length,
+          containerCount: result.containers.length,
+        }),
       );
       return;
     case "profiles.picker":
@@ -186,22 +201,26 @@ export function renderCommandResult(
       );
       return;
     case "profiles.enabled":
-      renderer.log.info(`Enabling profile: ${result.profile}`);
+      renderer.log.info(renderer.command.profileEnabledText(result.profile));
       if (result.startedServices.length === 0) {
-        renderer.log.info(`No services found for profile: ${result.profile}`);
+        renderer.log.info(
+          renderer.command.profileNoServicesText(result.profile),
+        );
       } else {
         renderer.log.info(
-          `Starting services: ${result.startedServices.join(", ")}`,
+          renderer.command.profileStartingServicesText(result.startedServices),
         );
       }
       return;
     case "profiles.disabled":
       if (!result.activeProfile) {
-        renderer.log.info("No active profile to disable");
+        renderer.log.info(renderer.command.noActiveProfileToDisableText());
       } else {
-        renderer.log.info(`Disabling active profile: ${result.activeProfile}`);
-        renderer.log.info("Active profile disabled");
-        renderer.log.info("Adjusting services to match new state...");
+        renderer.log.info(
+          renderer.command.profileDisablingText(result.activeProfile),
+        );
+        renderer.log.info(renderer.command.profileDisabledText());
+        renderer.log.info(renderer.command.profileAdjustingServicesText());
       }
       return;
     case "environments.picker":
@@ -213,83 +232,44 @@ export function renderCommandResult(
       );
       return;
     case "environments.enabled":
-      renderer.log.info(`Enabling environment: ${result.environment}`);
       renderer.log.info(
-        "Environment updated. Restart services to apply new environment variables.",
+        renderer.command.environmentEnabledText(result.environment),
       );
+      renderer.log.info(renderer.command.environmentUpdatedText());
       return;
     case "environments.disabled":
       if (!result.activeEnvironment) {
-        renderer.log.info("No active environment to disable");
+        renderer.log.info(renderer.command.noActiveEnvironmentToDisableText());
       } else {
         renderer.log.info(
-          `Disabling active environment: ${result.activeEnvironment}`,
+          renderer.command.environmentDisablingText(result.activeEnvironment),
         );
-        renderer.log.info(
-          "Environment reset to default. Restart services to apply new environment variables.",
-        );
+        renderer.log.info(renderer.command.environmentResetText());
       }
       return;
     case "global.list":
       if (result.projects.length === 0) {
-        renderer.log.info("No zap projects found.");
+        renderer.log.info(renderer.command.noProjectsFoundText());
         return;
       }
-
-      // Create a status-like detailed view
-      const sections: string[] = [];
-      for (const project of result.projects) {
-        const projectSections: string[] = [];
-
-        // Project header
-        if (result.allProjects) {
-          const totalResources = project.pm2.length + project.containers.length;
-          projectSections.push(
-            `== ${project.name} (${totalResources} resource${totalResources !== 1 ? "s" : ""}) ==`,
-          );
-        } else {
-          projectSections.push(`== ${project.name} ==`);
-        }
-
-        // PM2 processes section
-        if (project.pm2.length > 0) {
-          projectSections.push("\nPM2 PROCESSES");
-          for (const process of project.pm2) {
-            projectSections.push(`  ${process}`);
-          }
-        }
-
-        // Docker containers section
-        if (project.containers.length > 0) {
-          projectSections.push("\nDOCKER CONTAINERS");
-          for (const container of project.containers) {
-            projectSections.push(`  ${container}`);
-          }
-        }
-
-        // Handle empty case
-        if (project.pm2.length === 0 && project.containers.length === 0) {
-          projectSections.push("\nNo resources found");
-        }
-
-        sections.push(projectSections.join("\n"));
-      }
-
-      renderer.log.report(sections.join("\n\n"));
+      renderer.log.report(
+        renderer.command.globalListText(result.projects, result.allProjects),
+      );
       return;
-    case "global.kill":
+    case "global.kill": {
       if (result.status === "aborted") {
-        renderer.log.info("Aborted.");
+        renderer.log.info(renderer.command.abortedText());
         return;
       }
       if (result.projects.length === 0) {
         if (result.allProjects) {
-          renderer.log.info("No zap projects found to kill.");
+          renderer.log.info(renderer.command.noProjectsFoundToKillText());
         } else {
-          renderer.log.info("No resources found to kill.");
+          renderer.log.info(renderer.command.noResourcesFoundToKillText());
         }
         return;
       }
+
       const totalPm2 = result.projects.reduce(
         (sum, p) => sum + p.pm2.length,
         0,
@@ -300,24 +280,41 @@ export function renderCommandResult(
       );
       if (result.allProjects) {
         renderer.log.info(
-          `Killed ${totalPm2} PM2 process(es) and ${totalContainers} container(s) across ${result.projects.length} project(s).`,
+          renderer.command.globalKillAllCompletedText({
+            projectCount: result.projects.length,
+            pm2Count: totalPm2,
+            containerCount: totalContainers,
+          }),
         );
       } else {
         const project = result.projects[0];
         renderer.log.info(
-          `Killed ${project.pm2.length} PM2 process(es) and ${project.containers.length} container(s) for project ${project.name} (${project.prefix}.).`,
+          renderer.command.globalKillProjectCompletedText({
+            projectName: project.name,
+            prefix: project.prefix,
+            pm2Count: project.pm2.length,
+            containerCount: project.containers.length,
+          }),
         );
       }
       return;
+    }
     case "init":
       renderer.log.info(
-        `Initialized instance "${result.instanceKey}" (${result.instanceId})`,
+        renderer.command.initInstanceText(
+          result.instanceKey,
+          result.instanceId,
+        ),
       );
       renderer.log.info(
-        `${result.randomized ? "Randomized" : "Initialized"} ${Object.keys(result.ports).length} port(s) in ${result.path}`,
+        renderer.command.initPortsText({
+          randomized: result.randomized,
+          portCount: Object.keys(result.ports).length,
+          path: result.path,
+        }),
       );
       for (const [name, value] of Object.entries(result.ports)) {
-        renderer.log.report(`  ${name}=${value}`);
+        renderer.log.report(renderer.command.envAssignmentText(name, value));
       }
       return;
     case "services.action":

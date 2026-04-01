@@ -39,7 +39,7 @@ describe("instanceResolver", () => {
     expect(result.instanceId).toMatch(/^[a-z0-9]{6}$/);
   });
 
-  it("creates and resolves isolate mode", async () => {
+  it("creates and resolves the default instance", async () => {
     const instanceId = isolateProject(testDir);
     const result = await resolveInstance(testDir, undefined, {
       autoCreate: true,

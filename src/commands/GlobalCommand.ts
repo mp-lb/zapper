@@ -5,6 +5,8 @@ import { ProjectKillTargets } from "../core/Zapper";
 import { buildPrefix, parseServiceName } from "../utils/nameBuilder";
 import { Pm2Manager } from "../core/process/Pm2Manager";
 import { DockerManager } from "../core/docker/DockerManager";
+import { renderer } from "../ui/renderer";
+import { Zapper } from "../core/Zapper";
 
 export class GlobalCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -43,7 +45,7 @@ export class GlobalCommand extends CommandHandler {
   private async handleList(
     all?: boolean,
     projectName?: string,
-    zapper?: any,
+    zapper?: Zapper,
   ): Promise<CommandResult> {
     if (all) {
       const projects = await this.getAllProjects();
@@ -107,7 +109,7 @@ export class GlobalCommand extends CommandHandler {
   }
 
   private async handleKill(
-    zapper: any,
+    zapper: Zapper,
     projectName?: string,
     all?: boolean,
     force?: boolean,
@@ -129,10 +131,19 @@ export class GlobalCommand extends CommandHandler {
         (sum, p) => sum + p.containers.length,
         0,
       );
-      const projectNames = projects.map((p) => p.name).join(", ");
+
+      renderer.log.info(
+        renderer.confirm.globalKillAllPromptText({
+          projectCount: projects.length,
+          projectNames: projects.map((p) => p.name),
+          pm2Count: totalPm2,
+          containerCount: totalContainers,
+        }),
+      );
+      renderer.log.report(renderer.command.globalListText(projects, true));
 
       const proceed = await confirm(
-        `This will permanently delete ALL PM2 processes and Docker containers for ALL zap projects (${projects.length} projects: ${projectNames}). Found ${totalPm2} PM2 process(es) and ${totalContainers} container(s) total. Continue?`,
+        renderer.confirm.deleteResourcesPromptText(),
         { defaultYes: false, force },
       );
 
@@ -203,8 +214,18 @@ export class GlobalCommand extends CommandHandler {
         },
       ];
 
+      renderer.log.report(renderer.command.globalListText(projects, false));
+      renderer.log.info(
+        renderer.confirm.killProjectPromptText({
+          projectName: targets.projectName,
+          prefix: targets.prefix,
+          pm2Count: targets.pm2.length,
+          containerCount: targets.containers.length,
+        }),
+      );
+
       const proceed = await confirm(
-        `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${targets.projectName}" (prefix "${targets.prefix}."). Found ${targets.pm2.length} PM2 process(es) and ${targets.containers.length} container(s). Continue?`,
+        renderer.confirm.deleteResourcesPromptText(),
         { defaultYes: false, force },
       );
 

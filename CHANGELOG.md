@@ -1,4 +1,4 @@
-# @maplab/zapper
+# @mp-lb/zapper
 
 ## 0.13.0
 

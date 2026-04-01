@@ -11,6 +11,7 @@ import {
   StatusCommand,
   ListCommand,
   LogsCommand,
+  StartupLogCommand,
   ResetCommand,
   CloneCommand,
   TaskCommand,
@@ -23,6 +24,7 @@ import {
   ConfigCommand,
   EnvCommand,
   LaunchCommand,
+  LinksCommand,
   HomeCommand,
   NotesCommand,
   InitCommand,
@@ -93,6 +95,7 @@ export class CommanderCli {
     this.commandHandlers.set("status", new StatusCommand());
     this.commandHandlers.set("ls", new ListCommand());
     this.commandHandlers.set("logs", new LogsCommand());
+    this.commandHandlers.set("startup-log", new StartupLogCommand());
     this.commandHandlers.set("reset", new ResetCommand());
     this.commandHandlers.set("clone", new CloneCommand());
     this.commandHandlers.set("task", new TaskCommand());
@@ -106,6 +109,7 @@ export class CommanderCli {
     this.commandHandlers.set("config", new ConfigCommand());
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
+    this.commandHandlers.set("links", new LinksCommand());
     this.commandHandlers.set("home", new HomeCommand());
     this.commandHandlers.set("notes", new NotesCommand());
     this.commandHandlers.set("init", new InitCommand());
@@ -120,10 +124,7 @@ export class CommanderCli {
 
     this.program
       .option("--config <file>", "Use a specific config file")
-      .option(
-        "--instance <name>",
-        "Target a named instance (default: default)",
-      )
+      .option("--instance <name>", "Target a named instance (default: default)")
       .option("-v, --verbose", "Increase logging verbosity")
       .option("-q, --quiet", "Reduce logging output")
       .option("-d, --debug", "Enable debug logging");
@@ -210,6 +211,14 @@ export class CommanderCli {
       .option("--no-follow", "Do not follow logs (print and exit)")
       .action(async (services, options, command) => {
         await this.executeCommand("logs", services, command);
+      });
+
+    this.program
+      .command("startup-log")
+      .description("Show saved startup output for one or more services")
+      .argument("<services...>", "Services to show startup logs for")
+      .action(async (services, options, command) => {
+        await this.executeCommand("startup-log", services, command);
       });
 
     this.program
@@ -432,6 +441,14 @@ export class CommanderCli {
       });
 
     this.program
+      .command("links")
+      .description("List configured links, including the homepage")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("links", undefined, command);
+      });
+
+    this.program
       .command("notes")
       .description("Print configured project notes")
       .option("-j, --json", "Output command result as minified JSON")
@@ -474,7 +491,6 @@ export class CommanderCli {
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (options, command) => {
         const service = ["list"];
-        const allOptions = { ...options, all: true };
         command.setOptionValue("all", true);
         await this.executeCommand("global", service, command);
       });
@@ -526,7 +542,10 @@ export class CommanderCli {
 
     const zapper = new Zapper();
     if (!skipConfigLoad) {
-      await zapper.loadConfig(allOptions.config as string | undefined, allOptions);
+      await zapper.loadConfig(
+        allOptions.config as string | undefined,
+        allOptions,
+      );
     }
 
     const noAliasCommands = new Set([
