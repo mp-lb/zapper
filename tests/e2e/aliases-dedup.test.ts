@@ -2,6 +2,10 @@ import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  hasProjectServiceProcess,
+  isProjectProcessName,
+} from "./helpers/processNames";
 
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
@@ -55,7 +59,7 @@ function getProjectProcesses(projectName: string): Array<{ name: string }> {
   });
   const processes = JSON.parse(output);
   return processes.filter((proc: { name: string }) =>
-    proc.name?.startsWith(`zap.${projectName}.`),
+    isProjectProcessName(proc.name, projectName),
   );
 }
 
@@ -103,8 +107,16 @@ describe("E2E: Alias Deduplication", () => {
     const running = getProjectProcesses(testProjectName).map(
       (proc) => proc.name,
     );
-    expect(running).toContain(`zap.${testProjectName}.webserver`);
-    expect(running).toContain(`zap.${testProjectName}.database`);
+    expect(
+      running.some((name) =>
+        hasProjectServiceProcess(name, testProjectName, "webserver"),
+      ),
+    ).toBe(true);
+    expect(
+      running.some((name) =>
+        hasProjectServiceProcess(name, testProjectName, "database"),
+      ),
+    ).toBe(true);
     expect(running.length).toBe(2);
 
     runZapCommand(

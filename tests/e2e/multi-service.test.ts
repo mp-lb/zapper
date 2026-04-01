@@ -2,6 +2,11 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  hasProjectServiceProcess,
+  isProjectProcessName,
+  parseProjectProcessName,
+} from "./helpers/processNames";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -66,12 +71,10 @@ async function waitForServices(
       const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
       const pm2Processes = JSON.parse(pm2ListOutput);
 
-      const zapProcesses = pm2Processes.filter(
-        (proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${projectName}.`) &&
-          expectedServices.some(
-            (service) => proc.name === `zap.${projectName}.${service}`,
-          ),
+      const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+        expectedServices.some((service) =>
+          hasProjectServiceProcess(proc.name, projectName, service),
+        ),
       );
 
       const runningServices = zapProcesses
@@ -98,7 +101,7 @@ function getRunningServices(projectName: string): string[] {
     return pm2Processes
       .filter(
         (proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${projectName}.`) &&
+          isProjectProcessName(proc.name, projectName) &&
           proc.pm2_env?.status === "online",
       )
       .map((proc: { name: string }) => proc.name.split(".").pop());
@@ -217,17 +220,33 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
       const pm2Processes = JSON.parse(pm2ListOutput);
       const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
-        proc.name?.startsWith(`zap.${testProjectName}.`),
+        isProjectProcessName(proc.name, testProjectName),
       );
 
       expect(zapProcesses.length).toBe(4);
       const processNames = zapProcesses.map(
         (proc: { name: string }) => proc.name,
       );
-      expect(processNames).toContain(`zap.${testProjectName}.database`);
-      expect(processNames).toContain(`zap.${testProjectName}.api`);
-      expect(processNames).toContain(`zap.${testProjectName}.frontend`);
-      expect(processNames).toContain(`zap.${testProjectName}.worker`);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "database"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "api"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "frontend"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "worker"),
+        ),
+      ).toBe(true);
     }, 45000);
 
     it("should show all services in 'zap status'", async () => {
@@ -348,7 +367,8 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const initialPm2List = execSync("pm2 jlist", { encoding: "utf8" });
       const initialProcesses = JSON.parse(initialPm2List);
       const initialApiProcess = initialProcesses.find(
-        (proc: { name: string }) => proc.name === `zap.${testProjectName}.api`,
+        (proc: { name: string }) =>
+          hasProjectServiceProcess(proc.name, testProjectName, "api"),
       );
       expect(initialApiProcess).toBeDefined();
       const initialPid = initialApiProcess.pid;
@@ -368,7 +388,8 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const afterRestartPm2List = execSync("pm2 jlist", { encoding: "utf8" });
       const afterRestartProcesses = JSON.parse(afterRestartPm2List);
       const restartedApiProcess = afterRestartProcesses.find(
-        (proc: { name: string }) => proc.name === `zap.${testProjectName}.api`,
+        (proc: { name: string }) =>
+          hasProjectServiceProcess(proc.name, testProjectName, "api"),
       );
 
       expect(restartedApiProcess).toBeDefined();
@@ -508,14 +529,14 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const pm2ProcessesAfterDown = JSON.parse(pm2ListAfterDown);
       const zapProcessesAfterDown = pm2ProcessesAfterDown.filter(
         (proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${testProjectName}.`),
+          isProjectProcessName(proc.name, testProjectName),
       );
       expect(zapProcessesAfterDown.length).toBe(0);
     }, 60000);
   });
 
   describe("Naming Convention Validation", () => {
-    it("should follow zap.{project}.{service} naming convention consistently", async () => {
+    it("should follow zap.{project}.{instanceId}.{service} naming convention consistently", async () => {
       setupTempConfig({ stripProfiles: true });
 
       // Start services
@@ -534,18 +555,19 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const pm2Processes = JSON.parse(pm2ListOutput);
 
       const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
-        proc.name?.startsWith(`zap.${testProjectName}.`),
+        isProjectProcessName(proc.name, testProjectName),
       );
 
       // Should have exactly 4 processes
       expect(zapProcesses.length).toBe(4);
 
-      // Each process should follow the naming convention
+      // Each process should follow the instance-aware naming convention
       for (const proc of zapProcesses) {
-        expect(proc.name).toMatch(
-          new RegExp(
-            `^zap\\.${testProjectName}\\.(database|api|frontend|worker)$`,
-          ),
+        const parsed = parseProjectProcessName(proc.name, testProjectName);
+        expect(parsed).not.toBeNull();
+        expect(parsed?.instanceId).toBeDefined();
+        expect(["database", "api", "frontend", "worker"]).toContain(
+          parsed?.service,
         );
       }
 
@@ -553,10 +575,26 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       const processNames = zapProcesses.map(
         (proc: { name: string }) => proc.name,
       );
-      expect(processNames).toContain(`zap.${testProjectName}.database`);
-      expect(processNames).toContain(`zap.${testProjectName}.api`);
-      expect(processNames).toContain(`zap.${testProjectName}.frontend`);
-      expect(processNames).toContain(`zap.${testProjectName}.worker`);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "database"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "api"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "frontend"),
+        ),
+      ).toBe(true);
+      expect(
+        processNames.some((name: string) =>
+          hasProjectServiceProcess(name, testProjectName, "worker"),
+        ),
+      ).toBe(true);
     }, 45000);
   });
 });

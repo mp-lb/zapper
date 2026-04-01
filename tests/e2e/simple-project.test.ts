@@ -2,6 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  hasProjectServiceProcess,
+  isProjectProcessName,
+} from "./helpers/processNames";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -162,12 +166,12 @@ describe("E2E: Simple Project Flow", () => {
           Array.isArray(statusData) || typeof statusData === "object",
         ).toBe(true);
 
-        // Verify PM2 process names follow zap.{project}.{service} convention
+        // Verify PM2 process names follow the project-scoped naming convention
         const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
         const pm2Processes = JSON.parse(pm2ListOutput);
 
         const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${testProjectName}.`),
+          isProjectProcessName(proc.name, testProjectName),
         );
 
         expect(zapProcesses.length).toBe(2); // server + worker
@@ -175,8 +179,16 @@ describe("E2E: Simple Project Flow", () => {
         const processNames = zapProcesses.map(
           (proc: { name: string }) => proc.name,
         );
-        expect(processNames).toContain(`zap.${testProjectName}.server`);
-        expect(processNames).toContain(`zap.${testProjectName}.worker`);
+        expect(
+          processNames.some((name: string) =>
+            hasProjectServiceProcess(name, testProjectName, "server"),
+          ),
+        ).toBe(true);
+        expect(
+          processNames.some((name: string) =>
+            hasProjectServiceProcess(name, testProjectName, "worker"),
+          ),
+        ).toBe(true);
 
         // Test: zap logs for a specific service (logs requires a service argument)
         const logsOutput = runZapCommand(
@@ -212,7 +224,7 @@ describe("E2E: Simple Project Flow", () => {
         const pm2ProcessesAfterDown = JSON.parse(pm2ListAfterDown);
         const zapProcessesAfterDown = pm2ProcessesAfterDown.filter(
           (proc: { name: string }) =>
-            proc.name?.startsWith(`zap.${testProjectName}.`),
+            isProjectProcessName(proc.name, testProjectName),
         );
         expect(zapProcessesAfterDown.length).toBe(0);
       } finally {
@@ -339,9 +351,8 @@ describe("E2E: Simple Project Flow", () => {
         // Verify correct PM2 process name
         const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
         const pm2Processes = JSON.parse(pm2ListOutput);
-        const zapProcess = pm2Processes.find(
-          (proc: { name: string }) =>
-            proc.name === `zap.${testProjectName}.app`,
+        const zapProcess = pm2Processes.find((proc: { name: string }) =>
+          hasProjectServiceProcess(proc.name, testProjectName, "app"),
         );
         expect(zapProcess).toBeDefined();
 

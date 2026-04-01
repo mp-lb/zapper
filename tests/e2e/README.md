@@ -29,7 +29,7 @@ The e2e tests exercise the full CLI workflow:
 2. **`zap status`** - Reports running processes (human + JSON output)
 3. **`zap logs`** - Shows process output
 4. **`zap down`** - Stops all processes
-5. **PM2 process naming** - Verifies `zap.{project}.{service}` convention
+5. **PM2 process naming** - Verifies `zap.{project}.{instanceId}.{service}` convention
 6. **Cleanup** - Ensures no test processes remain after tests
 
 ## Key Design Decisions
@@ -44,11 +44,13 @@ The e2e tests exercise the full CLI workflow:
 ## Fixture Projects
 
 ### simple-project
+
 - 2 services: `server` and `worker`
 - Both run simple Node.js loops with console output
 - Tests multi-service orchestration
 
 ### minimal-project
+
 - 1 service: `app`
 - Minimal setup for basic functionality testing
 

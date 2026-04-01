@@ -2,6 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  hasProjectServiceProcess,
+  isProjectProcessName,
+} from "./helpers/processNames";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -133,7 +137,7 @@ describe("E2E: Aliases Support", () => {
         const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
         const pm2Processes = JSON.parse(pm2ListOutput);
         const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${testProjectName}.`),
+          isProjectProcessName(proc.name, testProjectName),
         );
 
         expect(zapProcesses.length).toBe(3); // webserver + background-worker + database
@@ -141,11 +145,25 @@ describe("E2E: Aliases Support", () => {
         const processNames = zapProcesses.map(
           (proc: { name: string }) => proc.name,
         );
-        expect(processNames).toContain(`zap.${testProjectName}.webserver`);
-        expect(processNames).toContain(
-          `zap.${testProjectName}.background-worker`,
-        );
-        expect(processNames).toContain(`zap.${testProjectName}.database`);
+        expect(
+          processNames.some((name: string) =>
+            hasProjectServiceProcess(name, testProjectName, "webserver"),
+          ),
+        ).toBe(true);
+        expect(
+          processNames.some((name: string) =>
+            hasProjectServiceProcess(
+              name,
+              testProjectName,
+              "background-worker",
+            ),
+          ),
+        ).toBe(true);
+        expect(
+          processNames.some((name: string) =>
+            hasProjectServiceProcess(name, testProjectName, "database"),
+          ),
+        ).toBe(true);
 
         // Test status shows all services
         const statusOutput = runZapCommand(
@@ -289,9 +307,8 @@ describe("E2E: Aliases Support", () => {
         // Get initial PM2 process info
         let pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
         let pm2Processes = JSON.parse(pm2ListOutput);
-        let webProcess = pm2Processes.find(
-          (proc: { name: string }) =>
-            proc.name === `zap.${testProjectName}.webserver`,
+        let webProcess = pm2Processes.find((proc: { name: string }) =>
+          hasProjectServiceProcess(proc.name, testProjectName, "webserver"),
         );
         const initialWebPid = webProcess?.pid;
 
@@ -312,8 +329,11 @@ describe("E2E: Aliases Support", () => {
           pm2Processes = JSON.parse(pm2ListOutput);
           webProcess = pm2Processes.find(
             (proc: { name: string; pm2_env?: { status: string } }) =>
-              proc.name === `zap.${testProjectName}.webserver` &&
-              proc.pm2_env?.status === "online",
+              hasProjectServiceProcess(
+                proc.name,
+                testProjectName,
+                "webserver",
+              ) && proc.pm2_env?.status === "online",
           );
           if (webProcess?.pid) {
             newWebPid = webProcess.pid;
@@ -380,7 +400,7 @@ describe("E2E: Aliases Support", () => {
         const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
         const pm2Processes = JSON.parse(pm2ListOutput);
         const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
-          proc.name?.startsWith(`zap.${testProjectName}.`),
+          isProjectProcessName(proc.name, testProjectName),
         );
         expect(zapProcesses.length).toBe(0);
       } finally {
@@ -551,9 +571,13 @@ describe("E2E: Aliases Support", () => {
       }).toThrow("Circular task reference detected");
 
       expect(() => {
-        runZapCommand(`task recurse-a --config zap-${testProjectName}.yaml`, fixtureDir, {
-          timeout: 10000,
-        });
+        runZapCommand(
+          `task recurse-a --config zap-${testProjectName}.yaml`,
+          fixtureDir,
+          {
+            timeout: 10000,
+          },
+        );
       }).toThrow("Circular task reference detected");
     });
   });
