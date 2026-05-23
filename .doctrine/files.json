@@ -9,6 +9,96 @@
       "remoteUpdatedAt": "2026-05-21T09:48:45.417Z",
       "remoteRevisionNumber": 1
     },
+    "proj/value/README.md": {
+      "contentType": "text",
+      "hash": "sha256:aeba39c8667d094b93e01cc0a4fe2b48ee66d1bf54d13cd81dc20a6a2ecee6b9",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "16349974-d78e-4a13-9499-99a6bc48b7fa",
+      "remotePath": "/value/README.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.257Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/ideal-customer.md": {
+      "contentType": "text",
+      "hash": "sha256:e36b59151c082eb2ea42804591080cb25baa095507885c068d563557ce0f049d",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "ad1f30dd-f006-4d9c-bb63-b260abd8b2c6",
+      "remotePath": "/value/ideal-customer.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.279Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/list-of-competitors.md": {
+      "contentType": "text",
+      "hash": "sha256:7acc8c70ef1f51ddecc5a77cc1ec2f5363b604f0c07115906111e4555b385af7",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "961bba55-4c95-4873-8868-8158e65a14cb",
+      "remotePath": "/value/list-of-competitors.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.266Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/market-context.md": {
+      "contentType": "text",
+      "hash": "sha256:d51c0cdd25e80e820a42444557b005f8499904005018f022983dff198316697f",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "52c3b257-79ec-46de-9848-5a99b0932743",
+      "remotePath": "/value/market-context.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.266Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/open-questions.md": {
+      "contentType": "text",
+      "hash": "sha256:a163be068fba00cf9a8109df80fa41f7e955125c2e1429d94f47d5ba94de0725",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "fd96f83e-e7fa-49ff-8e74-b5f3db836288",
+      "remotePath": "/value/open-questions.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.267Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/positioning-statement.md": {
+      "contentType": "text",
+      "hash": "sha256:e7cb90537d72331bd4cbcecdddf4460c13ff6e7ea84bb7340f5f3f383bcc1bb8",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "0819ad25-5242-48cf-be4b-221c83ab2525",
+      "remotePath": "/value/positioning-statement.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.270Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/product-features.md": {
+      "contentType": "text",
+      "hash": "sha256:7140dfe69db2b5f511acdffc197de87e90e3de90aff55eea241d321c134fd6ce",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "1b6be787-1c84-4516-9324-e669d468061a",
+      "remotePath": "/value/product-features.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.272Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/source-material.md": {
+      "contentType": "text",
+      "hash": "sha256:6028d5e6fe47e2179a0876336781b2ce3d93f59f372068281383b2602831d3f0",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "80fe96d0-f7b9-43a2-9b87-7e72761cc720",
+      "remotePath": "/value/source-material.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.298Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/unique-capabilities.md": {
+      "contentType": "text",
+      "hash": "sha256:24c7f8e87521da270e53fcb60a99bf7241aed07ccad9b1d46504197dd8a0a645",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "1b982c92-5328-4909-82f0-b93c7eb2c0c1",
+      "remotePath": "/value/unique-capabilities.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.852Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/value/value-drivers.md": {
+      "contentType": "text",
+      "hash": "sha256:4978bc793b30e3bb9e2c33c6772a7a25637c67e75ad0ece9605c90b407f823b4",
+      "lastSyncedAt": "2026-05-23T12:02:30.432Z",
+      "remoteFileId": "ee8f7984-f369-41c6-9fcb-4cda5819c8d7",
+      "remotePath": "/value/value-drivers.md",
+      "remoteUpdatedAt": "2026-05-23T12:02:31.899Z",
+      "remoteRevisionNumber": 1
+    },
     "proj/x-posts/b1.md": {
       "contentType": "text",
       "hash": "sha256:69d057c16a5530762803ddc6bc430b4d00b77102c4b4d29d9c54eca3fc45d0ae",
