@@ -1,168 +1,48 @@
 @import "tailwindcss";
 
 :root {
-  --background: 35 65% 97%;
-  --foreground: 225 29% 13%;
-  --card: 0 0% 100%;
-  --card-foreground: 225 29% 13%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 225 29% 13%;
-  --primary: 225 29% 13%;
-  --primary-foreground: 35 65% 97%;
-  --secondary: 34 35% 92%;
-  --secondary-foreground: 225 29% 13%;
-  --muted: 32 31% 92%;
-  --muted-foreground: 220 10% 39%;
-  --accent: 15 94% 58%;
-  --accent-foreground: 0 0% 100%;
-  --destructive: 0 70% 48%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 28 28% 83%;
-  --input: 28 28% 83%;
-  --ring: 15 94% 58%;
-  --radius: 1rem;
-  --panel: 228 31% 12%;
-  --term-bg: 228 31% 12%;
-  --term-fg: 35 25% 92%;
-  --term-muted: 220 11% 66%;
-  --term-prompt: 163 57% 59%;
-  --term-path: 197 70% 68%;
-  --term-accent: 15 94% 62%;
-  --term-up: 163 57% 59%;
-  --term-down: 0 0% 52%;
-  --term-border: 225 21% 20%;
+  --background: 0 0% 3%;
+  --foreground: 0 0% 97%;
+  --muted: 0 0% 70%;
+  --line: 0 0% 94%;
 }
 
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --font-sans: var(--font-space-grotesk);
-  --font-mono: var(--font-ibm-plex-mono);
-  --font-display: var(--font-syne);
-}
-
-html {
-  scroll-behavior: smooth;
+  --color-line: hsl(var(--line));
+  --font-sans: var(--font-dm-sans);
 }
 
 * {
-  border-color: hsl(var(--border));
+  box-sizing: border-box;
+}
+
+html {
+  background: hsl(var(--background));
 }
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 12% 10%, rgba(255, 151, 89, 0.26), transparent 28%),
-    radial-gradient(circle at 82% 18%, rgba(91, 198, 174, 0.18), transparent 22%),
-    linear-gradient(180deg, hsl(var(--background)), hsl(42 46% 96%));
+  background: hsl(var(--background));
   color: hsl(var(--foreground));
-  font-family: var(--font-sans), sans-serif;
-  font-feature-settings: "ss01", "cv11";
+  font-family: var(--font-dm-sans), sans-serif;
 }
 
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(36, 40, 51, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(36, 40, 51, 0.04) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 85%);
-  opacity: 0.7;
+a,
+button,
+code {
+  font: inherit;
 }
 
-.container {
-  width: 100%;
-  max-width: 1440px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+code {
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
+    Courier New, monospace;
 }
 
-.font-mono-tight {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-variant-ligatures: none;
-}
-
-.font-display {
-  font-family: var(--font-display), var(--font-sans), sans-serif;
-  letter-spacing: -0.04em;
-}
-
-.reveal {
-  opacity: 0;
-  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.delay-1 {
-  animation-delay: 0.06s;
-}
-
-.delay-2 {
-  animation-delay: 0.12s;
-}
-
-.delay-3 {
-  animation-delay: 0.18s;
-}
-
-.delay-4 {
-  animation-delay: 0.24s;
-}
-
-.delay-5 {
-  animation-delay: 0.3s;
-}
-
-.delay-6 {
-  animation-delay: 0.36s;
-}
-
-@keyframes rise {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (min-width: 640px) {
-  .container {
-    padding-left: 1.75rem;
-    padding-right: 1.75rem;
-  }
-}
-
-@media (min-width: 1024px) {
-  .container {
-    padding-left: 2.5rem;
-    padding-right: 2.5rem;
-  }
+::selection {
+  background: white;
+  color: black;
 }
