@@ -256,7 +256,7 @@ export function renderCommandResult(
       renderer.log.info(`Selected profile: ${result.profile}`);
       return;
     case "profiles.reset":
-      renderer.log.info(`Selected profile reset to ${result.profile}`);
+      renderer.log.info(`Reset profile to: ${result.profile}`);
       return;
     case "env.service":
       renderer.machine.envMap(result.resolvedEnv);

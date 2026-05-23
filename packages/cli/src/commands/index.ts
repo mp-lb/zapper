@@ -1,5 +1,10 @@
-export { CommandHandler, CommandContext, TaskParams } from "./CommandHandler";
-export { CommandResult } from "./CommandResult";
+export { CommandHandler } from "./CommandHandler";
+export type {
+  CommandContext,
+  CommandTarget,
+  TaskParams,
+} from "./CommandHandler";
+export type { CommandResult, ProjectLinkResult } from "./CommandResult";
 export { UpCommand } from "./UpCommand";
 export { DownCommand } from "./DownCommand";
 export { KillCommand } from "./KillCommand";

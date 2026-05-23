@@ -1,1 +1,9 @@
-export { TaskRunner, Task, TaskRegistry } from "./TaskRunner";
+export { TaskRunner } from "./TaskRunner";
+export type {
+  Task,
+  TaskCommand,
+  TaskParams,
+  TaskPrecondition,
+  TaskRegistry,
+  TaskRunnerOptions,
+} from "./TaskRunner";

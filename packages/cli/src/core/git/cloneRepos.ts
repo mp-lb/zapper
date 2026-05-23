@@ -1,5 +1,6 @@
-import { ZapperConfig } from "../../config/schemas";
-import { RepoCloner, CloneTarget, GitMethod } from "./RepoCloner";
+import type { ZapperConfig } from "../../config/schemas";
+import { RepoCloner } from "./RepoCloner";
+import type { CloneTarget, GitMethod } from "./RepoCloner";
 import { buildAliasMap, resolveAliasesToCanonical } from "../../utils";
 import { renderer } from "../../ui/renderer";
 import * as path from "path";

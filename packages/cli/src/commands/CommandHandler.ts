@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Zapper } from "../core/Zapper";
 import { logger, LogLevel } from "../utils/logger";
-import { CommandResult } from "./CommandResult";
+import type { CommandResult } from "./CommandResult";
 
 export interface TaskParams {
   named: Record<string, string>;
