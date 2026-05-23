@@ -350,7 +350,7 @@ private struct MissingStackSectionView: View {
                     .font(.system(size: stackActionFontSize))
                     .foregroundStyle(.primary)
                     .controlSize(.small)
-                    .disabled(model.actionInFlight != nil)
+                    .disabled(model.hasActionInFlight)
                 }
             }
 
@@ -401,7 +401,7 @@ private struct MissingStackSectionView: View {
                 }
                 .font(.system(size: stackActionFontSize))
                 .controlSize(.small)
-                .disabled(model.actionInFlight != nil)
+                .disabled(model.hasActionInFlight)
 
                 Button("Delete") {
                     isConfirmingPrune = false
@@ -411,7 +411,7 @@ private struct MissingStackSectionView: View {
                 .font(.system(size: stackActionFontSize))
                 .foregroundStyle(.red)
                 .controlSize(.small)
-                .disabled(model.actionInFlight != nil)
+                .disabled(model.hasActionInFlight)
             }
         }
     }
@@ -819,14 +819,14 @@ private struct StackActions: View {
                 stackActionButton("Start") {
                     Task { await model.startInstance(stack.instance, in: stack.project) }
                 }
-                .disabled(model.actionInFlight != nil)
+                .disabled(model.isGlobalActionInFlight || isBusy)
             }
 
             if stackCounts.up > 0 {
                 stackActionButton("Stop") {
                     Task { await model.stopInstance(stack.instance, in: stack.project) }
                 }
-                .disabled(model.actionInFlight != nil)
+                .disabled(model.isGlobalActionInFlight || isBusy)
             }
 
             StackOpenControl(links: model.links(for: stack.project, instance: stack.instance))
@@ -1139,14 +1139,14 @@ private struct ServiceInfoMenu: View {
                         await model.stopService(service, instance: instance, project: project)
                     }
                 }
-                .disabled(model.actionInFlight != nil || isBusy)
+                .disabled(model.isGlobalActionInFlight || isBusy)
             } else {
                 Button("Start") {
                     Task {
                         await model.startService(service, instance: instance, project: project)
                     }
                 }
-                .disabled(model.actionInFlight != nil || isBusy)
+                .disabled(model.isGlobalActionInFlight || isBusy)
             }
 
             Button("Restart") {
@@ -1154,7 +1154,7 @@ private struct ServiceInfoMenu: View {
                     await model.restartService(service, instance: instance, project: project)
                 }
             }
-            .disabled(model.actionInFlight != nil || isBusy)
+            .disabled(model.isGlobalActionInFlight || isBusy)
 
             if let cwd = service.cwd {
                 Divider()

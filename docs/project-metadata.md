@@ -32,11 +32,16 @@ links:
 ```
 
 ```bash
+zap open
 zap launch "API Docs"
 zap links
 zap open "API Docs"
 zap o "API Docs"
 ```
+
+`zap open` opens an interactive picker for the homepage and configured links.
+Pass a link name, or use `zap launch`, when you want to open a URL without
+prompting.
 
 Link URLs support `${VAR}` interpolation from root env files and assigned
 ports.

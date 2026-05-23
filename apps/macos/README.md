@@ -23,8 +23,10 @@ active; gray LED stacks are inactive. Expanding a stack groups services by
 native and Docker runtime. Service start, stop, and restart controls live in
 each service overflow menu. Start, stop, and restart actions show immediate
 stale-state feedback in the stack and service rows, then converge on the next
-real CLI refresh. Amber LEDs are reserved for real CLI-reported pending state;
-the spinner means the app knows the displayed state is stale. The open popover
+real CLI refresh. While one stack action is running, actions on unrelated stacks
+remain available; only the affected stack or service is held busy. Amber LEDs
+are reserved for real CLI-reported pending state; the spinner means the app
+knows the displayed state is stale. The open popover
 polls briefly at a faster cadence, settles to a slower idle cadence, polls at
 least every 8 seconds while closed, and polls more frequently while action state
 is stale. During refresh, the header keeps showing the last service summary and

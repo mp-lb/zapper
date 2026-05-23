@@ -35,6 +35,7 @@ export type Command =
   | "validate"
   | "env"
   | "launch"
+  | "open"
   | "links"
   | "home"
   | "notes"
@@ -51,6 +52,7 @@ export interface CliOptions {
   all?: boolean;
   force?: boolean;
   follow?: boolean;
+  nonInteractive?: boolean;
   config?: string;
   json?: boolean;
   jsonl?: boolean;

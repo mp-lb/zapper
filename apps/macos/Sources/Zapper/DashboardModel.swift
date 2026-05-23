@@ -39,6 +39,14 @@ final class DashboardModel: ObservableObject {
         !pendingServiceActions.isEmpty
     }
 
+    var hasActionInFlight: Bool {
+        isGlobalActionInFlight || hasStaleServiceState
+    }
+
+    var isGlobalActionInFlight: Bool {
+        actionInFlight == "global-prune"
+    }
+
     private let cli = ZapperCLI()
 
     init() {
@@ -218,7 +226,7 @@ final class DashboardModel: ObservableObject {
     }
 
     func pruneMissingStacks() async {
-        if actionInFlight != nil {
+        if hasActionInFlight {
             return
         }
 
@@ -243,18 +251,25 @@ final class DashboardModel: ObservableObject {
         instance: ZapperInstance,
         service: String? = nil
     ) async {
-        if actionInFlight != nil {
+        if isGlobalActionInFlight {
             return
         }
 
         let target = service ?? instance.instanceKey
         let affectedServices = affectedServiceNames(action: action, instance: instance, service: service)
-        actionInFlight = "\(action.rawValue):\(project.registryId):\(instance.instanceKey):\(service ?? "*")"
+        if hasPendingAction(for: affectedServices, project: project, instance: instance) {
+            return
+        }
+
+        let actionID = "\(action.rawValue):\(project.registryId):\(instance.instanceKey):\(service ?? "*")"
+        actionInFlight = actionID
         actionMessage = "\(action.rawValue) \(project.project)/\(target)"
         setPendingAction(PendingServiceAction(action: action), for: affectedServices, project: project, instance: instance)
         defer {
             clearPendingActions(for: affectedServices, project: project, instance: instance)
-            actionInFlight = nil
+            if actionInFlight == actionID {
+                actionInFlight = nil
+            }
         }
 
         do {
@@ -341,6 +356,18 @@ final class DashboardModel: ObservableObject {
     ) {
         for service in services {
             pendingServiceActions[serviceKey(project: project, instanceKey: instance.instanceKey, service: service)] = action
+        }
+    }
+
+    private func hasPendingAction(
+        for services: [String],
+        project: ZapperProject,
+        instance: ZapperInstance
+    ) -> Bool {
+        services.contains { service in
+            pendingServiceActions[
+                serviceKey(project: project, instanceKey: instance.instanceKey, service: service)
+            ] != nil
         }
     }
 

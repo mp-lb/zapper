@@ -28,6 +28,7 @@ import {
   ValidateCommand,
   EnvCommand,
   LaunchCommand,
+  OpenCommand,
   LinksCommand,
   HomeCommand,
   NotesCommand,
@@ -126,6 +127,7 @@ export class CommanderCli {
     this.commandHandlers.set("validate", new ValidateCommand());
     this.commandHandlers.set("env", new EnvCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
+    this.commandHandlers.set("open", new OpenCommand());
     this.commandHandlers.set("links", new LinksCommand());
     this.commandHandlers.set("home", new HomeCommand());
     this.commandHandlers.set("notes", new NotesCommand());
@@ -477,8 +479,6 @@ export class CommanderCli {
 
     this.program
       .command("launch")
-      .alias("open")
-      .alias("o")
       .description(
         "Open homepage by default, or open a configured link by name",
       )
@@ -486,6 +486,20 @@ export class CommanderCli {
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (service, options, command) => {
         await this.executeCommand("launch", service, command);
+      });
+
+    this.program
+      .command("open")
+      .alias("o")
+      .description("Choose a configured project link interactively")
+      .argument("[name]", "Link name to open without prompting")
+      .option(
+        "--non-interactive",
+        "Open the configured homepage or named link without prompting",
+      )
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (service, options, command) => {
+        await this.executeCommand("open", service, command);
       });
 
     this.program
