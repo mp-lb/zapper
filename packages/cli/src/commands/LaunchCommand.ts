@@ -1,16 +1,16 @@
 import { CommandHandler, CommandContext } from "./CommandHandler";
 import { CommandResult } from "./CommandResult";
-import { exec } from "child_process";
+import { spawn } from "child_process";
 import type { Zapper } from "../core/Zapper";
+import { resolveOpenUrlRuntime } from "../runtime";
 
 export function openUrl(link: string): void {
-  const openCmd =
-    process.platform === "darwin"
-      ? "open"
-      : process.platform === "win32"
-        ? "start"
-        : "xdg-open";
-  exec(`${openCmd} "${link}"`);
+  const opener = resolveOpenUrlRuntime(link);
+  const child = spawn(opener.command, opener.argsPrefix, {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
 }
 
 export function resolveLaunchLink(zapper: Zapper, name?: string): string {

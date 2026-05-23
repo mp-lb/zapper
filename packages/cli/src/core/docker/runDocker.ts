@@ -1,8 +1,10 @@
 import { spawn } from "child_process";
+import { resolveDockerRuntime } from "../../runtime";
 
 export function runDocker(args: string[]): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn("docker", args, {
+    const docker = resolveDockerRuntime(args);
+    const child = spawn(docker.command, docker.argsPrefix, {
       stdio: ["pipe", "pipe", "pipe"],
     });
 

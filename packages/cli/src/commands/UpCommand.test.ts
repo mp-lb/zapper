@@ -2,18 +2,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UpCommand } from "./UpCommand";
 import type { Zapper } from "../core/Zapper";
 
-const { mockExec } = vi.hoisted(() => ({
-  mockExec: vi.fn(),
+const { mockSpawn } = vi.hoisted(() => ({
+  mockSpawn: vi.fn(() => ({ unref: vi.fn() })),
 }));
 
 vi.mock("child_process", () => ({
-  exec: mockExec,
+  spawn: mockSpawn,
 }));
 
-function getOpenCommand(): string {
-  if (process.platform === "darwin") return "open";
-  if (process.platform === "win32") return "start";
-  return "xdg-open";
+function getOpenCommand(url: string): [string, string[]] {
+  if (process.platform === "darwin") return ["open", [url]];
+  if (process.platform === "win32") return ["cmd", ["/c", "start", "", url]];
+  return ["xdg-open", [url]];
 }
 
 describe("UpCommand", () => {
@@ -54,9 +54,11 @@ describe("UpCommand", () => {
       undefined,
       expect.objectContaining({ onEvent: expect.any(Function) }),
     );
-    expect(mockExec).toHaveBeenCalledWith(
-      `${getOpenCommand()} "http://localhost:3000"`,
-    );
+    const [commandName, args] = getOpenCommand("http://localhost:3000");
+    expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
+      detached: true,
+      stdio: "ignore",
+    });
     expect(result).toEqual({
       kind: "services.action",
       action: "up",
@@ -103,7 +105,7 @@ describe("UpCommand", () => {
       options: { open: true },
     });
 
-    expect(mockExec).not.toHaveBeenCalled();
+    expect(mockSpawn).not.toHaveBeenCalled();
     expect(result).toEqual({
       kind: "services.action",
       action: "up",

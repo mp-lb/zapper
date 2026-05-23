@@ -2555,6 +2555,22 @@ dependency for bundled desktop builds, and the macOS app passes `ZAPPER_NODE`
 and `ZAPPER_PM2_JS` so the CLI can invoke PM2 through the bundled Node runtime
 instead of `spawn("pm2")`.
 
+Runtime executable lookup is centralized behind platform adapters in the CLI.
+PM2, Docker, shell wrappers, log tailing, and URL opening are resolved through
+the same boundary instead of scattering `process.platform` checks across command
+implementations. The adapters keep the default behavior simple:
+
+- macOS uses the bundled PM2 runtime when `ZAPPER_NODE` and `ZAPPER_PM2_JS` are
+  present, otherwise falls back to `pm2`;
+- Linux uses the same PM2 environment override and otherwise falls back to
+  `pm2`;
+- WSL is treated as Linux. Linux paths are preferred. If a user-provided
+  `ZAPPER_NODE` or `ZAPPER_PM2_JS` value looks like a Windows absolute path, the
+  adapter converts it with `wslpath -u` when available and falls back to the
+  equivalent `/mnt/<drive>/...` path;
+- native Windows falls back to `pm2.cmd` when no bundled PM2 runtime is
+  configured.
+
 Remaining options if PM2 continues to be a source of local-machine
 compatibility issues:
 
@@ -2712,8 +2728,9 @@ Status: implemented for macOS release builds.
   command failed".
 
 Status: partially implemented. PM2 is bundled and invoked through `ZAPPER_NODE`
-and `ZAPPER_PM2_JS` for desktop-launched CLI commands. Better diagnostics are
-still pending.
+and `ZAPPER_PM2_JS` for desktop-launched CLI commands, with runtime adapter
+functions keeping platform-specific path and command resolution out of command
+implementations. Better diagnostics are still pending.
 
 ### Phase 4: Install and Repair UX
 

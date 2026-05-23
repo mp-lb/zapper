@@ -1,5 +1,6 @@
 import { spawn } from "child_process";
 import { renderer } from "../../ui/renderer";
+import { resolveBrewRuntime, resolveDockerRuntime } from "../../runtime";
 
 interface CommandResult {
   code: number;
@@ -40,7 +41,8 @@ function runCommand(command: string, args: string[]): Promise<CommandResult> {
 }
 
 async function hasDockerCli(): Promise<boolean> {
-  const result = await runCommand("docker", ["--version"]);
+  const docker = resolveDockerRuntime(["--version"]);
+  const result = await runCommand(docker.command, docker.argsPrefix);
   return result.code === 0;
 }
 
@@ -60,7 +62,8 @@ async function tryInstallDocker(): Promise<void> {
     throw new Error(missingDockerMessage());
   }
 
-  const brewAvailable = await runCommand("brew", ["--version"]);
+  const brew = resolveBrewRuntime(["--version"]);
+  const brewAvailable = await runCommand(brew.command, brew.argsPrefix);
   if (brewAvailable.code !== 0) {
     throw new Error(
       "Docker is required but Homebrew is not available. Install Docker Desktop manually from https://www.docker.com/products/docker-desktop/ and retry.",
@@ -68,11 +71,8 @@ async function tryInstallDocker(): Promise<void> {
   }
 
   renderer.log.warn("Docker CLI not found. Attempting automatic install...");
-  const installResult = await runCommand("brew", [
-    "install",
-    "--cask",
-    "docker",
-  ]);
+  const install = resolveBrewRuntime(["install", "--cask", "docker"]);
+  const installResult = await runCommand(install.command, install.argsPrefix);
 
   if (installResult.code !== 0) {
     const details = installResult.stderr.trim() || installResult.stdout.trim();

@@ -11,6 +11,12 @@ import { Process } from "../../config/schemas";
 import { ProcessInfo } from "../../types/index";
 import { renderer } from "../../ui/renderer";
 import { buildServiceName, buildPrefix } from "../../utils/nameBuilder";
+import {
+  resolvePm2Runtime,
+  resolveBashRuntime,
+  resolveTailRuntime,
+  RuntimeCommand,
+} from "../../runtime";
 
 export class Pm2Manager {
   static async startProcess(
@@ -83,7 +89,7 @@ export class Pm2Manager {
             instanceId,
           ),
           script: wrapperScript,
-          interpreter: "/bin/bash",
+          interpreter: resolveBashRuntime([]).command,
           cwd: (() => {
             if (!processConfig.cwd) return configDir;
             const resolved = path.isAbsolute(processConfig.cwd)
@@ -511,7 +517,8 @@ export class Pm2Manager {
       }
 
       if (follow) {
-        const child = spawn("tail", ["-n", "50", "-f", logFile], {
+        const tail = resolveTailRuntime(["-n", "50", "-f", logFile]);
+        const child = spawn(tail.command, tail.argsPrefix, {
           stdio: ["ignore", "pipe", "inherit"],
         });
 
@@ -543,7 +550,8 @@ export class Pm2Manager {
           globalThis.process?.on("SIGINT", cleanup);
         });
       } else {
-        const result = await this.runCommand("tail", ["-50", logFile]);
+        const tail = resolveTailRuntime(["-50", logFile]);
+        const result = await this.runCommand(tail.command, tail.argsPrefix);
         globalThis.process?.stdout?.write(result);
       }
     } catch (error) {
@@ -582,7 +590,7 @@ export class Pm2Manager {
     return new Promise((resolve, reject) => {
       const pm2 = this.resolvePm2Command(args);
       renderer.log.debug(`Running: ${pm2.label}`);
-      const child = spawn(pm2.command, pm2.args, {
+      const child = spawn(pm2.command, pm2.argsPrefix, {
         stdio: ["pipe", "pipe", "pipe"],
       });
 
@@ -636,7 +644,7 @@ export class Pm2Manager {
     return new Promise((resolve, reject) => {
       const pm2 = this.resolvePm2Command(args);
       renderer.log.debug(`Running: ${pm2.label}`);
-      const child = spawn(pm2.command, pm2.args, {
+      const child = spawn(pm2.command, pm2.argsPrefix, {
         stdio: ["pipe", "pipe", "pipe"],
       });
 
@@ -687,7 +695,7 @@ export class Pm2Manager {
     return new Promise((resolve, reject) => {
       const pm2 = this.resolvePm2Command(args);
       renderer.log.debug(`Running: ${pm2.label}`);
-      const child = spawn(pm2.command, pm2.args, {
+      const child = spawn(pm2.command, pm2.argsPrefix, {
         stdio: ["pipe", "pipe", "pipe"],
       });
 
@@ -751,28 +759,8 @@ export class Pm2Manager {
     });
   }
 
-  private static resolvePm2Command(args: string[]): {
-    command: string;
-    args: string[];
-    label: string;
-  } {
-    const env = globalThis.process?.env || {};
-    const bundledNode = env.ZAPPER_NODE;
-    const bundledPm2 = env.ZAPPER_PM2_JS;
-
-    if (bundledNode && bundledPm2) {
-      return {
-        command: bundledNode,
-        args: [bundledPm2, ...args],
-        label: `${bundledNode} ${bundledPm2} ${args.join(" ")}`,
-      };
-    }
-
-    return {
-      command: "pm2",
-      args,
-      label: `pm2 ${args.join(" ")}`,
-    };
+  private static resolvePm2Command(args: string[]): RuntimeCommand {
+    return resolvePm2Runtime(args);
   }
 
   private static createWrapperScript(
@@ -787,7 +775,7 @@ export class Pm2Manager {
     const fileName = `${projectName}.${processConfig.name as string}.${timestamp}.sh`;
     const filePath = path.join(zapDir, fileName);
 
-    let content = "#!/bin/bash\n";
+    let content = "#!/usr/bin/env bash\n";
     // Export PATH from the shell that ran `zap up` to ensure consistent tool versions
     if (process.env.PATH) {
       content += `export PATH="${process.env.PATH}"\n`;

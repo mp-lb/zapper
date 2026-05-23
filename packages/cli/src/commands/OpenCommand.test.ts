@@ -3,18 +3,18 @@ import { OpenCommand } from "./OpenCommand";
 import type { ProjectLinkResult } from "./CommandResult";
 import type { Zapper } from "../core/Zapper";
 
-const { mockExec } = vi.hoisted(() => ({
-  mockExec: vi.fn(),
+const { mockSpawn } = vi.hoisted(() => ({
+  mockSpawn: vi.fn(() => ({ unref: vi.fn() })),
 }));
 
 vi.mock("child_process", () => ({
-  exec: mockExec,
+  spawn: mockSpawn,
 }));
 
-function getOpenCommand(): string {
-  if (process.platform === "darwin") return "open";
-  if (process.platform === "win32") return "start";
-  return "xdg-open";
+function getOpenCommand(url: string): [string, string[]] {
+  if (process.platform === "darwin") return ["open", [url]];
+  if (process.platform === "win32") return ["cmd", ["/c", "start", "", url]];
+  return ["xdg-open", [url]];
 }
 
 function zapperWithLinks(): Zapper {
@@ -72,9 +72,11 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3001/docs",
     });
-    expect(mockExec).toHaveBeenCalledWith(
-      `${getOpenCommand()} "http://localhost:3001/docs"`,
-    );
+    const [commandName, args] = getOpenCommand("http://localhost:3001/docs");
+    expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
+      detached: true,
+      stdio: "ignore",
+    });
   });
 
   it("opens the homepage without prompting in non-interactive mode", async () => {
@@ -91,9 +93,11 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3000",
     });
-    expect(mockExec).toHaveBeenCalledWith(
-      `${getOpenCommand()} "http://localhost:3000"`,
-    );
+    const [commandName, args] = getOpenCommand("http://localhost:3000");
+    expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
+      detached: true,
+      stdio: "ignore",
+    });
   });
 
   it("opens directly when homepage is the only available link", async () => {
@@ -124,9 +128,11 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3000",
     });
-    expect(mockExec).toHaveBeenCalledWith(
-      `${getOpenCommand()} "http://localhost:3000"`,
-    );
+    const [commandName, args] = getOpenCommand("http://localhost:3000");
+    expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
+      detached: true,
+      stdio: "ignore",
+    });
   });
 
   it("opens a named link without prompting", async () => {

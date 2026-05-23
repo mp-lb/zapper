@@ -4,6 +4,7 @@ import path from "path";
 import { ContainerStartError } from "../../errors";
 import { runDocker } from "./runDocker";
 import { ensureDockerAvailable } from "./ensureDocker";
+import { resolveDockerRuntime } from "../../runtime";
 
 interface DockerConfig {
   image: string;
@@ -181,7 +182,8 @@ export class DockerManager {
       let pid = -1;
       let stdout = "";
       let stderr = "";
-      const child = spawn("docker", args, {
+      const docker = resolveDockerRuntime(args);
+      const child = spawn(docker.command, docker.argsPrefix, {
         stdio: ["ignore", "pipe", "pipe"],
       });
       pid = child.pid || -1;
@@ -366,7 +368,10 @@ export class DockerManager {
     args.push(name);
 
     return new Promise((resolve, reject) => {
-      const child = spawn("docker", args, { stdio: "inherit" });
+      const docker = resolveDockerRuntime(args);
+      const child = spawn(docker.command, docker.argsPrefix, {
+        stdio: "inherit",
+      });
       child.on("close", () => resolve());
       child.on("error", (err) => reject(err));
     });
