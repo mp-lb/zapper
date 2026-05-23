@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "data": [],
+  "statuses": [
+    "backlog",
+    "todo",
+    "in_progress",
+    "done"
+  ],
+  "view": {
+    "mode": "list"
+  }
+}

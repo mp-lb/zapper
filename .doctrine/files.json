@@ -1,0 +1,30 @@
+{
+  "files": {
+    "proj/tasks.board.json": {
+      "contentType": "text",
+      "hash": "sha256:e64b7fbf3d7248bcd01e79b22c27f45dd47ca9c15b4f3b793350a3d3ad50d4c6",
+      "lastSyncedAt": "2026-05-23T12:02:12.524Z",
+      "remoteFileId": "aebc04a4-c67c-4131-9712-2c4a8d531055",
+      "remotePath": "/tasks.board.json",
+      "remoteUpdatedAt": "2026-05-21T09:48:45.417Z",
+      "remoteRevisionNumber": 1
+    },
+    "proj/x-posts/b1.md": {
+      "contentType": "text",
+      "hash": "sha256:69d057c16a5530762803ddc6bc430b4d00b77102c4b4d29d9c54eca3fc45d0ae",
+      "lastSyncedAt": "2026-05-23T12:02:12.524Z",
+      "remoteFileId": "8cba7675-1af2-4764-bed1-f7bacea361bb",
+      "remotePath": "/x-posts/b1.md",
+      "remoteUpdatedAt": "2026-05-21T09:18:47.834Z",
+      "remoteRevisionNumber": 72
+    }
+  },
+  "references": {},
+  "syncRules": {
+    "sha256:cf6439cce83121126a653b45f9a02ff2408f5a85f93e90321a6ab15f45320063": {
+      "path": "",
+      "target": "proj"
+    }
+  },
+  "version": 1
+}
