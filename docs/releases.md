@@ -23,7 +23,7 @@ asset to the matching GitHub Release.
 
 macOS release builds use the same desktop signing environment names as the
 Electron apps in nearby MAP Lab repos. CI loads `.env.production` first, then
-loads `PRODUCTION_SECRETS` from GitHub Actions.
+decrypts `proj/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret.
 
 Put non-secret desktop release values in `.env.production`:
 
@@ -32,12 +32,13 @@ Put non-secret desktop release values in `.env.production`:
 - `CSC_LINK`: base64-encoded Developer ID Application `.p12`, a supported
   `data:...;base64,...` value, an HTTPS URL, or a local file path.
 
-Put secret desktop release values in the GitHub Actions `PRODUCTION_SECRETS`
-env-file secret:
+Put secret desktop release values in `proj/secrets.txt.enc`:
 
 - `CSC_KEY_PASSWORD`
 - `APPLE_APP_SPECIFIC_PASSWORD`
 - `DESKTOP_RELEASES_GITHUB_TOKEN`
+
+GitHub Actions only needs `SECRETS_KEY` for these project-specific secrets.
 
 ## Release Auth Prerequisite
 

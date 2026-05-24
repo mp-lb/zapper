@@ -1,5 +1,14 @@
 {
   "files": {
+    "proj/secrets.txt.enc": {
+      "contentType": "text",
+      "hash": "sha256:41c54e309a8dd5b611c561f005432ef39f2c34561759393e4c5fcef9547f021b",
+      "lastSyncedAt": "2026-05-24T11:12:48.854Z",
+      "remoteFileId": "b640d407-5ec7-4f80-a92e-bf6dc069c3c3",
+      "remotePath": "/secrets.txt.enc",
+      "remoteUpdatedAt": "2026-05-24T11:12:28.642Z",
+      "remoteRevisionNumber": 23
+    },
     "proj/tasks.board.json": {
       "contentType": "text",
       "hash": "sha256:e64b7fbf3d7248bcd01e79b22c27f45dd47ca9c15b4f3b793350a3d3ad50d4c6",

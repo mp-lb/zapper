@@ -8,6 +8,8 @@ docs/.vitepress/cache/
 .env
 .env.local
 .env.*.local
+secrets.txt
+.deployment/
 !tests/e2e/fixtures/env-precedence/.env.local
 coverage/
 .vitest/
