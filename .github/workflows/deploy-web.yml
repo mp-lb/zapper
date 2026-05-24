@@ -48,10 +48,32 @@ jobs:
 
           echo "ZAPPER_SECRETS_FILE=$secrets_file" >> "$GITHUB_ENV"
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Prepare Google Cloud credentials
+        run: |
+          set -euo pipefail
+          set -a
+          . "$ZAPPER_SECRETS_FILE"
+          set +a
+
+          credentials_file="$RUNNER_TEMP/gcp-sa-key.json"
+          GCP_CREDENTIALS_FILE="$credentials_file" node <<'NODE'
+          const fs = require("fs");
+
+          const value = process.env.GCP_SA_KEY || "";
+          if (!value) {
+            throw new Error("GCP_SA_KEY is required in proj/secrets.txt.enc");
+          }
+
+          let credentials = value;
+          if (!value.trim().startsWith("{")) {
+            const decoded = Buffer.from(value, "base64").toString("utf8");
+            if (decoded.trim().startsWith("{")) credentials = decoded;
+          }
+
+          fs.writeFileSync(process.env.GCP_CREDENTIALS_FILE, credentials);
+          NODE
+
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials_file" >> "$GITHUB_ENV"
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
@@ -61,8 +83,13 @@ jobs:
       - name: Terraform Init
         working-directory: infra
         run: |
+          set -euo pipefail
+          set -a
+          . "$ZAPPER_SECRETS_FILE"
+          set +a
+
           terraform init \
-            -backend-config="bucket=${{ secrets.GCP_PROJECT_ID }}-terraform-state" \
+            -backend-config="bucket=$GCP_PROJECT_ID-terraform-state" \
             -backend-config="prefix=terraform/state/${{ env.PROJECT_NAME }}"
 
       - name: Terraform Apply

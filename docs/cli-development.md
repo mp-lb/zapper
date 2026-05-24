@@ -196,10 +196,10 @@ terraform apply \
   -var="cloudflare_zone_id=$CLOUDFLARE_ZONE_ID"
 ```
 
-The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs`, then deploys both projects with the Vercel CLI. `GCP_PROJECT_ID` and `GCP_SA_KEY` remain GitHub Actions secrets for Terraform state and Google Cloud authentication.
+The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs`, then deploys both projects with the Vercel CLI.
 The landing page `/download/mac` route redirects to the latest macOS GitHub
-Release zip. Add `VERCEL_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
-`CLOUDFLARE_ZONE_ID`, optional `VERCEL_ORG_ID`, and optional
+Release zip. Add `GCP_PROJECT_ID`, `GCP_SA_KEY`, `VERCEL_API_TOKEN`,
+`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ZONE_ID`, optional `VERCEL_ORG_ID`, and optional
 `DESKTOP_RELEASES_GITHUB_TOKEN` to `proj/secrets.txt.enc`; GitHub Actions
 decrypts it with `SECRETS_KEY`. Terraform passes the desktop releases token into
 the Vercel project runtime environment when present.
