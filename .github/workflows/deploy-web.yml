@@ -133,7 +133,6 @@ jobs:
             -var="project_name=${{ env.PROJECT_NAME }}" \
             -var="vercel_api_token=$VERCEL_API_TOKEN" \
             -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" \
-            -var="cloudflare_zone_id=$CLOUDFLARE_ZONE_ID" \
             -var="desktop_releases_github_token=${DESKTOP_RELEASES_GITHUB_TOKEN:-}"
 
       - name: Set up pnpm
