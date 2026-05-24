@@ -13,7 +13,16 @@ Keep the decryption key in the platform secret store.
 
 ## Format
 
-The decrypted file should use one variable per line. Prefer env syntax:
+The decrypted file may be a JSON object:
+
+```json
+{
+  "API_TOKEN": "...",
+  "SERVICE_PASSWORD": "..."
+}
+```
+
+It may also use one variable per line:
 
 ```sh
 API_TOKEN=...
@@ -21,8 +30,8 @@ SERVICE_PASSWORD=...
 MULTILINE_VALUE=...
 ```
 
-`KEY: value` is also acceptable when the deployment parser supports it. Quote
-values only when the consumer requires it.
+`KEY: value` is also acceptable when the deployment parser supports it. Use
+uppercase underscore keys. Quote values only when the consumer requires it.
 
 ## CI Usage
 
