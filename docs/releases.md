@@ -48,7 +48,6 @@ Before attempting a release, make sure npm trusted publishing auth is configured
 
 Important details:
 
-- `NPM_TOKEN` is ignored by the release workflow. If the secret still exists, the workflow logs only the token length and a short SHA-256 fingerprint for cleanup/debugging. It does not print token characters.
 - npm trusted publishing currently requires Node `22.14.0+` and npm CLI `11.5.1+`.
 - For GitHub-based trusted publishing, npm also requires `packages/cli/package.json` `repository.url` to exactly match the GitHub repository URL.
 - Remove or revoke old write tokens when possible.
@@ -349,8 +348,7 @@ pnpm --filter @mp-lb/zapper publish     # Publish to npm
 - Verify `packages/cli/package.json` has correct name and version
 - Ensure no duplicate version exists on npm
 - Check if there are publishing restrictions
-- If CI shows token or 2FA errors, confirm the workflow is not passing `NPM_TOKEN` to Changesets and finish migrating to npm trusted publishing for `.github/workflows/release.yml`.
-- If a legacy `NPM_TOKEN` repository secret still exists, compare the workflow's logged `NPM_TOKEN sha256 prefix` with the same fingerprint generated locally before revoking it. Do not print token characters in CI logs.
+- If CI shows auth or 2FA errors, finish the npm trusted publishing setup for `.github/workflows/release.yml`.
 - If trusted publishing is configured but publish still fails, confirm these values match exactly on npm:
   - GitHub org/user: `mp-lb`
   - Repository: `zapper`

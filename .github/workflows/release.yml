@@ -48,22 +48,6 @@ jobs:
       - name: Test
         run: pnpm test
 
-      - name: Debug npm publish auth
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          if [ -z "${NPM_TOKEN:-}" ]; then
-            echo "NPM_TOKEN: absent; Changesets will use OIDC trusted publishing"
-            exit 0
-          fi
-
-          token_len=${#NPM_TOKEN}
-          token_fingerprint=$(printf '%s' "$NPM_TOKEN" | shasum -a 256 | cut -c1-12)
-
-          echo "NPM_TOKEN length: ${token_len}"
-          echo "NPM_TOKEN sha256 prefix: ${token_fingerprint}"
-          echo "NPM_TOKEN is ignored by this workflow; Changesets will use OIDC trusted publishing"
-
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
