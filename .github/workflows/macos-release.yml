@@ -46,7 +46,6 @@ jobs:
 
           set -a
           source .env.production
-          source "$secrets_file"
           set +a
 
           write_env() {
@@ -64,16 +63,33 @@ jobs:
             } >> "$GITHUB_ENV"
           }
 
-          while IFS= read -r line; do
-            if [[ "$line" == *=* ]]; then
-              value="${line#*=}"
-              if [ -n "$value" ]; then
-                echo "::add-mask::$value"
-              fi
-            fi
-          done < "$secrets_file"
+          SECRETS_FILE="$secrets_file" node <<'NODE'
+          const fs = require("fs");
+          const file = process.env.SECRETS_FILE;
+          const githubEnv = process.env.GITHUB_ENV;
+          const lines = fs.readFileSync(file, "utf8").split(/\r?\n/);
 
-          for name in CSC_LINK CSC_KEY_PASSWORD APPLE_ID APPLE_APP_SPECIFIC_PASSWORD APPLE_TEAM_ID DESKTOP_RELEASES_GITHUB_TOKEN; do
+          for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line || line.startsWith("#")) continue;
+
+            const match = line.match(/^([A-Z0-9_]+)\s*(=|:)\s*(.*)$/);
+            if (!match) {
+              throw new Error(`Invalid secrets line for key export: ${rawLine}`);
+            }
+
+            const [, key, , rawValue] = match;
+            const value = rawValue.replace(/^"(.*)"$/, "$1");
+            if (value) console.log(`::add-mask::${value}`);
+
+            fs.appendFileSync(
+              githubEnv,
+              `${key}<<__ZAPPER_SECRET_${key}__\n${value}\n__ZAPPER_SECRET_${key}__\n`,
+            );
+          }
+          NODE
+
+          for name in CSC_LINK APPLE_ID APPLE_TEAM_ID; do
             write_env "$name"
           done
 
