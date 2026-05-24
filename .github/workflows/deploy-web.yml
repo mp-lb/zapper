@@ -98,6 +98,14 @@ jobs:
           }
 
           fs.writeFileSync(process.env.GCP_CREDENTIALS_FILE, credentials);
+
+          const parsed = JSON.parse(credentials);
+          if (!process.env.GCP_PROJECT_ID && parsed.project_id) {
+            fs.appendFileSync(
+              process.env.GITHUB_ENV,
+              `GCP_PROJECT_ID=${parsed.project_id}\n`,
+            );
+          }
           NODE
 
           echo "GOOGLE_APPLICATION_CREDENTIALS=$credentials_file" >> "$GITHUB_ENV"
