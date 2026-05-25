@@ -1,5 +1,11 @@
 # @mp-lb/zapper
 
+## 0.17.0
+
+### Minor Changes
+
+- Add bundled runtime command resolution for PM2 and host tools, improve cross-platform launch/open behavior, and update release/deploy workflows.
+
 ## 0.16.1
 
 ### Patch Changes

@@ -1,6 +1,6 @@
 {
   "name": "@mp-lb/zapper",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "A lightweight dev environment runner for local multi-service projects",
   "type": "commonjs",
   "main": "dist/index.js",

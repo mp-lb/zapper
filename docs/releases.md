@@ -96,31 +96,12 @@ Common issues and fixes:
 - **Lint failures** (exit code ≠ 0): Run `pnpm lint:fix` to auto-fix, then manually fix remaining issues
 - **Warnings are fine**: Build warnings, lint warnings, etc. don't block if exit code is 0
 
-## 3. Add verify task (recommended)
+## 3. Repeat verification
 
-Create a `zap.yaml` file in the project root to use Zapper's own task system for verification:
-
-```yaml
-project: zapper-release
-tasks:
-  verify:
-    desc: Run all verification checks for release
-    cmds:
-      - pnpm build
-      - pnpm test:e2e
-      - pnpm test
-      - pnpm lint:fix
-```
-
-Then you can run:
-
-```bash
-zap task verify
-```
-
-This runs the full verification suite and **MUST PASS CLEANLY** with exit code 0. If this fails, go back to step 2 and fix the remaining issues.
-
-Keep running `zap task verify` until it passes completely before proceeding.
+Keep running the manual verification commands from step 2 until they all pass
+with exit code 0. Do not commit a root `zap.yaml` helper for release
+verification; this repository's unit tests include no-config discovery cases
+that expect the repo root not to contain a Zapper config.
 
 ## 4. Commit all outstanding work
 
@@ -165,8 +146,7 @@ git commit -m "Release: v$(node -p "require('./packages/cli/package.json').versi
 Run the verification one more time to ensure version changes didn't break anything:
 
 ```bash
-zap task verify
-# or manually: pnpm build && pnpm test:e2e && pnpm test && pnpm lint:fix
+pnpm build && pnpm test:e2e && pnpm test && pnpm lint:fix
 ```
 
 **This MUST pass cleanly.** If it fails, fix the issues and repeat until clean.
