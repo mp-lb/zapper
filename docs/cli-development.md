@@ -178,7 +178,7 @@ Notes:
 
 The landing page lives in `apps/landing-page`, and the docs site lives in `docs`. Both are deployed by `.github/workflows/deploy-web.yml`.
 
-Deployment resources are managed through Terraform in `infra`. Terraform creates separate Vercel projects for the landing page and docs site, plus Cloudflare DNS records for `zapper.mp-lb.dev` and `docs.zapper.mp-lb.dev` by default.
+Deployment resources are managed through Terraform in `infra`. Terraform creates separate Vercel projects for the landing page and docs site, plus Cloudflare DNS records for `zapper.mp-lb.dev` and `docs.zapper.mp-lb.dev` by default. The Vercel project root directories stay unset because CI runs each Vercel build from the correct workspace directory.
 
 The landing page deploy is built from the repo's root pnpm workspace metadata.
 Keep the root `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` as
