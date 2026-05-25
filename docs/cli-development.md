@@ -209,8 +209,10 @@ runtime environment when present.
 
 Release publishing runs through `.github/workflows/release.yml`.
 
-- The workflow publishes with npm trusted publishing via GitHub Actions OIDC.
-- npm trusted publishing currently requires Node `22.14.0+` and npm CLI `11.5.1+`; the release workflow upgrades npm explicitly before publishing.
-- npm currently requires trusted publishing for this workflow's non-interactive package publishes.
-- If release CI fails with auth or 2FA errors, finish the npm trusted publishing setup.
-- Keep `packages/cli/package.json` `repository.url` aligned with the canonical GitHub repo because npm checks it for GitHub trusted publishing.
+- The workflow decrypts `proj/secrets.txt.enc` with the repository
+  `SECRETS_KEY` GitHub Actions secret.
+- `proj/secrets.txt.enc` must contain `NPM_TOKEN` with publish access to
+  `@mp-lb/zapper`.
+- If release CI fails with auth or 2FA errors, confirm `NPM_TOKEN` exists in
+  the encrypted secrets file and belongs to an npm identity with publish rights
+  for the `@mp-lb` scope.

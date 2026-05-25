@@ -32,8 +32,9 @@ Put non-secret desktop release values in `.env.production`:
 - `CSC_LINK`: base64-encoded Developer ID Application `.p12`, a supported
   `data:...;base64,...` value, an HTTPS URL, or a local file path.
 
-Put secret desktop release values in `proj/secrets.txt.enc`:
+Put secret release values in `proj/secrets.txt.enc`:
 
+- `NPM_TOKEN`
 - `CSC_KEY_PASSWORD`
 - `APPLE_APP_SPECIFIC_PASSWORD`
 - `DESKTOP_RELEASES_GITHUB_TOKEN`
@@ -42,15 +43,22 @@ GitHub Actions only needs `SECRETS_KEY` for these project-specific secrets.
 
 ## Release Auth Prerequisite
 
-Before attempting a release, make sure npm trusted publishing auth is configured correctly for CI. As of March 25, 2026, npm recommends trusted publishing for GitHub Actions.
+Before attempting a release, make sure npm token auth is configured correctly
+for CI.
 
-- Required: npm trusted publishing configured for `mp-lb/zapper` and `.github/workflows/release.yml`
+- Required: `NPM_TOKEN` in `proj/secrets.txt.enc` with publish access to
+  `@mp-lb/zapper`.
+- Required: GitHub Actions repository secret `SECRETS_KEY` so the release
+  workflow can decrypt `proj/secrets.txt.enc`.
 
 Important details:
 
-- npm trusted publishing currently requires Node `22.14.0+` and npm CLI `11.5.1+`.
-- For GitHub-based trusted publishing, npm also requires `packages/cli/package.json` `repository.url` to exactly match the GitHub repository URL.
-- Remove or revoke old write tokens when possible.
+- Use a granular npm access token scoped as narrowly as possible while still
+  allowing publish for `@mp-lb/zapper`.
+- Keep token expiry/rotation documented outside the repo.
+- The release workflow passes `NPM_TOKEN` as both `NPM_TOKEN` and
+  `NODE_AUTH_TOKEN` for npm/Changesets compatibility after decrypting
+  `proj/secrets.txt.enc`.
 
 ## 1. Create release branch
 
@@ -181,7 +189,7 @@ git push origin release/$(date +%Y-%m-%d):main
 This triggers the GitHub Actions workflow which will:
 1. Run verification checks
 2. Create a "Version Packages" PR (if there are changesets)
-3. Automatically publish to npm when the Version Packages PR is merged using GitHub Actions OIDC trusted publishing when configured on npm
+3. Automatically publish to npm when the Version Packages PR is merged using the `NPM_TOKEN` value from `proj/secrets.txt.enc`
 
 Immediately monitor the push with GitHub CLI:
 
@@ -328,15 +336,12 @@ pnpm --filter @mp-lb/zapper publish     # Publish to npm
 - Verify `packages/cli/package.json` has correct name and version
 - Ensure no duplicate version exists on npm
 - Check if there are publishing restrictions
-- If CI shows auth or 2FA errors, finish the npm trusted publishing setup for `.github/workflows/release.yml`.
-- If trusted publishing is configured but publish still fails, confirm these values match exactly on npm:
-  - GitHub org/user: `mp-lb`
-  - Repository: `zapper`
-  - Workflow filename: `release.yml`
-  - `packages/cli/package.json` `repository.url`: `https://github.com/mp-lb/zapper`
+- If CI shows auth or 2FA errors, confirm `proj/secrets.txt.enc` contains
+  `NPM_TOKEN`, the repository has `SECRETS_KEY`, and the token has publish
+  access to `@mp-lb/zapper`.
 - If publish fails with `E404 Not Found - PUT https://registry.npmjs.org/@mp-lb%2fzapper`, verify the npm scope owner exists and the publishing identity has rights to it:
   - `mp-lb` must exist on npm as the owning user or organization
-  - the account connected to the trusted publisher must have publish access to the `@mp-lb` scope
+  - the token owner must have publish access to the `@mp-lb` scope
 
 **If the Version Packages PR doesn't appear:**
 - Verify you committed changeset files (should be in `.changeset/` directory)
