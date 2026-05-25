@@ -35,7 +35,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mp-lb/zapper.git"
+    "url": "https://github.com/mp-lb/zapper"
   },
   "author": "",
   "license": "MIT",

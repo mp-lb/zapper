@@ -353,7 +353,7 @@ pnpm --filter @mp-lb/zapper publish     # Publish to npm
   - GitHub org/user: `mp-lb`
   - Repository: `zapper`
   - Workflow filename: `release.yml`
-  - `packages/cli/package.json` `repository.url`: `git+https://github.com/mp-lb/zapper.git`
+  - `packages/cli/package.json` `repository.url`: `https://github.com/mp-lb/zapper`
 - If publish fails with `E404 Not Found - PUT https://registry.npmjs.org/@mp-lb%2fzapper`, verify the npm scope owner exists and the publishing identity has rights to it:
   - `mp-lb` must exist on npm as the owning user or organization
   - the account connected to the trusted publisher must have publish access to the `@mp-lb` scope
