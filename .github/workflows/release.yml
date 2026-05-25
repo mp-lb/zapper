@@ -94,6 +94,20 @@ jobs:
           );
           NODE
 
+      - name: Verify npm publish auth
+        run: |
+          set -euo pipefail
+
+          token_len=${#NPM_TOKEN}
+          token_fingerprint=$(printf '%s' "$NPM_TOKEN" | shasum -a 256 | cut -c1-12)
+          tmp_npmrc="$(mktemp)"
+          trap 'rm -f "$tmp_npmrc"' EXIT
+          printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$tmp_npmrc"
+
+          echo "NPM_TOKEN length: ${token_len}"
+          echo "NPM_TOKEN sha256 prefix: ${token_fingerprint}"
+          echo "npm whoami: $(NPM_CONFIG_USERCONFIG="$tmp_npmrc" npm whoami)"
+
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1

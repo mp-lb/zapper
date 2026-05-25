@@ -59,6 +59,8 @@ Important details:
 - The release workflow passes `NPM_TOKEN` as both `NPM_TOKEN` and
   `NODE_AUTH_TOKEN` for npm/Changesets compatibility after decrypting
   `proj/secrets.txt.enc`.
+- The release workflow logs token length, a short SHA-256 fingerprint, and
+  `npm whoami`. It must never print token characters.
 
 ## 1. Create release branch
 
