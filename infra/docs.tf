@@ -6,7 +6,7 @@ locals {
 resource "vercel_project" "docs" {
   name             = "${var.project_name}-docs"
   framework        = "vitepress"
-  build_command    = "pnpm build"
+  build_command    = "npm run build"
   output_directory = ".vitepress/dist"
 
   vercel_authentication = {

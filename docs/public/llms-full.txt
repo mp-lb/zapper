@@ -3137,7 +3137,7 @@ Notes:
 
 The landing page lives in `apps/landing-page`, and the docs site lives in `docs`. Both are deployed by `.github/workflows/deploy-web.yml`.
 
-Deployment resources are managed through Terraform in `infra`. Terraform creates separate Vercel projects for the landing page and docs site, plus Cloudflare DNS records for `zapper.mp-lb.dev` and `docs.zapper.mp-lb.dev` by default. The Vercel project root directories stay unset because CI runs each Vercel build from the correct workspace directory.
+Deployment resources are managed through Terraform in `infra`. Terraform creates separate Vercel projects for the landing page and docs site, plus Cloudflare DNS records for `zapper.mp-lb.dev` and `docs.zapper.mp-lb.dev` by default.
 
 The landing page deploy is built from the repo's root pnpm workspace metadata.
 Keep the root `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` as
@@ -3154,7 +3154,7 @@ terraform apply \
   -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN"
 ```
 
-The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs` for verification, then deploys each project from that project's workspace directory with the Vercel CLI.
+The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs` for verification, deploys the landing page from the repo root using Vercel's prebuilt output, then deploys the docs site from the `docs` workspace directory.
 The landing page `/download/mac` route redirects to the latest macOS GitHub
 Release zip. Add `GCP_SA_KEY`, `VERCEL_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
 optional `VERCEL_ORG_ID`, and optional `DESKTOP_RELEASES_GITHUB_TOKEN` to
