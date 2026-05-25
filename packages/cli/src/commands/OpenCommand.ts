@@ -44,9 +44,16 @@ export class OpenCommand extends CommandHandler {
     if (Array.isArray(name)) {
       throw new Error("Open command accepts a single link name");
     }
+    if (options.home && name) {
+      throw new Error("Open command accepts either --home or a link name");
+    }
 
     const shouldSelect =
-      !name && !options.nonInteractive && !options.json && !options.jsonl;
+      !options.home &&
+      !name &&
+      !options.nonInteractive &&
+      !options.json &&
+      !options.jsonl;
 
     let link: string;
     if (shouldSelect) {
@@ -58,6 +65,8 @@ export class OpenCommand extends CommandHandler {
       }
       link =
         links.length === 1 ? links[0].url : (await this.selectLink(links)).url;
+    } else if (options.home) {
+      link = resolveLaunchLink(zapper);
     } else {
       link = resolveLaunchLink(zapper, name);
     }

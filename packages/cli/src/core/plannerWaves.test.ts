@@ -54,7 +54,7 @@ describe("Planner Wave Generation", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockPm2Manager.listProcesses.mockResolvedValue([]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(null);
+    mockDockerManager.listContainers.mockResolvedValue([]);
   });
 
   describe("Independent stops should be grouped into a single wave", () => {
@@ -112,9 +112,10 @@ describe("Planner Wave Generation", () => {
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.worker", "online"),
       ]);
-      mockDockerManager.getContainerInfo.mockResolvedValue(
+      mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.redis", "running"),
-      );
+        createMockDockerContainer("zap.test-project.postgres", "running"),
+      ]);
 
       const planner = new Planner(config);
       const plan = await planner.plan("stop", undefined, "test-project");
@@ -223,9 +224,9 @@ describe("Planner Wave Generation", () => {
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "online"),
       ]);
-      mockDockerManager.getContainerInfo.mockResolvedValue(
+      mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.database", "running"),
-      );
+      ]);
 
       const planner = new Planner(config);
       const plan = await planner.plan("stop", undefined, "test-project");
@@ -322,7 +323,7 @@ describe("Wave output formatting", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockPm2Manager.listProcesses.mockResolvedValue([]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(null);
+    mockDockerManager.listContainers.mockResolvedValue([]);
   });
 
   it("should produce alphabetically sorted action names within each wave", async () => {

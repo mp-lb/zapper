@@ -72,6 +72,7 @@ describe("Planner - start/stop/restart planning", () => {
     };
 
     planner = new Planner(config);
+    mockDockerManager.listContainers.mockResolvedValue([]);
   });
 
   describe("startAll", () => {
@@ -83,12 +84,9 @@ describe("Planner - start/stop/restart planning", () => {
         createMockProcessInfo("zap.test-project.monitor", "online"),
       ]);
 
-      mockDockerManager.getContainerInfo
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(null)
-        .mockResolvedValueOnce(
-          createMockDockerContainer("zap.test-project.analytics", "running"),
-        );
+      mockDockerManager.listContainers.mockResolvedValue([
+        createMockDockerContainer("zap.test-project.analytics", "running"),
+      ]);
 
       const plan = await planner.plan("start", undefined, "test-project");
       const actions = flattenActions(plan);
@@ -126,14 +124,6 @@ describe("Planner - start/stop/restart planning", () => {
         createMockProcessInfo("zap.test-project.monitor", "stopped"),
       ]);
 
-      mockDockerManager.getContainerInfo
-        .mockResolvedValueOnce(
-          createMockDockerContainer("zap.test-project.cache", "running"),
-        )
-        .mockResolvedValueOnce(
-          createMockDockerContainer("zap.test-project.database", "running"),
-        );
-
       const plan = await planner.plan("start", undefined, "test-project", true);
       const actions = flattenActions(plan);
 
@@ -166,8 +156,6 @@ describe("Planner - start/stop/restart planning", () => {
         createMockProcessInfo("zap.test-project.worker", "stopped"),
         createMockProcessInfo("zap.test-project.monitor", "stopped"),
       ]);
-
-      mockDockerManager.getContainerInfo.mockResolvedValue(null);
 
       const plan = await planner.plan("start", undefined, "test-project");
       const actions = flattenActions(plan);
@@ -207,6 +195,26 @@ describe("Planner - start/stop/restart planning", () => {
         serviceType: "docker",
         name: "analytics",
       });
+    });
+
+    it("should return an empty plan when every service is already running", async () => {
+      mockPm2Manager.listProcesses.mockResolvedValue([
+        createMockProcessInfo("zap.test-project.api", "online"),
+        createMockProcessInfo("zap.test-project.frontend", "online"),
+        createMockProcessInfo("zap.test-project.worker", "online"),
+        createMockProcessInfo("zap.test-project.monitor", "online"),
+      ]);
+      mockDockerManager.listContainers.mockResolvedValue([
+        createMockDockerContainer("zap.test-project.cache", "running"),
+        createMockDockerContainer("zap.test-project.database", "Up 2 minutes"),
+        createMockDockerContainer("zap.test-project.analytics", "running"),
+      ]);
+
+      const plan = await planner.plan("start", undefined, "test-project");
+
+      expect(plan.waves).toEqual([]);
+      expect(mockDockerManager.listContainers).toHaveBeenCalledTimes(1);
+      expect(mockDockerManager.getContainerInfo).not.toHaveBeenCalled();
     });
   });
 
@@ -272,9 +280,9 @@ describe("Planner - start/stop/restart planning", () => {
       mockPm2Manager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
-      mockDockerManager.getContainerInfo.mockResolvedValue(
+      mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.database", "running"),
-      );
+      ]);
 
       const plan = await dependencyPlanner.plan(
         "restart",
@@ -318,8 +326,6 @@ describe("Planner - Dependency-aware waves", () => {
     };
 
     mockPm2Manager.listProcesses.mockResolvedValue([]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(null);
-
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -347,8 +353,6 @@ describe("Planner - Dependency-aware waves", () => {
     };
 
     mockPm2Manager.listProcesses.mockResolvedValue([]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(null);
-
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -374,8 +378,6 @@ describe("Planner - Dependency-aware waves", () => {
     };
 
     mockPm2Manager.listProcesses.mockResolvedValue([]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(null);
-
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -436,9 +438,9 @@ describe("Planner - Dependency-aware waves", () => {
       createMockProcessInfo("zap.test-project.api", "online"),
       createMockProcessInfo("zap.test-project.frontend", "online"),
     ]);
-    mockDockerManager.getContainerInfo.mockResolvedValue(
+    mockDockerManager.listContainers.mockResolvedValue([
       createMockDockerContainer("zap.test-project.database", "running"),
-    );
+    ]);
 
     const planner = new Planner(config);
     const plan = await planner.plan("stop", undefined, "test-project");

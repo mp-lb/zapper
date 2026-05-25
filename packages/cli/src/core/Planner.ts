@@ -134,7 +134,33 @@ export class Planner {
     const allProcesses = this.getProcesses();
     const allContainers = this.getContainers();
 
-    const pm2List = await Pm2Manager.listProcesses();
+    let selectedProcesses: Process[];
+    let selectedContainers: Array<[string, Container]>;
+
+    if (targets && targets.length > 0) {
+      if (op === "start" && resolveTargetDependencies) {
+        const resolved = this.resolveDependencies(
+          targets,
+          allProcesses,
+          allContainers,
+        );
+        selectedProcesses = resolved.processes;
+        selectedContainers = resolved.containers;
+      } else {
+        selectedProcesses = allProcesses.filter((p) =>
+          targets.includes(p.name as string),
+        );
+        selectedContainers = allContainers.filter(([name]) =>
+          targets.includes(name),
+        );
+      }
+    } else {
+      selectedProcesses = allProcesses;
+      selectedContainers = allContainers;
+    }
+
+    const pm2List =
+      selectedProcesses.length > 0 ? await Pm2Manager.listProcesses() : [];
     const onlinePm2 = new Set(
       pm2List
         .filter((p) => p.status.toLowerCase() === "online")
@@ -148,8 +174,14 @@ export class Planner {
     const hasPm2Process = (name: string) =>
       existingPm2.has(buildServiceName(projectName, name, instanceId));
 
-    const isDockerRunning = async (name: string): Promise<boolean> => {
-      const info = await DockerManager.getContainerInfo(
+    const shouldListContainers =
+      selectedContainers.length > 0 && !(op === "start" && forceStart);
+    const containerList = shouldListContainers
+      ? await DockerManager.listContainers()
+      : [];
+    const containersByName = new Map(containerList.map((c) => [c.name, c]));
+    const isDockerRunning = (name: string): boolean => {
+      const info = containersByName.get(
         buildServiceName(projectName, name, instanceId),
       );
       return (
@@ -160,31 +192,6 @@ export class Planner {
     };
 
     if (op === "start") {
-      let selectedProcesses: Process[];
-      let selectedContainers: Array<[string, Container]>;
-
-      if (targets && targets.length > 0) {
-        if (resolveTargetDependencies) {
-          const resolved = this.resolveDependencies(
-            targets,
-            allProcesses,
-            allContainers,
-          );
-          selectedProcesses = resolved.processes;
-          selectedContainers = resolved.containers;
-        } else {
-          selectedProcesses = allProcesses.filter((p) =>
-            targets.includes(p.name as string),
-          );
-          selectedContainers = allContainers.filter(([name]) =>
-            targets.includes(name),
-          );
-        }
-      } else {
-        selectedProcesses = allProcesses;
-        selectedContainers = allContainers;
-      }
-
       const servicesToStart = new Set<string>();
       for (const p of selectedProcesses) {
         if (forceStart || !isPm2Online(p.name as string)) {
@@ -192,7 +199,7 @@ export class Planner {
         }
       }
       for (const [name] of selectedContainers) {
-        if (forceStart || !(await isDockerRunning(name))) {
+        if (forceStart || !isDockerRunning(name)) {
           servicesToStart.add(name);
         }
       }
@@ -206,27 +213,12 @@ export class Planner {
       return { waves };
     }
 
-    let selectedProcesses: Process[];
-    let selectedContainers: Array<[string, Container]>;
-
-    if (targets && targets.length > 0) {
-      selectedProcesses = allProcesses.filter((p) =>
-        targets.includes(p.name as string),
-      );
-      selectedContainers = allContainers.filter(([name]) =>
-        targets.includes(name),
-      );
-    } else {
-      selectedProcesses = allProcesses;
-      selectedContainers = allContainers;
-    }
-
     const servicesToStop = new Set<string>();
     for (const p of selectedProcesses) {
       if (hasPm2Process(p.name as string)) servicesToStop.add(p.name as string);
     }
     for (const [name] of selectedContainers) {
-      if (await isDockerRunning(name)) servicesToStop.add(name);
+      if (isDockerRunning(name)) servicesToStop.add(name);
     }
 
     return { waves: this.buildStopWave(servicesToStop) };

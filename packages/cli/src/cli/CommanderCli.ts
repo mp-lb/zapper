@@ -493,6 +493,7 @@ export class CommanderCli {
       .alias("o")
       .description("Choose a configured project link interactively")
       .argument("[name]", "Link name to open without prompting")
+      .option("--home", "Open the configured homepage without prompting")
       .option(
         "--non-interactive",
         "Open the configured homepage or named link without prompting",

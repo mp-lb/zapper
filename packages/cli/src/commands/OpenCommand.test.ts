@@ -100,6 +100,39 @@ describe("OpenCommand", () => {
     });
   });
 
+  it("opens the homepage without prompting with --home", async () => {
+    const selectLink = vi.fn();
+    const command = new OpenCommand(selectLink);
+
+    const result = await command.execute({
+      zapper: zapperWithLinks(),
+      options: { home: true },
+    });
+
+    expect(selectLink).not.toHaveBeenCalled();
+    expect(result).toMatchObject({
+      kind: "launch.opened",
+      url: "http://localhost:3000",
+    });
+    const [commandName, args] = getOpenCommand("http://localhost:3000");
+    expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
+      detached: true,
+      stdio: "ignore",
+    });
+  });
+
+  it("rejects --home with a link name", async () => {
+    const command = new OpenCommand(vi.fn());
+
+    await expect(
+      command.execute({
+        zapper: zapperWithLinks(),
+        service: "Storybook",
+        options: { home: true },
+      }),
+    ).rejects.toThrow("Open command accepts either --home or a link name");
+  });
+
   it("opens directly when homepage is the only available link", async () => {
     const selectLink = vi.fn();
     const command = new OpenCommand(selectLink);

@@ -93,14 +93,16 @@ zap home
 zap notes
 zap open
 zap o "API Docs"
+zap open --home
 zap open --non-interactive
 ```
 
 `zap launch` opens the configured homepage or a named link without prompting.
 `zap open` shows an interactive link picker when run without a link name. Use
 the arrow keys to choose a link, then press Enter to open it. `zap open <name>`
-and `zap o <name>` open a named link directly. `zap open --non-interactive`
-keeps the old script-friendly behavior and opens the configured homepage.
+and `zap o <name>` open a named link directly. `zap open --home` explicitly
+opens the configured homepage. `zap open --non-interactive` keeps the old
+script-friendly behavior and opens the configured homepage.
 
 See [Project Metadata](project-metadata.md) for `homepage`, `links`, and
 `notes`.
