@@ -106,7 +106,8 @@ jobs:
 
           echo "NPM_TOKEN length: ${token_len}"
           echo "NPM_TOKEN sha256 prefix: ${token_fingerprint}"
-          echo "npm whoami: $(NPM_CONFIG_USERCONFIG="$tmp_npmrc" npm whoami)"
+          npm_user="$(NPM_CONFIG_USERCONFIG="$tmp_npmrc" npm whoami)"
+          echo "npm whoami: ${npm_user}"
 
       - name: Create Release Pull Request or Publish
         id: changesets
