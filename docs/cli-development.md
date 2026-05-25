@@ -195,7 +195,7 @@ terraform apply \
   -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN"
 ```
 
-The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs`, then deploys both projects with the Vercel CLI.
+The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs`, then deploys each project with the Vercel CLI from that project's workspace directory.
 The landing page `/download/mac` route redirects to the latest macOS GitHub
 Release zip. Add `GCP_SA_KEY`, `VERCEL_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
 optional `VERCEL_ORG_ID`, and optional `DESKTOP_RELEASES_GITHUB_TOKEN` to

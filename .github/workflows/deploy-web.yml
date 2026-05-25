@@ -170,14 +170,17 @@ jobs:
           fi
 
       - name: Build landing page for Vercel
+        working-directory: apps/landing-page
         run: |
           set -euo pipefail
+          rm -rf .vercel/output
           npx vercel build --prod --yes --token="$VERCEL_API_TOKEN"
         env:
           VERCEL_PROJECT_ID: ${{ steps.vercel.outputs.landing_project_id }}
           VERCEL_ORG_ID: ${{ steps.vercel.outputs.org_id }}
 
       - name: Deploy landing page to Vercel
+        working-directory: apps/landing-page
         run: |
           set -euo pipefail
           npx vercel deploy --prebuilt --prod --yes --token="$VERCEL_API_TOKEN"
@@ -186,14 +189,17 @@ jobs:
           VERCEL_ORG_ID: ${{ steps.vercel.outputs.org_id }}
 
       - name: Build docs for Vercel
+        working-directory: docs
         run: |
           set -euo pipefail
+          rm -rf .vercel/output
           npx vercel build --prod --yes --token="$VERCEL_API_TOKEN"
         env:
           VERCEL_PROJECT_ID: ${{ steps.vercel.outputs.docs_project_id }}
           VERCEL_ORG_ID: ${{ steps.vercel.outputs.org_id }}
 
       - name: Deploy docs to Vercel
+        working-directory: docs
         run: |
           set -euo pipefail
           npx vercel deploy --prebuilt --prod --yes --token="$VERCEL_API_TOKEN"
