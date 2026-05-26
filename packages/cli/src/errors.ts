@@ -151,6 +151,24 @@ export class ExclusiveLockError extends Error {
   }
 }
 
+export class PromptCancelledError extends Error {
+  constructor(message = "Aborted.") {
+    super(message);
+    this.name = "PromptCancelledError";
+  }
+}
+
+export function isPromptCancelledError(error: unknown): boolean {
+  if (error instanceof PromptCancelledError) return true;
+  if (!(error instanceof Error)) return false;
+
+  const maybeNodeError = error as Error & { code?: unknown };
+  return (
+    error.name === "PromptCancelledError" ||
+    maybeNodeError.code === "ERR_USE_AFTER_CLOSE"
+  );
+}
+
 export function formatError(error: unknown, showStackTrace = false): string {
   return renderer.errors.format(error, showStackTrace);
 }

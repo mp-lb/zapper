@@ -103,6 +103,10 @@ zap profile reset
 Later files override earlier files. Root `env_files` remains a compatibility
 alias, but new configs should prefer `env`.
 
+Profile service subsets automatically include `depends_on` dependencies. A
+profile can list a native app service and Zapper will still include the Docker
+services that app depends on.
+
 See [Environment Variable Management](env-var-mgmt.md) for detailed resolution
 rules.
 

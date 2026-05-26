@@ -313,7 +313,7 @@ describe("Planner - start/stop/restart planning", () => {
 });
 
 describe("Planner - Dependency-aware waves", () => {
-  it("should order services based on depends_on", async () => {
+  it("should start dependencies in the same wave when no healthchecks are set", async () => {
     const config: ZapperConfig = {
       project: "test-project",
       native: {
@@ -329,26 +329,23 @@ describe("Planner - Dependency-aware waves", () => {
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
-    expect(plan.waves.length).toBe(3);
-
-    const wave1Names = plan.waves[0].actions.map((a) => a.name);
-    const wave2Names = plan.waves[1].actions.map((a) => a.name);
-    const wave3Names = plan.waves[2].actions.map((a) => a.name);
-
-    expect(wave1Names).toContain("database");
-    expect(wave2Names).toContain("api");
-    expect(wave3Names).toContain("frontend");
+    expect(plan.waves.length).toBe(1);
+    expect(plan.waves[0].actions.map((a) => a.name)).toEqual([
+      "api",
+      "database",
+      "frontend",
+    ]);
   });
 
-  it("should run independent services in parallel", async () => {
+  it("should wait for dependencies that define healthchecks", async () => {
     const config: ZapperConfig = {
       project: "test-project",
       native: {
         api: { cmd: "npm start", depends_on: ["database", "redis"] },
       },
       docker: {
-        database: { image: "postgres:15" },
-        redis: { image: "redis:7" },
+        database: { image: "postgres:15", healthcheck: 5 },
+        redis: { image: "redis:7", healthcheck: 5 },
       },
     };
 
@@ -389,7 +386,7 @@ describe("Planner - Dependency-aware waves", () => {
     expect(dbAction?.healthcheck).toBe(15);
   });
 
-  it("should use default healthcheck of 5", async () => {
+  it("should not set a default healthcheck", async () => {
     const config: ZapperConfig = {
       project: "test-project",
       native: {
@@ -402,10 +399,10 @@ describe("Planner - Dependency-aware waves", () => {
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
-    expect(plan.waves[0].actions[0].healthcheck).toBe(5);
+    expect(plan.waves[0].actions[0].healthcheck).toBeUndefined();
   });
 
-  it("should throw on circular dependencies", async () => {
+  it("should start circular dependencies together when no healthchecks are set", async () => {
     const config: ZapperConfig = {
       project: "test-project",
       native: {
@@ -417,9 +414,10 @@ describe("Planner - Dependency-aware waves", () => {
     mockPm2Manager.listProcesses.mockResolvedValue([]);
 
     const planner = new Planner(config);
-    await expect(
-      planner.plan("start", undefined, "test-project", true),
-    ).rejects.toThrow(/[Cc]ircular/);
+    const plan = await planner.plan("start", undefined, "test-project", true);
+
+    expect(plan.waves).toHaveLength(1);
+    expect(plan.waves[0].actions.map((a) => a.name)).toEqual(["a", "b"]);
   });
 
   it("should stop all services in one wave regardless of dependencies", async () => {

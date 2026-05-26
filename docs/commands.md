@@ -37,7 +37,8 @@ zap watch api
 
 `zap up`, `zap down`, and `zap restart` accept service names and service
 aliases. Unknown names are reported, and valid names in the same command still
-run. `zap up <service>` starts dependencies first. `zap restart <service>`
+run. `zap up <service>` includes dependencies. Explicit health checks decide
+whether dependents wait for those dependencies to be ready. `zap restart <service>`
 restarts only the targeted service.
 
 `zap watch` starts Docker services that define `watch` rules and keeps running.
@@ -99,7 +100,8 @@ zap open --non-interactive
 
 `zap launch` opens the configured homepage or a named link without prompting.
 `zap open` shows an interactive link picker when run without a link name. Use
-the arrow keys to choose a link, then press Enter to open it. `zap open <name>`
+the arrow keys to choose a link, then press Enter to open it, or press Ctrl+C
+to abort. `zap open <name>`
 and `zap o <name>` open a named link directly. `zap open --home` explicitly
 opens the configured homepage. `zap open --non-interactive` keeps the old
 script-friendly behavior and opens the configured homepage.

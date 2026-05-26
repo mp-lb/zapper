@@ -77,6 +77,9 @@ For full reference docs, see [Commands](commands.md),
 For profile-based env files, service selection, and isolated stacks, see
 [Profiles](profiles.md).
 
+For readiness waits and dependency startup behavior, see
+[Health Checks](healthchecks.md).
+
 For packaging and local machine runtime plans, see
 [Local Runtime Compatibility](local-runtime.md).
 
@@ -130,7 +133,8 @@ zap watch api
 
 `zap up`, `zap down`, and `zap restart` accept service names and service
 aliases. Unknown names are reported, and valid names in the same command still
-run. `zap up <service>` starts dependencies first. `zap restart <service>`
+run. `zap up <service>` includes dependencies. Explicit health checks decide
+whether dependents wait for those dependencies to be ready. `zap restart <service>`
 restarts only the targeted service.
 
 `zap watch` starts Docker services that define `watch` rules and keeps running.
@@ -192,7 +196,8 @@ zap open --non-interactive
 
 `zap launch` opens the configured homepage or a named link without prompting.
 `zap open` shows an interactive link picker when run without a link name. Use
-the arrow keys to choose a link, then press Enter to open it. `zap open <name>`
+the arrow keys to choose a link, then press Enter to open it, or press Ctrl+C
+to abort. `zap open <name>`
 and `zap o <name>` open a named link directly. `zap open --home` explicitly
 opens the configured homepage. `zap open --non-interactive` keeps the old
 script-friendly behavior and opens the configured homepage.
@@ -427,6 +432,10 @@ zap profile reset
 Later files override earlier files. Root `env_files` remains a compatibility
 alias, but new configs should prefer `env`.
 
+Profile service subsets automatically include `depends_on` dependencies. A
+profile can list a native app service and Zapper will still include the Docker
+services that app depends on.
+
 See [Environment Variable Management](env-var-mgmt.md) for detailed resolution
 rules.
 
@@ -565,9 +574,9 @@ native:
 - `aliases` are alternate names accepted by service-targeting commands.
 - `cwd` is relative to the project root.
 - `env` controls env routing for the service.
-- `depends_on` starts dependencies first.
+- `depends_on` includes dependencies when starting this service.
 - `repo` is used by `zap clone`.
-- `healthcheck` can be a number of seconds or a URL to poll.
+- `healthcheck` can be a delay, HTTP URL, or explicit health check object.
 
 ## Docker Services
 
@@ -602,7 +611,9 @@ docker:
     networks: [backend]
     command: postgres -c log_statement=all
     depends_on: [other]
-    healthcheck: 10
+    healthcheck:
+      type: delay
+      seconds: 10
     watch:
       - path: ./postgres
         action: rebuild
@@ -673,7 +684,7 @@ service `env` are file stacks.
 
 ## Dependencies
 
-Use `depends_on` to control startup order:
+Use `depends_on` to include related services when starting a target:
 
 ```yaml
 docker:
@@ -686,13 +697,19 @@ native:
     depends_on: [postgres]
 ```
 
-When you run `zap up api`, Zapper starts `postgres` before `api`.
+When you run `zap up api`, Zapper also starts `postgres`.
 
-`depends_on` affects start order only:
+`depends_on` affects service selection by default:
 
-- `zap up` and `zap restart` start waves are dependency-aware.
+- `zap up <service>` includes transitive dependencies.
+- Services without explicit health checks can start in the same wave as their
+  dependents.
+- If a dependency defines `healthcheck`, dependent services wait until that
+  check passes before starting.
 - `zap down` stops targeted services in a single wave.
 - `zap restart <service>` restarts only the targeted service, not its dependencies.
+
+See [Health Checks](healthchecks.md) for readiness behavior.
 
 ## Profiles
 
@@ -724,6 +741,10 @@ zap profile use e2e
 zap restart
 zap profile reset
 ```
+
+Profile service selection includes dependencies automatically. If a profile
+lists `api` and `api` depends on `postgres`, `postgres` participates in that
+profile without needing to be listed directly.
 
 ## Docker Volumes
 
@@ -863,6 +884,118 @@ docker:
       - /data/db
 ```
 
+# Source: docs/healthchecks.md
+
+# Health Checks
+
+Health checks are optional readiness gates for service dependencies. By default,
+Zapper does not wait after starting a service.
+
+## Default Behavior
+
+`depends_on` means "include this service when starting the target service." It
+does not mean "wait for this service to be ready" unless the dependency has an
+explicit `healthcheck`.
+
+```yaml
+docker:
+  postgres:
+    image: postgres:15
+
+native:
+  api:
+    cmd: pnpm dev
+    depends_on: [postgres]
+
+  frontend:
+    cmd: pnpm dev
+    depends_on: [api]
+```
+
+With this config, `zap up frontend` includes `postgres`, `api`, and `frontend`,
+and starts them in the same wave when they are not already running.
+
+## Waiting For Readiness
+
+Add `healthcheck` to a dependency when dependents should wait for it before
+starting:
+
+```yaml
+docker:
+  postgres:
+    image: postgres:15
+    healthcheck: 10
+
+native:
+  api:
+    cmd: pnpm dev
+    depends_on: [postgres]
+```
+
+Here, `api` waits until `postgres` passes its health check. Numeric
+`healthcheck` values are delay checks measured in seconds. The explicit delay
+form is equivalent:
+
+```yaml
+healthcheck:
+  type: delay
+  seconds: 10
+```
+
+URL health checks poll until the endpoint returns a successful HTTP status:
+
+```yaml
+native:
+  api:
+    cmd: pnpm dev
+    healthcheck: http://localhost:3000/health
+
+  frontend:
+    cmd: pnpm dev
+    depends_on: [api]
+```
+
+`frontend` starts after the `api` health URL responds successfully.
+
+Use the explicit HTTP form when you need polling controls:
+
+```yaml
+healthcheck:
+  type: http
+  url: http://localhost:${API_PORT}/health
+  timeout: 60
+  interval: 1
+```
+
+- `timeout` is the maximum number of seconds `zap up` waits before moving on.
+- `interval` is the number of seconds between poll attempts.
+- If `timeout` is omitted, Zapper waits up to 120 seconds.
+- If `interval` is omitted, Zapper polls once per second.
+
+## Status
+
+`zap status` reports a running service without a `healthcheck` as `up`.
+
+For delay checks, status is `pending` until the configured delay has elapsed.
+For HTTP checks, status is `pending` until the URL returns a successful response.
+
+## Current Shape
+
+Supported forms:
+
+```yaml
+healthcheck: 10
+healthcheck: http://localhost:3000/health
+healthcheck:
+  type: delay
+  seconds: 10
+healthcheck:
+  type: http
+  url: http://localhost:3000/health
+  timeout: 60
+  interval: 1
+```
+
 # Source: docs/tasks.md
 
 # Tasks
@@ -918,7 +1051,7 @@ tasks:
 - `aliases` are alternate names accepted by `zap task`.
 - `cwd` is relative to the project root.
 - `env` uses the same routing modes as service env.
-- `silent` hides Zapper command headers.
+- `silent` hides Zapper task-start lines and command headers.
 - `interactive` inherits stdio directly for TTY-sensitive commands.
 - `params` defines named task parameters.
 - `preconditions` must pass before commands run.
@@ -933,8 +1066,10 @@ If a task name or alias is not defined, the command fails with
 By default, Zapper prints each command before execution, then streams stdout and
 stderr in muted task output.
 
-Set `silent: true` on a task or command object to hide Zapper's command header
-while preserving command output.
+Set `silent: true` on a task to hide Zapper's task-start line and command
+headers while preserving command output. Set it on a command object to hide that
+command's header, or on a nested task call to hide the nested task-start line
+and command headers.
 
 Set `interactive: true` on a task or command object for TTY-sensitive commands
 such as database shells, REPLs, SSH sessions, and CLIs that prompt for

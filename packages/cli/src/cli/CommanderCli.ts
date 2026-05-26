@@ -146,7 +146,7 @@ export class CommanderCli {
 
     this.program
       .option("--config <file>", "Use a specific config file")
-      .option("--profile <name>", "Use a stack profile for this invocation")
+      .option("--profile <name>", "Use a profile for this invocation")
       .option("--instance <name>", "Target a named instance (default: default)")
       .option("-v, --verbose", "Increase logging verbosity")
       .option("-q, --quiet", "Reduce logging output")
@@ -350,7 +350,7 @@ export class CommanderCli {
     this.program
       .command("profile [action] [name]")
       .alias("p")
-      .description("Manage stack profiles")
+      .description("Manage profiles")
       .option("-j, --json", "Output as minified JSON")
       .action(async (action, name, options, command) => {
         const service = [action, name].filter(

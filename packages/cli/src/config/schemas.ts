@@ -116,8 +116,35 @@ const PortNameSchema = z
     "Port name must contain only uppercase letters, numbers, and underscores",
   );
 
+const DelayHealthcheckSchema = z
+  .object({
+    type: z.literal("delay"),
+    seconds: z.number().nonnegative("Healthcheck delay cannot be negative"),
+  })
+  .strict();
+
+const HttpHealthcheckSchema = z
+  .object({
+    type: z.literal("http"),
+    url: z.string().url("Healthcheck URL must be a valid URL"),
+    timeout: z
+      .number()
+      .positive("Healthcheck timeout must be positive")
+      .optional(),
+    interval: z
+      .number()
+      .positive("Healthcheck interval must be positive")
+      .optional(),
+  })
+  .strict();
+
 const HealthcheckSchema = z
-  .union([z.number(), z.string().url("Healthcheck must be a valid URL")])
+  .union([
+    z.number().nonnegative("Healthcheck delay cannot be negative"),
+    z.string().url("Healthcheck must be a valid URL"),
+    DelayHealthcheckSchema,
+    HttpHealthcheckSchema,
+  ])
   .optional();
 
 const BuildSchema = z.union([

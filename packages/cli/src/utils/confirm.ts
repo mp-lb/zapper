@@ -1,5 +1,6 @@
 import readline from "readline";
 import { renderer } from "../ui/renderer";
+import { PromptCancelledError } from "../errors";
 
 export async function confirm(
   message: string,
@@ -18,14 +19,27 @@ export async function confirm(
     output: (g.process?.stdout as any) || undefined,
   });
 
-  const answer: string = await new Promise((resolve) => {
+  const answer: string = await new Promise<string>((resolve, reject) => {
+    let settled = false;
+    const finish = (value: string) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+    };
+    const cancel = () => {
+      if (settled) return;
+      settled = true;
+      reject(new PromptCancelledError());
+    };
+
+    rl.once("SIGINT", cancel);
     rl.question(
       renderer.confirm.promptText(message, options.defaultYes),
-      (ans) => resolve(ans.trim()),
+      (ans) => finish(ans.trim()),
     );
+  }).finally(() => {
+    rl.close();
   });
-
-  rl.close();
 
   if (!answer) return !!options.defaultYes;
   const normalized = answer.toLowerCase();

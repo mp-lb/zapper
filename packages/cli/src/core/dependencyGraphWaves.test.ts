@@ -43,7 +43,7 @@ describe("DependencyGraph Wave Generation", () => {
       expect(waves[0].actions.length).toBe(3);
     });
 
-    it("should place dependencies in earlier waves", () => {
+    it("should start dependencies without healthchecks in the same wave", () => {
       graph.addContainer("database", { image: "postgres:15" });
       graph.addProcess("api", { cmd: "npm start", depends_on: ["database"] });
       graph.addProcess("frontend", { cmd: "npm start", depends_on: ["api"] });
@@ -52,21 +52,17 @@ describe("DependencyGraph Wave Generation", () => {
         new Set(["database", "api", "frontend"]),
       );
 
-      expect(waves.length).toBe(3);
-
-      // Wave 1: database (no deps)
-      expect(waves[0].actions.map((a) => a.name)).toEqual(["database"]);
-
-      // Wave 2: api (depends on database)
-      expect(waves[1].actions.map((a) => a.name)).toEqual(["api"]);
-
-      // Wave 3: frontend (depends on api)
-      expect(waves[2].actions.map((a) => a.name)).toEqual(["frontend"]);
+      expect(waves.length).toBe(1);
+      expect(waves[0].actions.map((a) => a.name)).toEqual([
+        "api",
+        "database",
+        "frontend",
+      ]);
     });
 
-    it("should place independent dependents in the same wave", () => {
-      graph.addContainer("database", { image: "postgres:15" });
-      graph.addContainer("redis", { image: "redis:7" });
+    it("should wait for dependencies that define healthchecks", () => {
+      graph.addContainer("database", { image: "postgres:15", healthcheck: 5 });
+      graph.addContainer("redis", { image: "redis:7", healthcheck: 5 });
       graph.addProcess("api", {
         cmd: "npm start",
         depends_on: ["database", "redis"],
@@ -77,12 +73,8 @@ describe("DependencyGraph Wave Generation", () => {
       );
 
       expect(waves.length).toBe(2);
-
-      // Wave 1: database and redis (both have no deps)
       const wave1Names = waves[0].actions.map((a) => a.name).sort();
       expect(wave1Names).toEqual(["database", "redis"]);
-
-      // Wave 2: api (depends on both)
       expect(waves[1].actions.map((a) => a.name)).toEqual(["api"]);
     });
 
@@ -102,21 +94,22 @@ describe("DependencyGraph Wave Generation", () => {
       expect(waves[0].actions[0].healthcheck).toBe(15);
     });
 
-    it("should use default healthcheck of 5 when not specified", () => {
+    it("should leave healthcheck undefined when not specified", () => {
       graph.addProcess("api", { cmd: "npm start" });
 
       const waves = graph.computeStartWaves(new Set(["api"]));
 
-      expect(waves[0].actions[0].healthcheck).toBe(5);
+      expect(waves[0].actions[0].healthcheck).toBeUndefined();
     });
 
-    it("should throw on circular dependencies", () => {
+    it("should start circular dependencies together when no healthchecks are set", () => {
       graph.addProcess("a", { cmd: "npm start", depends_on: ["b"] });
       graph.addProcess("b", { cmd: "npm start", depends_on: ["a"] });
 
-      expect(() => graph.computeStartWaves(new Set(["a", "b"]))).toThrow(
-        /Circular/,
-      );
+      const waves = graph.computeStartWaves(new Set(["a", "b"]));
+
+      expect(waves).toHaveLength(1);
+      expect(waves[0].actions.map((a) => a.name)).toEqual(["a", "b"]);
     });
 
     it("should throw on missing dependency", () => {

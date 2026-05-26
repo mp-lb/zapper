@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
 import path from "path";
@@ -10,6 +10,9 @@ import { Pm2Executor } from "./process/Pm2Executor";
 import { ActionPlan } from "../types";
 import { findProcess } from "./findProcess";
 import { findContainer } from "./findContainer";
+
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
 
 vi.mock("./docker");
 vi.mock("./findProcess");
@@ -74,6 +77,7 @@ describe("executeActions", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockFetch.mockReset();
 
     mockConfig = {
       project: "test-project",
@@ -125,6 +129,10 @@ describe("executeActions", () => {
     vi.mocked(DockerManager.buildImage).mockResolvedValue(undefined);
     vi.mocked(DockerManager.startContainerAsync).mockResolvedValue(12345);
     vi.mocked(DockerManager.stopContainer).mockResolvedValue(undefined);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   describe("bare metal service actions", () => {
@@ -635,6 +643,154 @@ describe("executeActions", () => {
           configDir: "/config/dir",
         },
       );
+    });
+  });
+
+  describe("healthchecks", () => {
+    it("should wait for the longest delay healthcheck in a wave", async () => {
+      vi.useFakeTimers();
+      vi.mocked(findProcess).mockImplementation((_, name) => ({
+        name,
+        cmd: `npm run ${name}`,
+      }));
+
+      const plan: ActionPlan = {
+        waves: [
+          {
+            actions: [
+              {
+                type: "start",
+                serviceType: "native",
+                name: "fast",
+                healthcheck: { type: "delay", seconds: 1 },
+              },
+              {
+                type: "start",
+                serviceType: "native",
+                name: "slow",
+                healthcheck: { type: "delay", seconds: 5 },
+              },
+            ],
+          },
+          {
+            actions: [
+              {
+                type: "start",
+                serviceType: "native",
+                name: "next",
+              },
+            ],
+          },
+        ],
+      };
+
+      const execution = executeActions(
+        mockConfig,
+        "test-project",
+        "/config/dir",
+        plan,
+      );
+
+      await vi.advanceTimersByTimeAsync(0);
+      expect(mockPm2Executor.startProcess).toHaveBeenCalledTimes(2);
+      expect(mockPm2Executor.startProcess).not.toHaveBeenCalledWith(
+        expect.objectContaining({ name: "next" }),
+        "test-project",
+      );
+
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(mockPm2Executor.startProcess).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(4000);
+      await execution;
+
+      expect(mockPm2Executor.startProcess).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "next" }),
+        "test-project",
+      );
+
+      vi.useRealTimers();
+    });
+
+    it("should poll HTTP healthcheck objects until they pass", async () => {
+      vi.mocked(findProcess).mockReturnValue({
+        name: "api",
+        cmd: "npm start",
+      });
+      mockFetch
+        .mockResolvedValueOnce({ ok: false })
+        .mockResolvedValueOnce({ ok: true });
+
+      const plan: ActionPlan = {
+        waves: [
+          {
+            actions: [
+              {
+                type: "start",
+                serviceType: "native",
+                name: "api",
+                healthcheck: {
+                  type: "http",
+                  url: "http://localhost:3000/health",
+                  timeout: 1,
+                  interval: 0.001,
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      await executeActions(mockConfig, "test-project", "/config/dir", plan);
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledWith(
+        "http://localhost:3000/health",
+        expect.objectContaining({ method: "GET" }),
+      );
+    });
+
+    it("should emit timeout events for HTTP healthcheck objects", async () => {
+      vi.mocked(findProcess).mockReturnValue({
+        name: "api",
+        cmd: "npm start",
+      });
+      mockFetch.mockResolvedValue({ ok: false });
+      const reporter = { onEvent: vi.fn() };
+
+      const plan: ActionPlan = {
+        waves: [
+          {
+            actions: [
+              {
+                type: "start",
+                serviceType: "native",
+                name: "api",
+                healthcheck: {
+                  type: "http",
+                  url: "http://localhost:3000/health",
+                  timeout: 0.001,
+                  interval: 0.001,
+                },
+              },
+            ],
+          },
+        ],
+      };
+
+      await executeActions(
+        mockConfig,
+        "test-project",
+        "/config/dir",
+        plan,
+        reporter,
+      );
+
+      expect(reporter.onEvent).toHaveBeenCalledWith({
+        type: "service.healthcheck.timeout",
+        service: "api",
+        healthcheck: "http://localhost:3000/health",
+      });
     });
   });
 

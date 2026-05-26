@@ -14,23 +14,21 @@ describe("DependencyGraph", () => {
       expect(waves[0].actions.length).toBe(2);
     });
 
-    it("should order dependent services into separate waves", () => {
+    it("should start dependent services in the same wave without healthchecks", () => {
       const graph = new DependencyGraph();
-      graph.addContainer("database", { image: "postgres:15", healthcheck: 5 });
+      graph.addContainer("database", { image: "postgres:15" });
       graph.addProcess("api", {
         cmd: "npm start",
-        healthcheck: 5,
         depends_on: ["database"],
       });
 
       const waves = graph.computeStartWaves(new Set(["api", "database"]));
 
-      expect(waves.length).toBe(2);
-      expect(waves[0].actions[0].name).toBe("database");
-      expect(waves[1].actions[0].name).toBe("api");
+      expect(waves.length).toBe(1);
+      expect(waves[0].actions.map((a) => a.name)).toEqual(["api", "database"]);
     });
 
-    it("should handle complex dependency chains", () => {
+    it("should wait for dependencies that define healthchecks", () => {
       const graph = new DependencyGraph();
       graph.addContainer("database", { image: "postgres:15", healthcheck: 5 });
       graph.addContainer("redis", { image: "redis:7", healthcheck: 5 });
@@ -133,6 +131,24 @@ describe("DependencyGraph", () => {
 
       expect(actions.find((a) => a.name === "api")?.healthcheck).toBe(15);
       expect(actions.find((a) => a.name === "database")?.healthcheck).toBe(30);
+    });
+
+    it("should wait for dependencies with object healthchecks", () => {
+      const graph = new DependencyGraph();
+      graph.addContainer("database", {
+        image: "postgres:15",
+        healthcheck: { type: "delay", seconds: 10 },
+      });
+      graph.addProcess("api", {
+        cmd: "npm start",
+        depends_on: ["database"],
+      });
+
+      const waves = graph.computeStartWaves(new Set(["api", "database"]));
+
+      expect(waves).toHaveLength(2);
+      expect(waves[0].actions[0].name).toBe("database");
+      expect(waves[1].actions[0].name).toBe("api");
     });
   });
 

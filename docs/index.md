@@ -71,6 +71,9 @@ For full reference docs, see [Commands](commands.md),
 For profile-based env files, service selection, and isolated stacks, see
 [Profiles](profiles.md).
 
+For readiness waits and dependency startup behavior, see
+[Health Checks](healthchecks.md).
+
 For packaging and local machine runtime plans, see
 [Local Runtime Compatibility](local-runtime.md).
 

@@ -7,6 +7,7 @@ import {
   Action,
   ActionPlan,
   ExecutionWave,
+  Healthcheck,
   ServiceActionEvent,
   ServiceActionReporter,
   ServiceExecutionReport,
@@ -118,6 +119,44 @@ function resolveSecretVolumes({
   return volumes;
 }
 
+interface NormalizedHealthcheck {
+  type: "delay" | "http";
+  seconds?: number;
+  url?: string;
+  timeout: number;
+  interval: number;
+}
+
+function normalizeHealthcheck(healthcheck: Healthcheck): NormalizedHealthcheck {
+  if (typeof healthcheck === "number") {
+    return { type: "delay", seconds: healthcheck, timeout: 0, interval: 0 };
+  }
+  if (typeof healthcheck === "string") {
+    return { type: "http", url: healthcheck, timeout: 120, interval: 1 };
+  }
+  if (healthcheck.type === "delay") {
+    return {
+      type: "delay",
+      seconds: healthcheck.seconds,
+      timeout: 0,
+      interval: 0,
+    };
+  }
+  return {
+    type: "http",
+    url: healthcheck.url,
+    timeout: healthcheck.timeout ?? 120,
+    interval: healthcheck.interval ?? 1,
+  };
+}
+
+function describeHealthcheck(healthcheck: Healthcheck): string {
+  if (typeof healthcheck === "number") return `${healthcheck}s delay`;
+  if (typeof healthcheck === "string") return healthcheck;
+  if (healthcheck.type === "delay") return `${healthcheck.seconds}s delay`;
+  return healthcheck.url;
+}
+
 async function checkHealthUrl(url: string): Promise<boolean> {
   try {
     const res = await fetch(url, {
@@ -137,20 +176,33 @@ async function waitForHealth(
   if (action.type !== "start") return;
 
   const { healthcheck } = action;
-  if (typeof healthcheck === "number") {
-    await sleep(healthcheck * 1000);
-  } else if (typeof healthcheck === "string") {
-    const maxAttempts = 120;
-    for (let i = 0; i < maxAttempts; i++) {
-      if (await checkHealthUrl(healthcheck)) return;
-      await sleep(1000);
-    }
-    reporter?.onEvent({
-      type: "service.healthcheck.timeout",
-      service: action.name,
-      healthcheck,
-    });
+  if (healthcheck === undefined) return;
+  const normalized = normalizeHealthcheck(healthcheck);
+
+  if (normalized.type === "delay") {
+    await sleep((normalized.seconds ?? 0) * 1000);
+    return;
   }
+
+  const { url } = normalized;
+  if (!url) return;
+
+  const startedAt = Date.now();
+  const timeoutMs = normalized.timeout * 1000;
+  const intervalMs = normalized.interval * 1000;
+
+  while (Date.now() - startedAt < timeoutMs) {
+    if (await checkHealthUrl(url)) return;
+    const remainingMs = timeoutMs - (Date.now() - startedAt);
+    if (remainingMs <= 0) break;
+    await sleep(Math.min(intervalMs, remainingMs));
+  }
+
+  reporter?.onEvent({
+    type: "service.healthcheck.timeout",
+    service: action.name,
+    healthcheck: describeHealthcheck(healthcheck),
+  });
 }
 
 /**

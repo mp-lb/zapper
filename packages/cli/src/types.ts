@@ -1,11 +1,24 @@
 export type ServiceType = "native" | "docker";
 export type ActionType = "start" | "stop";
+export type Healthcheck =
+  | number
+  | string
+  | {
+      type: "delay";
+      seconds: number;
+    }
+  | {
+      type: "http";
+      url: string;
+      timeout?: number;
+      interval?: number;
+    };
 
 export interface Action {
   type: ActionType;
   serviceType: ServiceType;
   name: string;
-  healthcheck: number | string;
+  healthcheck?: Healthcheck;
 }
 
 export interface ExecutionWave {

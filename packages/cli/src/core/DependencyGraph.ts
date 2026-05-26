@@ -1,10 +1,10 @@
 import { Process, Container } from "../config/schemas";
-import { Action, ExecutionWave, ServiceType } from "../types";
+import { Action, ExecutionWave, Healthcheck, ServiceType } from "../types";
 
 interface ServiceNode {
   name: string;
   serviceType: ServiceType;
-  healthcheck: number | string;
+  healthcheck?: Healthcheck;
   depends_on: string[];
 }
 
@@ -16,7 +16,7 @@ export class DependencyGraph {
     this.nodes.set(name, {
       name,
       serviceType: "native",
-      healthcheck: process.healthcheck ?? 5,
+      healthcheck: process.healthcheck,
       depends_on: process.depends_on ?? [],
     });
   }
@@ -25,7 +25,7 @@ export class DependencyGraph {
     this.nodes.set(name, {
       name,
       serviceType: "docker",
-      healthcheck: container.healthcheck ?? 5,
+      healthcheck: container.healthcheck,
       depends_on: container.depends_on ?? [],
     });
   }
@@ -54,7 +54,7 @@ export class DependencyGraph {
       recStack.add(node);
       path.push(node);
 
-      for (const dep of this.edges.get(node) || []) {
+      for (const dep of this.startWaitDependencies(node)) {
         if (!visited.has(dep)) {
           if (dfs(dep)) return true;
         } else if (recStack.has(dep)) {
@@ -79,6 +79,12 @@ export class DependencyGraph {
     return null;
   }
 
+  private startWaitDependencies(node: string): string[] {
+    return [...(this.edges.get(node) || [])].filter(
+      (dep) => this.nodes.get(dep)?.healthcheck !== undefined,
+    );
+  }
+
   computeStartWaves(servicesToStart: Set<string>): ExecutionWave[] {
     this.buildEdges();
 
@@ -97,9 +103,12 @@ export class DependencyGraph {
         const node = this.nodes.get(name);
         if (!node) continue;
 
-        const depsReady = node.depends_on.every(
-          (dep) => started.has(dep) || !servicesToStart.has(dep),
-        );
+        const depsReady = node.depends_on.every((dep) => {
+          if (!servicesToStart.has(dep)) return true;
+          const dependency = this.nodes.get(dep);
+          if (!dependency?.healthcheck) return true;
+          return started.has(dep);
+        });
 
         if (depsReady) {
           wave.push({

@@ -137,6 +137,50 @@ describe("createContext", () => {
       ]);
     });
 
+    it("keeps transitive dependencies for selected profile services", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        profiles: {
+          default: {
+            env_files: [".env"],
+            services: ["frontend"],
+            isolate: false,
+          },
+        },
+        native: {
+          backend: {
+            cmd: "npm run backend",
+            depends_on: ["mongodb", "redis"],
+          },
+          frontend: {
+            cmd: "npm run frontend",
+            depends_on: ["backend"],
+          },
+          worker: { cmd: "npm run worker" },
+        },
+        docker: {
+          mongodb: { image: "mongo:latest" },
+          redis: { image: "redis:7-alpine" },
+          localstack: { image: "localstack/localstack:latest" },
+        },
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.processes.map((process) => process.name)).toEqual([
+        "backend",
+        "frontend",
+      ]);
+      expect(result.containers.map((container) => container.name)).toEqual([
+        "mongodb",
+        "redis",
+      ]);
+    });
+
     it("uses selectedProfile from state", () => {
       const config: ZapperConfig = {
         project: "test-project",

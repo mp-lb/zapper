@@ -29,9 +29,9 @@ native:
 - `aliases` are alternate names accepted by service-targeting commands.
 - `cwd` is relative to the project root.
 - `env` controls env routing for the service.
-- `depends_on` starts dependencies first.
+- `depends_on` includes dependencies when starting this service.
 - `repo` is used by `zap clone`.
-- `healthcheck` can be a number of seconds or a URL to poll.
+- `healthcheck` can be a delay, HTTP URL, or explicit health check object.
 
 ## Docker Services
 
@@ -66,7 +66,9 @@ docker:
     networks: [backend]
     command: postgres -c log_statement=all
     depends_on: [other]
-    healthcheck: 10
+    healthcheck:
+      type: delay
+      seconds: 10
     watch:
       - path: ./postgres
         action: rebuild
@@ -137,7 +139,7 @@ service `env` are file stacks.
 
 ## Dependencies
 
-Use `depends_on` to control startup order:
+Use `depends_on` to include related services when starting a target:
 
 ```yaml
 docker:
@@ -150,13 +152,19 @@ native:
     depends_on: [postgres]
 ```
 
-When you run `zap up api`, Zapper starts `postgres` before `api`.
+When you run `zap up api`, Zapper also starts `postgres`.
 
-`depends_on` affects start order only:
+`depends_on` affects service selection by default:
 
-- `zap up` and `zap restart` start waves are dependency-aware.
+- `zap up <service>` includes transitive dependencies.
+- Services without explicit health checks can start in the same wave as their
+  dependents.
+- If a dependency defines `healthcheck`, dependent services wait until that
+  check passes before starting.
 - `zap down` stops targeted services in a single wave.
 - `zap restart <service>` restarts only the targeted service, not its dependencies.
+
+See [Health Checks](healthchecks.md) for readiness behavior.
 
 ## Profiles
 
@@ -188,6 +196,10 @@ zap profile use e2e
 zap restart
 zap profile reset
 ```
+
+Profile service selection includes dependencies automatically. If a profile
+lists `api` and `api` depends on `postgres`, `postgres` participates in that
+profile without needing to be listed directly.
 
 ## Docker Volumes
 

@@ -4,7 +4,7 @@ import { renderer } from "../../ui/renderer";
 import * as path from "path";
 import Mustache from "mustache";
 import { TaskParam } from "../../config/schemas";
-import { TaskNotFoundError } from "../../errors";
+import { PromptCancelledError, TaskNotFoundError } from "../../errors";
 
 const ansi = {
   reset: "\u001B[0m",
@@ -197,8 +197,21 @@ export class TaskRunner {
     });
 
     try {
-      return await new Promise((resolve) => {
-        rl.question(`${taskName}.${label}: `, (answer) => resolve(answer));
+      return await new Promise<string>((resolve, reject) => {
+        let settled = false;
+        const finish = (value: string) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+        const cancel = () => {
+          if (settled) return;
+          settled = true;
+          reject(new PromptCancelledError());
+        };
+
+        rl.once("SIGINT", cancel);
+        rl.question(`${taskName}.${label}: `, (answer) => finish(answer));
       });
     } finally {
       rl.close();
@@ -439,9 +452,11 @@ export class TaskRunner {
     );
 
     const env = this.taskEnv(task, name, cwd);
-    renderer.log.info(
-      `Running task: ${name}${task.desc ? ` — ${task.desc}` : ""}`,
-    );
+    if (!execution.silent && !task.silent) {
+      renderer.log.info(
+        `Running task: ${name}${task.desc ? ` — ${task.desc}` : ""}`,
+      );
+    }
 
     await this.runPreconditions(name, task, cwd, env, params);
 

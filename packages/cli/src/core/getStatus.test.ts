@@ -67,12 +67,17 @@ function createMockContext(projectName: string = "test-project"): Context {
       {
         name: "worker",
         cmd: "node worker.js",
-        healthcheck: 5,
+        healthcheck: { type: "delay", seconds: 5 },
       },
       {
         name: "frontend",
         cmd: "npm run dev",
-        healthcheck: "http://localhost:3000/health",
+        healthcheck: {
+          type: "http",
+          url: "http://localhost:3000/health",
+          timeout: 30,
+          interval: 1,
+        },
       },
     ],
     containers: [
@@ -85,12 +90,15 @@ function createMockContext(projectName: string = "test-project"): Context {
       {
         name: "cache",
         image: "redis:7",
-        healthcheck: 3,
+        healthcheck: { type: "delay", seconds: 3 },
       },
       {
         name: "analytics",
         image: "elasticsearch:8",
-        healthcheck: "http://localhost:9200/_cluster/health",
+        healthcheck: {
+          type: "http",
+          url: "http://localhost:9200/_cluster/health",
+        },
       },
     ],
     tasks: [],
@@ -650,9 +658,8 @@ describe("getStatus", () => {
       expect(apiService?.status).toBe("down");
     });
 
-    it("should use default healthcheck value when not specified", async () => {
+    it("should report running services without healthchecks as up", async () => {
       const context = createMockContext("test");
-      // Remove healthcheck from worker process
       context.processes = context.processes.map((p) =>
         p.name === "worker" ? { ...p, healthcheck: undefined } : p,
       );
@@ -666,9 +673,7 @@ describe("getStatus", () => {
       const result = await getStatus(context);
       const workerService = result.native.find((s) => s.service === "worker");
 
-      // elapsed = (10000 - 7000) / 1000 = 3s, default healthcheck = 5s
-      // Since 3 < 5, should be "pending"
-      expect(workerService?.status).toBe("pending");
+      expect(workerService?.status).toBe("up");
 
       mockNow.mockRestore();
     });

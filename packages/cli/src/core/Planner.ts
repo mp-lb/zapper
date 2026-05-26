@@ -56,7 +56,6 @@ export class Planner {
           ? "docker"
           : "native",
       name,
-      healthcheck: 0,
     }));
 
     actions.sort((a, b) => a.name.localeCompare(b.name));

@@ -79,7 +79,11 @@ export function createContext(
   });
 
   if (selectedProfile && selectedProfile.services !== "*") {
-    const selectedServices = new Set(selectedProfile.services);
+    const selectedServices = expandServiceDependencies(
+      selectedProfile.services,
+      processes,
+      containers,
+    );
     for (let i = processes.length - 1; i >= 0; i -= 1) {
       if (!selectedServices.has(processes[i].name)) processes.splice(i, 1);
     }
@@ -126,4 +130,34 @@ export function createContext(
     profile: selectedProfile,
     state,
   };
+}
+
+function expandServiceDependencies(
+  services: string[],
+  processes: Process[],
+  containers: Container[],
+): Set<string> {
+  const dependenciesByService = new Map<string, string[]>();
+
+  for (const process of processes) {
+    dependenciesByService.set(process.name, process.depends_on ?? []);
+  }
+  for (const container of containers) {
+    dependenciesByService.set(container.name, container.depends_on ?? []);
+  }
+
+  const selectedServices = new Set<string>();
+  const toVisit = [...services];
+
+  while (toVisit.length > 0) {
+    const service = toVisit.pop()!;
+    if (selectedServices.has(service)) continue;
+
+    selectedServices.add(service);
+    for (const dependency of dependenciesByService.get(service) ?? []) {
+      if (!selectedServices.has(dependency)) toVisit.push(dependency);
+    }
+  }
+
+  return selectedServices;
 }

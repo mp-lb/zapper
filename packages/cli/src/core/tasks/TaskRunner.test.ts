@@ -340,6 +340,9 @@ describe("TaskRunner", () => {
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         "\u001B[1m\u001B[36mtask: [build] echo hello\u001B[0m\n",
       );
+      expect(process.stdout.write).not.toHaveBeenCalledWith(
+        expect.stringContaining("Running task: build"),
+      );
       expect(process.stdout.write).toHaveBeenCalledWith(
         "\u001B[90mhello\n\u001B[0m",
       );
@@ -660,6 +663,9 @@ describe("TaskRunner", () => {
 
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         "\u001B[1m\u001B[36mtask: [build] echo build\u001B[0m\n",
+      );
+      expect(process.stdout.write).not.toHaveBeenCalledWith(
+        expect.stringContaining("Running task: build"),
       );
     });
 

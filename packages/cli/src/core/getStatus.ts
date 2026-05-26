@@ -1,6 +1,7 @@
 import { Pm2Manager } from "./process";
 import { DockerManager } from "./docker";
 import { Context } from "../types/Context";
+import { Healthcheck } from "../types";
 import { buildServiceName } from "../utils/nameBuilder";
 import { resolveServiceTargets } from "../utils/serviceAliases";
 
@@ -27,16 +28,23 @@ async function checkHealthUrl(url: string): Promise<boolean> {
 async function computeStatus(
   running: boolean,
   startedAtMs: number | undefined,
-  healthcheck: number | string,
+  healthcheck?: Healthcheck,
 ): Promise<Status> {
   if (!running) return "down";
-  if (typeof healthcheck === "string") {
-    const healthy = await checkHealthUrl(healthcheck);
+  if (healthcheck === undefined) return "up";
+  if (
+    typeof healthcheck === "string" ||
+    (typeof healthcheck === "object" && healthcheck.type === "http")
+  ) {
+    const url = typeof healthcheck === "string" ? healthcheck : healthcheck.url;
+    const healthy = await checkHealthUrl(url);
     return healthy ? "up" : "pending";
   }
   if (!startedAtMs) return "up";
+  const seconds =
+    typeof healthcheck === "number" ? healthcheck : healthcheck.seconds;
   const elapsed = (Date.now() - startedAtMs) / 1000;
-  return elapsed < healthcheck ? "pending" : "up";
+  return elapsed < seconds ? "pending" : "up";
 }
 
 export interface ServiceStatus {
@@ -119,7 +127,7 @@ export async function getStatus(
       context.instanceId,
     );
     const runningProcess = pm2List.find((p) => p.name === expectedPm2Name);
-    const healthcheck = proc.healthcheck ?? 5;
+    const healthcheck = proc.healthcheck;
 
     let status: Status = "down";
     if (runningProcess) {
@@ -150,7 +158,7 @@ export async function getStatus(
     );
     const containerInfo =
       await DockerManager.getContainerInfo(expectedDockerName);
-    const healthcheck = container.healthcheck ?? 5;
+    const healthcheck = container.healthcheck;
 
     let status: Status = "down";
     if (containerInfo) {

@@ -143,6 +143,11 @@ services: [api, worker, db]    # Only named services
 The service list uses canonical service names. Aliases remain command-line
 convenience names, not config identity.
 
+When a selected service declares `depends_on`, its dependencies are included in
+the active profile automatically, even if they are not listed directly. For
+example, `services: [api]` also includes `postgres` when `api` has
+`depends_on: [postgres]`.
+
 ### `isolate`
 
 `isolate` controls whether the profile gets its own stack.
@@ -322,6 +327,9 @@ zap --profile e2e status
 zap --profile e2e logs api
 zap --profile e2e down
 ```
+
+A profile is the named env/service/isolation selection; a stack is the runtime
+namespace produced by that selection.
 
 Rules:
 

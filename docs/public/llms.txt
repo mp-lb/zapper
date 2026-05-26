@@ -7,6 +7,7 @@ Raw documentation for agents and automation:
 - commands.md: /commands
 - configuration.md: /configuration
 - services.md: /services
+- healthchecks.md: /healthchecks
 - tasks.md: /tasks
 - project-metadata.md: /project-metadata
 - instances.md: /instances

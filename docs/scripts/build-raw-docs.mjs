@@ -9,6 +9,7 @@ const sourceOrder = [
   "commands.md",
   "configuration.md",
   "services.md",
+  "healthchecks.md",
   "tasks.md",
   "project-metadata.md",
   "instances.md",

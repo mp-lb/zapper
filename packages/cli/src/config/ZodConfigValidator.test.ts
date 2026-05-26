@@ -131,6 +131,53 @@ describe("ZodConfigValidator", () => {
     }).not.toThrow();
   });
 
+  it("should validate healthcheck object forms", () => {
+    const config = {
+      project: "myproj",
+      native: {
+        api: {
+          cmd: "npm run dev",
+          healthcheck: {
+            type: "http",
+            url: "http://localhost:3000/health",
+            timeout: 60,
+            interval: 2,
+          },
+        },
+        worker: {
+          cmd: "npm run worker",
+          healthcheck: {
+            type: "delay",
+            seconds: 5,
+          },
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).not.toThrow();
+  });
+
+  it("should reject invalid healthcheck object forms", () => {
+    const config = {
+      project: "myproj",
+      native: {
+        api: {
+          cmd: "npm run dev",
+          healthcheck: {
+            type: "http",
+            url: "not-a-url",
+          },
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).toThrow();
+  });
+
   it("should validate correct config with legacy processes (backward compatibility)", () => {
     const config = {
       project: "myproj",

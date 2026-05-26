@@ -183,8 +183,8 @@ describe("Planner Wave Generation", () => {
     });
   });
 
-  describe("Dependent services should be in separate waves", () => {
-    it("should place dependents after their dependencies for start", async () => {
+  describe("Dependent services should only wait for healthchecks", () => {
+    it("should start dependents with their dependencies when no healthchecks are set", async () => {
       const config: ZapperConfig = {
         project: "test-project",
         native: {
@@ -199,9 +199,30 @@ describe("Planner Wave Generation", () => {
       const planner = new Planner(config);
       const plan = await planner.plan("start", undefined, "test-project", true);
 
-      // Should have 3 waves: database, api, frontend
-      expect(plan.waves.length).toBe(3);
+      expect(plan.waves.length).toBe(1);
+      expect(plan.waves[0].actions.map((a) => a.name)).toEqual([
+        "api",
+        "database",
+        "frontend",
+      ]);
+    });
 
+    it("should place dependents after dependencies that define healthchecks", async () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        native: {
+          api: { cmd: "npm start", depends_on: ["database"], healthcheck: 5 },
+          frontend: { cmd: "npm start", depends_on: ["api"] },
+        },
+        docker: {
+          database: { image: "postgres:15", healthcheck: 5 },
+        },
+      };
+
+      const planner = new Planner(config);
+      const plan = await planner.plan("start", undefined, "test-project", true);
+
+      expect(plan.waves.length).toBe(3);
       expect(plan.waves[0].actions.map((a) => a.name)).toContain("database");
       expect(plan.waves[1].actions.map((a) => a.name)).toContain("api");
       expect(plan.waves[2].actions.map((a) => a.name)).toContain("frontend");

@@ -51,7 +51,7 @@ tasks:
 - `aliases` are alternate names accepted by `zap task`.
 - `cwd` is relative to the project root.
 - `env` uses the same routing modes as service env.
-- `silent` hides Zapper command headers.
+- `silent` hides Zapper task-start lines and command headers.
 - `interactive` inherits stdio directly for TTY-sensitive commands.
 - `params` defines named task parameters.
 - `preconditions` must pass before commands run.
@@ -66,8 +66,10 @@ If a task name or alias is not defined, the command fails with
 By default, Zapper prints each command before execution, then streams stdout and
 stderr in muted task output.
 
-Set `silent: true` on a task or command object to hide Zapper's command header
-while preserving command output.
+Set `silent: true` on a task to hide Zapper's task-start line and command
+headers while preserving command output. Set it on a command object to hide that
+command's header, or on a nested task call to hide the nested task-start line
+and command headers.
 
 Set `interactive: true` on a task or command object for TTY-sensitive commands
 such as database shells, REPLs, SSH sessions, and CLIs that prompt for
