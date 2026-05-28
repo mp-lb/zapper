@@ -1,5 +1,11 @@
 # @mp-lb/zapper
 
+## 0.18.1
+
+### Patch Changes
+
+- Support Docker command overrides as either friendly strings or exact argument arrays, and add best-effort CLI command analytics.
+
 ## 0.18.0
 
 ### Minor Changes
