@@ -11,6 +11,7 @@ import { Pm2Manager } from "./process/Pm2Manager";
 import { parseServiceName } from "../utils/nameBuilder";
 import { resolveServiceTargets } from "../utils/serviceAliases";
 import { StoredVolume } from "../config/schemas";
+import { formatDockerCommand } from "../config/dockerCommand";
 
 export interface ServiceListEntry {
   type: "native" | "docker";
@@ -298,7 +299,9 @@ function buildServiceEntries(
           container.volumes,
           stateVolumes || {},
         ),
-        cmd: container.command || container.image || "docker build",
+        cmd: container.command
+          ? formatDockerCommand(container.command)
+          : container.image || "docker build",
       };
     },
   );

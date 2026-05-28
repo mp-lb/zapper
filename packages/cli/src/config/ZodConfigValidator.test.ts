@@ -448,6 +448,40 @@ describe("ZodConfigValidator", () => {
     );
   });
 
+  it("should validate docker command arrays", () => {
+    const config = {
+      project: "myproj",
+      docker: {
+        test: {
+          image: "postgres:15",
+          command: ["postgres", "-c", "log_statement=all"],
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).not.toThrow();
+  });
+
+  it("should reject docker command strings with unterminated quotes", () => {
+    const config = {
+      project: "myproj",
+      docker: {
+        test: {
+          image: "nginx",
+          command: 'sh -c "echo hello',
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).toThrow(
+      "Configuration validation failed: docker.test.command: Docker command contains an unterminated quote",
+    );
+  });
+
   it("should reject config with invalid volume path", () => {
     const config = {
       project: "myproj",

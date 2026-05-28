@@ -71,6 +71,25 @@ pnpm docs:build                  # Build the docs site and generated raw docs
 
 For manual CLI testing, use the example projects in `packages/cli/examples/`. After building, cd into one and run `zap up`.
 
+## CLI Analytics
+
+The CLI sends one best-effort product analytics event, `command.run`, when a
+top-level command handler is invoked. Events use the shared event shape: the
+PostHog event name is `command.run`, `source.platform` is `cli`, and command
+breakdowns live in `details` as space-separated CLI names such as
+`command_l1: "profile"` and `command_l2: "profile use"`.
+
+The PostHog project token is public product analytics configuration. Put it in
+the repo root `.env.production` as `POSTHOG_KEY`; `POSTHOG_HOST` is optional
+and defaults to `https://us.i.posthog.com`. `pnpm build` injects those values
+into the compiled CLI package. Runtime `POSTHOG_KEY` and `POSTHOG_HOST`
+environment variables override the injected values for local testing.
+
+Analytics is intentionally silent and best-effort. Missing config, offline
+network, request timeouts, and PostHog errors do not print output or affect
+command exit behavior. Set `ZAPPER_ANALYTICS_DISABLED=1` or `DO_NOT_TRACK=1`
+to disable capture for a process.
+
 ## macOS Menu Bar App
 
 The native macOS app lives in `apps/macos`. It is a lightweight SwiftUI

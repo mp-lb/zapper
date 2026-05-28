@@ -5,6 +5,7 @@ import { ContainerStartError } from "../../errors";
 import { runDocker } from "./runDocker";
 import { ensureDockerAvailable } from "./ensureDocker";
 import { resolveDockerRuntime } from "../../runtime";
+import { DockerCommand, dockerCommandToArgs } from "../../config/dockerCommand";
 
 interface DockerConfig {
   image: string;
@@ -12,7 +13,7 @@ interface DockerConfig {
   volumes?: string[];
   networks?: string[];
   environment?: Record<string, string>;
-  command?: string;
+  command?: DockerCommand;
   labels?: Record<string, string>;
 }
 
@@ -131,7 +132,7 @@ export class DockerManager {
       for (const [k, v] of Object.entries(config.environment))
         args.push("-e", `${k}=${v}`);
     args.push(config.image);
-    if (config.command) args.push(config.command);
+    args.push(...dockerCommandToArgs(config.command));
     return args;
   }
 

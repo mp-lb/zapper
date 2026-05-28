@@ -82,7 +82,27 @@ docker:
 - `env` controls env routing for the container.
 - `volumes` supports managed volumes, named volumes, and bind mounts.
 - `networks` passes Docker network names.
-- `command` overrides the image command.
+- `command` overrides the image command. Use a string for simple commands, or
+  an array when you need exact argument boundaries:
+
+```yaml
+docker:
+  postgres:
+    image: postgres:15
+    command: ["postgres", "-c", "log_statement=all"]
+```
+
+String commands are split into Docker arguments with basic shell-style quoting.
+Array commands are passed through exactly. `command` does not run through a
+shell unless you explicitly invoke one:
+
+```yaml
+docker:
+  app:
+    image: alpine
+    command: ["sh", "-c", "echo $HOSTNAME"]
+```
+
 - `watch` is used by `zap watch` for local restart/rebuild loops.
 - `secrets` grants the service access to top-level Docker secrets.
 

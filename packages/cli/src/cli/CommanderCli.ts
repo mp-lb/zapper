@@ -4,6 +4,7 @@ import { Zapper } from "../core/Zapper";
 import { logger, LogLevel } from "../utils/logger";
 import { renderer } from "../ui/renderer";
 import { renderCommandResult } from "../ui/commandResultRenderer";
+import { captureCommandRun } from "../analytics";
 import {
   UpCommand,
   DownCommand,
@@ -620,6 +621,8 @@ export class CommanderCli {
       ...commandOpts,
       __command: command,
     };
+
+    captureCommandRun({ command, service, options: allOptions });
 
     const jsonMode = !!allOptions.json;
     const jsonlMode = !!allOptions.jsonl;

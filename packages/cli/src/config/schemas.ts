@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseDockerCommandString } from "./dockerCommand";
 import { processValidation, duplicateValidation } from "./validators";
 
 const validNameSchema = z
@@ -184,6 +185,22 @@ const ServiceSecretSchema = z.union([
     .strict(),
 ]);
 
+const DockerCommandSchema = z.union([
+  z.string().superRefine((command, ctx) => {
+    try {
+      parseDockerCommandString(command);
+    } catch (err) {
+      ctx.addIssue({
+        code: "custom",
+        message: err instanceof Error ? err.message : "Invalid Docker command",
+      });
+    }
+  }),
+  z
+    .array(z.string().min(1, "Command argument cannot be empty"))
+    .min(1, "Command must have at least one argument"),
+]);
+
 export const ProcessSchema = z
   .object({
     name: z.string().optional(),
@@ -211,7 +228,7 @@ export const ContainerSchema = z
     networks: z
       .array(z.string().min(1, "Network name cannot be empty"))
       .optional(),
-    command: z.string().optional(),
+    command: DockerCommandSchema.optional(),
     aliases: z.array(validNameSchema).optional(),
     resolvedEnv: z.record(z.string(), z.string()).optional(),
     healthcheck: HealthcheckSchema,

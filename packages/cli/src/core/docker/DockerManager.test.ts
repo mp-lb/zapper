@@ -133,4 +133,64 @@ describe("DockerManager.startContainerAsync", () => {
     ).resolves.toBe(9876);
     expect(fs.existsSync(failureLog)).toBe(false);
   });
+
+  it("splits string commands before passing them to docker run", async () => {
+    vi.mocked(spawn).mockImplementation(() => {
+      const child = new MockChildProcess();
+      process.nextTick(() => {
+        child.emit("close", 0);
+      });
+      return child as never;
+    });
+
+    await DockerManager.startContainerAsync("zap.test.db", {
+      image: "postgres:15",
+      command: "postgres -c log_statement=all",
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "docker",
+      [
+        "run",
+        "-d",
+        "--name",
+        "zap.test.db",
+        "postgres:15",
+        "postgres",
+        "-c",
+        "log_statement=all",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
+  });
+
+  it("passes array commands to docker run without parsing", async () => {
+    vi.mocked(spawn).mockImplementation(() => {
+      const child = new MockChildProcess();
+      process.nextTick(() => {
+        child.emit("close", 0);
+      });
+      return child as never;
+    });
+
+    await DockerManager.startContainerAsync("zap.test.db", {
+      image: "postgres:15",
+      command: ["postgres", "-c", "log_statement=all"],
+    });
+
+    expect(spawn).toHaveBeenCalledWith(
+      "docker",
+      [
+        "run",
+        "-d",
+        "--name",
+        "zap.test.db",
+        "postgres:15",
+        "postgres",
+        "-c",
+        "log_statement=all",
+      ],
+      { stdio: ["ignore", "pipe", "pipe"] },
+    );
+  });
 });

@@ -64,7 +64,7 @@ function createContext(): Context {
       {
         name: "cache",
         image: "redis:7",
-        command: "redis-server --appendonly yes",
+        command: ["redis-server", "--appendonly", "yes"],
       },
     ],
     tasks: [],
