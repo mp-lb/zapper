@@ -300,7 +300,11 @@ the project registry read path:
    present.
 4. If metadata is absent, match by `project` and known `instanceId`.
 5. If a live resource belongs to a registered project/instance but no longer
-   appears in that project's current config/state, mark it as dangling.
+   appears in that project's current config/state, mark it as dangling. Only do
+   this when the project loaded successfully. If the project is `unresolved`
+   (its config could not be loaded), its current service list is unknown, so its
+   running resources must not be marked dangling — otherwise a temporarily
+   broken project's live resources could be deleted by cleanup.
 6. If a live resource cannot be mapped to a registered project, mark it as
    live-unregistered or legacy.
 7. If multiple registered projects match a live resource, mark it ambiguous

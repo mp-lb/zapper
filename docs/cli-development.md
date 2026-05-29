@@ -160,7 +160,7 @@ builds the CLI, builds the signed app with the bundled runtime, zips
 
 Local app builds are ad-hoc signed unless `CODESIGN_IDENTITY` is set. Release
 builds load `CSC_LINK`, `APPLE_ID`, and `APPLE_TEAM_ID` from `.env.production`,
-decrypt `proj/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret,
+decrypt `docs/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret,
 load `CSC_KEY_PASSWORD` and `APPLE_APP_SPECIFIC_PASSWORD`, and then sign with
 the hardened runtime before notarizing and packaging.
 The build signs nested runtime binaries with
@@ -218,7 +218,7 @@ The workflow provisions the Vercel projects/domains through Terraform, builds `@
 The landing page `/download/mac` route redirects to the latest macOS GitHub
 Release zip. Add `GCP_SA_KEY`, `VERCEL_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
 optional `VERCEL_ORG_ID`, and optional `DESKTOP_RELEASES_GITHUB_TOKEN` to
-`proj/secrets.txt.enc`; GitHub Actions decrypts it with `SECRETS_KEY`.
+`docs/secrets.txt.enc`; GitHub Actions decrypts it with `SECRETS_KEY`.
 `GCP_PROJECT_ID` is derived from the service account JSON when it is not
 provided separately. Terraform resolves the active Cloudflare zone from
 `domain`. Terraform passes the desktop releases token into the Vercel project
@@ -228,9 +228,9 @@ runtime environment when present.
 
 Release publishing runs through `.github/workflows/release.yml`.
 
-- The workflow decrypts `proj/secrets.txt.enc` with the repository
+- The workflow decrypts `docs/secrets.txt.enc` with the repository
   `SECRETS_KEY` GitHub Actions secret.
-- `proj/secrets.txt.enc` must contain `NPM_TOKEN` with publish access to
+- `docs/secrets.txt.enc` must contain `NPM_TOKEN` with publish access to
   `@mp-lb/zapper`.
 - If release CI fails with auth or 2FA errors, confirm `NPM_TOKEN` exists in
   the encrypted secrets file and belongs to an npm identity with publish rights

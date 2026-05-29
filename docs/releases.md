@@ -23,7 +23,7 @@ asset to the matching GitHub Release.
 
 macOS release builds use the same desktop signing environment names as the
 Electron apps in nearby MAP Lab repos. CI loads `.env.production` first, then
-decrypts `proj/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret.
+decrypts `docs/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret.
 
 Put non-secret desktop release values in `.env.production`:
 
@@ -32,7 +32,7 @@ Put non-secret desktop release values in `.env.production`:
 - `CSC_LINK`: base64-encoded Developer ID Application `.p12`, a supported
   `data:...;base64,...` value, an HTTPS URL, or a local file path.
 
-Put secret release values in `proj/secrets.txt.enc`:
+Put secret release values in `docs/secrets.txt.enc`:
 
 - `NPM_TOKEN`
 - `CSC_KEY_PASSWORD`
@@ -46,10 +46,10 @@ GitHub Actions only needs `SECRETS_KEY` for these project-specific secrets.
 Before attempting a release, make sure npm token auth is configured correctly
 for CI.
 
-- Required: `NPM_TOKEN` in `proj/secrets.txt.enc` with publish access to
+- Required: `NPM_TOKEN` in `docs/secrets.txt.enc` with publish access to
   `@mp-lb/zapper`.
 - Required: GitHub Actions repository secret `SECRETS_KEY` so the release
-  workflow can decrypt `proj/secrets.txt.enc`.
+  workflow can decrypt `docs/secrets.txt.enc`.
 
 Important details:
 
@@ -58,7 +58,7 @@ Important details:
 - Keep token expiry/rotation documented outside the repo.
 - The release workflow passes `NPM_TOKEN` as both `NPM_TOKEN` and
   `NODE_AUTH_TOKEN` for npm/Changesets compatibility after decrypting
-  `proj/secrets.txt.enc`.
+  `docs/secrets.txt.enc`.
 - The release workflow logs token length, a short SHA-256 fingerprint, and
   `npm whoami`. It must never print token characters.
 
@@ -191,7 +191,7 @@ git push origin release/$(date +%Y-%m-%d):main
 This triggers the GitHub Actions workflow which will:
 1. Run verification checks
 2. Create a "Version Packages" PR (if there are changesets)
-3. Automatically publish to npm when the Version Packages PR is merged using the `NPM_TOKEN` value from `proj/secrets.txt.enc`
+3. Automatically publish to npm when the Version Packages PR is merged using the `NPM_TOKEN` value from `docs/secrets.txt.enc`
 
 Immediately monitor the push with GitHub CLI:
 
@@ -338,7 +338,7 @@ pnpm --filter @mp-lb/zapper publish     # Publish to npm
 - Verify `packages/cli/package.json` has correct name and version
 - Ensure no duplicate version exists on npm
 - Check if there are publishing restrictions
-- If CI shows auth or 2FA errors, confirm `proj/secrets.txt.enc` contains
+- If CI shows auth or 2FA errors, confirm `docs/secrets.txt.enc` contains
   `NPM_TOKEN`, the repository has `SECRETS_KEY`, and the token has publish
   access to `@mp-lb/zapper`.
 - If publish fails with `E404 Not Found - PUT https://registry.npmjs.org/@mp-lb%2fzapper`, verify the npm scope owner exists and the publishing identity has rights to it:

@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           secrets_file="$RUNNER_TEMP/zapper-secrets.txt"
-          npx -y @mp-lb/doctrine-secrets decrypt proj/secrets.txt.enc --secret "$SECRETS_KEY" > "$secrets_file"
+          npx -y @mp-lb/doctrine-secrets decrypt docs/secrets.txt.enc --secret "$SECRETS_KEY" > "$secrets_file"
 
           set -a
           source .env.production

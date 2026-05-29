@@ -1,0 +1,100 @@
+# <<title>>
+
+<<project_description>>
+
+<<more info reference to PRODUCT.md or STORY.md if it exists>>
+
+Read [PRODUCT.md](PRODUCT.md) if you need to understand the product.
+
+## Project mode
+
+<<project_mode_info>>
+
+## Packages
+
+<<packages_summary>>
+
+`dx read docs/modular-monolith.md` for more monorepo architecture info.
+
+## Doctrine
+
+Central docs are stored in the cloud using doctrine. You can run commands like `dx read some-file.md`, `dx ls` . Relative file paths are likely to be real files on disk.
+
+## Process management
+
+This project uses zapper for running native processes, containers, and one-off tasks. Zapper manages ports env vars. Changes to the stack are done through zap.yaml. Any process or command that needs env vars would need to be run through zapper. The project may well already be running in the background. Check and manage with:
+
+```
+zap status # See what's running
+zap up # Start everything
+zap logs <service> --no-follow # View logs
+zap restart <service> # Restart a service
+zap task <task> # Run a one off task
+```
+
+The port management is very important. No local dev ports should be in .env files or committed to git. It's all managed through zap.yaml.
+
+See [https://docs.zapper.mp-lb.dev/llms-full.txt](https://docs.zapper.mp-lb.dev/llms-full.txt) for full usage guide.
+
+## Standards
+
+Read these before making changes:
+- docs/standards/style-guide.md - For significant code changes
+- docs/standards/crud.md - For implementing simple CRUD patterns
+- docs/standards/errors.md - For throwing and handling errors
+- docs/standards/services.md - For adding/removing services, frontends, databases, or updating infrastructure configuration
+- docs/standards/trpc.md - For doing frontend queries/mutations
+- docs/standards/logging.md - For logging on backend (via tRPC context) and frontend
+- docs/standards/event-schema.md - For sending/storing any kind of events: errors, logs, analytics, real time events follow this
+
+## Releases
+
+For package releases, read the relevant release standard:
+- docs/standards/cli-release.md - For publishable CLI packages
+- docs/standards/lib-release.md - For publishable library packages
+
+## Tech stack
+
+This tech is core and should be used **religiously**:
+- Zod
+- shadcn/ui and utility functions
+- shadcn/ui CLI
+- Tailwind CSS
+- tRPC
+- tRPC's tanstack style hooks
+- react-hook-form with zod resolver
+
+## Code style
+
+- Use PascalCase for components
+- Files should have 1 export, and should be named the same. E.g. MyComponent lives in MyComponent.tsx
+- Use camelCase for constants, functions, mongo collections
+- Use train_case for typed strings
+- File routers are an exception
+- Generally 1 function/class per file
+
+### Functional decomposition
+
+Good functional decomposition is essential. This applies to react components, hooks, backend functions. Continuously abstract and centralise important code. Functions should be small and "do one thing".
+
+### Code organization
+
+Maintain an extreme approach to code organization. Functions/components should never be large or complex. Generally every function should have it's own file. Those files should be well organised. Continuously break down programs and organise files so that it's always crystal clear what modules relate to each other. You have permission to do this at all times. Flag concerns with the developer if unsure.
+
+Take extra care when organizing tests.
+
+### Tech debt
+
+In general, follow the boy scout principle. But if you come across tech debt that's too big to address, add a .md doc to docs/tech-debt and raise it with the user.
+
+## Working locally
+
+You are expected to check logs, check which services are running, update env vars on your own. All code should have hot reloading so you would not need to restart unless the changes are not hot-reloadable. The `.env.local` is for non-secrets. The regular `.env` is for secrets so leave that to the dev, just ask them to update secrets.
+
+## Validation
+
+The critical validation boundary is at the tRPC procedure level, tRPC procedure level integration tests are absolutely crucial. Continuously make sure that there are enough procedure tests, that they are well organised, and that desired behaviour is clear and logical. When in doubt, flag concerns with the developer.
+
+- For every change, run `zap t check -- foo.ts bar.ts` to run linting and typechecking on all touched files
+- For meaningful behaviour changes run `zap t test` to run tests
+- For system level changes run `zap t build` to check that all the builds still succeed

@@ -1,7 +1,5 @@
-defaults:
-  store: felixsebastian/zapper
 git:
   commit_message: Update doctrine docs
 sync:
-  - target: proj
+  - target: docs
     store: felixsebastian/zapper

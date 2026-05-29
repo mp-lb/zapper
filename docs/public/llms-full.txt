@@ -1555,6 +1555,12 @@ of discovered Zapper PM2 and Docker container resources. Use
   before mutating anything. After confirmation, it deletes orphaned PM2
   processes, Docker containers, and generated Docker volumes, then removes stale
   registry entries. Use `--force` (`-y`) for non-interactive cleanup.
+  - The audit only judges a running PM2 process or container "dangling" when its
+    owning project loads successfully and no longer lists that service. If a
+    registered project cannot be loaded right now (invalid config, missing
+    dependency, mid-edit), its live resources are left alone rather than offered
+    for deletion, so a temporarily broken project is never pruned out from under
+    you.
 - `zap volume prune` deletes stale generated Docker volumes for the selected
   instance.
 - `zap volume reset` forgets generated volume assignments in `.zap/state.json`
@@ -1891,7 +1897,11 @@ the project registry read path:
    present.
 4. If metadata is absent, match by `project` and known `instanceId`.
 5. If a live resource belongs to a registered project/instance but no longer
-   appears in that project's current config/state, mark it as dangling.
+   appears in that project's current config/state, mark it as dangling. Only do
+   this when the project loaded successfully. If the project is `unresolved`
+   (its config could not be loaded), its current service list is unknown, so its
+   running resources must not be marked dangling — otherwise a temporarily
+   broken project's live resources could be deleted by cleanup.
 6. If a live resource cannot be mapped to a registered project, mark it as
    live-unregistered or legacy.
 7. If multiple registered projects match a live resource, mark it ambiguous
@@ -3403,3 +3413,9 @@ PACKAGE_ZAPPER_RUNTIME=0 apps/macos/bin/run
   --json`, links, and start/stop/restart actions.
 - Use the gear menu to choose an external CLI only when debugging CLI selection.
 - If the popover still looks stale, open the app menu and refresh after launch.
+- Open Settings (gear) and click **Debug Console** to see every `zap` command
+  the app has run this session: the full command line, exit code, duration, and
+  raw stdout/stderr. Use **Copy** on a row to replay a command in a terminal, or
+  **Copy All** to grab the whole transcript. The log is in-memory only and is
+  never written to disk. This is the first place to look when the app's view
+  disagrees with what you see from the CLI directly.

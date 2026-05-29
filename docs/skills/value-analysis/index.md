@@ -1,0 +1,11 @@
+- positioning
+- messaging
+- pricing
+- go-to-market fit
+- competitive strategy
+- icp & segmentation
+- retention & expansion
+- trust & risk analysis
+- buyer psychology mapping
+- market education analysis
+- feature prioritization by strategic value

@@ -56,6 +56,12 @@ of discovered Zapper PM2 and Docker container resources. Use
   before mutating anything. After confirmation, it deletes orphaned PM2
   processes, Docker containers, and generated Docker volumes, then removes stale
   registry entries. Use `--force` (`-y`) for non-interactive cleanup.
+  - The audit only judges a running PM2 process or container "dangling" when its
+    owning project loads successfully and no longer lists that service. If a
+    registered project cannot be loaded right now (invalid config, missing
+    dependency, mid-edit), its live resources are left alone rather than offered
+    for deletion, so a temporarily broken project is never pruned out from under
+    you.
 - `zap volume prune` deletes stale generated Docker volumes for the selected
   instance.
 - `zap volume reset` forgets generated volume assignments in `.zap/state.json`

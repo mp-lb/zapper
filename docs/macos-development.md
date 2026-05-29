@@ -28,7 +28,7 @@ apps/macos/bin/clean   # Remove apps/macos/build
 ```
 
 CLI npm release publishing is handled by `.github/workflows/release.yml` using
-the `NPM_TOKEN` value from `proj/secrets.txt.enc`. The macOS app release
+the `NPM_TOKEN` value from `docs/secrets.txt.enc`. The macOS app release
 workflow is separate and starts from pushed `v*` tags after the CLI package
 version is final.
 
@@ -46,3 +46,9 @@ PACKAGE_ZAPPER_RUNTIME=0 apps/macos/bin/run
   --json`, links, and start/stop/restart actions.
 - Use the gear menu to choose an external CLI only when debugging CLI selection.
 - If the popover still looks stale, open the app menu and refresh after launch.
+- Open Settings (gear) and click **Debug Console** to see every `zap` command
+  the app has run this session: the full command line, exit code, duration, and
+  raw stdout/stderr. Use **Copy** on a row to replay a command in a terminal, or
+  **Copy All** to grab the whole transcript. The log is in-memory only and is
+  never written to disk. This is the first place to look when the app's view
+  disagrees with what you see from the CLI directly.
