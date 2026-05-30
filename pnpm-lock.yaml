@@ -130,6 +130,9 @@ importers:
       '@eslint/js':
         specifier: ^9.0.0
         version: 9.32.0
+      '@mp-lb/cli-docs':
+        specifier: ^0.0.1
+        version: 0.0.1(commander@14.0.0)
       '@types/commander':
         specifier: ^2.12.5
         version: 2.12.5
@@ -918,6 +921,11 @@ packages:
 
   '@manypkg/get-packages@1.1.3':
     resolution: {integrity: sha512-fo+QhuU3qE/2TQMQmbVMqaQ6EWbMhi4ABWP+O4AM1NqPBuy0OrApV5LO6BrrgnhtAHS2NH6RrVk9OL181tTi8A==}
+
+  '@mp-lb/cli-docs@0.0.1':
+    resolution: {integrity: sha512-mc1QugpS3tFOR6fakCpjvPxqvQ8lErIK+Z7mEW2IdBlHN4KN0q+CNz6q1qtqtT1wCcX7C4KaJuwWgsuVQsSMbw==}
+    peerDependencies:
+      commander: '>=12'
 
   '@next/env@15.4.10':
     resolution: {integrity: sha512-knhmoJ0Vv7VRf6pZEPSnciUG1S4bIhWx+qTYBW/AjxEtlzsiNORPk8sFDCEvqLfmKuey56UB9FL1UdHEV3uBrg==}
@@ -3981,6 +3989,10 @@ snapshots:
       fs-extra: 8.1.0
       globby: 11.1.0
       read-yaml-file: 1.1.0
+
+  '@mp-lb/cli-docs@0.0.1(commander@14.0.0)':
+    dependencies:
+      commander: 14.0.0
 
   '@next/env@15.4.10': {}
 

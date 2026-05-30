@@ -25,6 +25,8 @@
     "test:watch": "vitest",
     "test:e2e": "bash ./etc/e2e_run.sh",
     "test:e2e:local": "pnpm build && vitest run --config vitest.e2e.config.ts",
+    "docs:gen": "tsx scripts/gen-cli-docs.ts",
+    "docs:check": "tsx scripts/gen-cli-docs.ts --check",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "prepublishOnly": "pnpm build"
@@ -42,6 +44,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.27.0",
     "@eslint/js": "^9.0.0",
+    "@mp-lb/cli-docs": "^0.0.1",
     "@types/commander": "^2.12.5",
     "@types/dotenv": "^8.2.3",
     "@types/mustache": "^4.2.5",
