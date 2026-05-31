@@ -1,7 +1,7 @@
 node_modules/
 dist/
 .turbo/
-# Compiled from CLAUDE.md (the import-shell) via `mdcompile CLAUDE.md -o AGENTS.md`; not committed.
+# Compiled from CLAUDE.md (the import-shell) via `zap t compile-agents`; not committed.
 /AGENTS.md
 docs/.vitepress/dist/
 docs/.vitepress/cache/

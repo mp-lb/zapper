@@ -1,0 +1,24 @@
+project: zapper
+env-files:
+  - .env.local
+  - .env
+native:
+  dev:
+    cmd: pnpm dev
+    env: "*"
+tasks:
+  setup:
+    cmds:
+      - pnpm install
+  build:
+    cmds:
+      - pnpm build
+  test:
+    cmds:
+      - pnpm test
+  lint:
+    cmds:
+      - pnpm lint
+  compile-agents:
+    cmds:
+      - mdcompile CLAUDE.md -o AGENTS.md --optional --silent
