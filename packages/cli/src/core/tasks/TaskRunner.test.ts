@@ -143,6 +143,57 @@ describe("TaskRunner", () => {
       );
     });
 
+    it("ARGS keeps a multi-word argument as a single shell token", async () => {
+      // Regression: an argument with spaces must survive as ONE argv entry to
+      // the underlying command, not be re-split by the task shell.
+      const tasks: TaskRegistry = {
+        forward: {
+          cmds: ["node script.js {{ARGS}}"],
+        },
+      };
+
+      const params: TaskParams = {
+        named: {},
+        rest: [
+          "--notes",
+          "two words",
+          "--msg",
+          "a; b",
+          "--path",
+          "with space/x",
+        ],
+      };
+
+      const runner = new TaskRunner(tasks, "/project", { params });
+      await runner.run("forward");
+
+      expect(childProcess.spawn).toHaveBeenCalledWith(
+        "node script.js --notes 'two words' --msg 'a; b' --path 'with space/x'",
+        expect.objectContaining({ cwd: "/project", shell: true }),
+      );
+    });
+
+    it("ARGS leaves space-free args untouched (no regression)", async () => {
+      const tasks: TaskRegistry = {
+        forward: {
+          cmds: ["node script.js {{ARGS}}"],
+        },
+      };
+
+      const params: TaskParams = {
+        named: {},
+        rest: ["--on", "worktree", "--name", "rfw:smoke"],
+      };
+
+      const runner = new TaskRunner(tasks, "/project", { params });
+      await runner.run("forward");
+
+      expect(childProcess.spawn).toHaveBeenCalledWith(
+        "node script.js --on worktree --name rfw:smoke",
+        expect.objectContaining({ cwd: "/project", shell: true }),
+      );
+    });
+
     it("interpolates special task vars", async () => {
       const tasks: TaskRegistry = {
         inspect: {

@@ -66,7 +66,7 @@ tasks:
   e2e:
     env: "*"
     cmds:
-      - FRONTEND_URL=http://localhost:9775 BACKEND_URL=http://localhost:2821 pnpm --filter=<e2e-package> exec playwright test {{REST}}
+      - FRONTEND_URL=http://localhost:9775 BACKEND_URL=http://localhost:2821 pnpm --filter=<e2e-package> exec playwright test {{ARGS}}
 ```
 
 Use different local ports from the normal development stack. Add worker services and Docker services only when the project needs them.

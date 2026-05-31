@@ -145,9 +145,11 @@ tasks:
 zap task test -- --coverage src/
 ```
 
-`{{ARGS}}` and `{{CLI_ARGS}}` shell-quote each argument independently, so paths
-with spaces and quotes survive better in shell commands. `{{REST}}` remains
-available as the older raw joined string for backward compatibility.
+`{{ARGS}}` and `{{CLI_ARGS}}` shell-quote each argument independently, so an
+argument that contains spaces or shell-special characters (e.g.
+`--notes "two words"`, `--msg "a; b"`) survives as a **single** argument to the
+underlying command instead of being re-split by the task shell. Always use
+`{{ARGS}}` to forward arguments.
 
 ## Special Vars
 
@@ -168,8 +170,7 @@ tasks:
 | `TASK`     | Current task name                         |
 | `PROJECT`  | Current Zapper project name               |
 | `INSTANCE` | Current instance key                      |
-| `REST`     | Raw pass-through args joined with spaces  |
-| `ARGS`     | Shell-quoted pass-through args            |
+| `ARGS`     | Shell-quoted pass-through args (preserves argument boundaries) |
 | `CLI_ARGS` | Alias for `ARGS`                          |
 
 Built-in vars are also available when interpolating nested task `vars`,
