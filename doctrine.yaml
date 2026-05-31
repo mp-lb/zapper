@@ -1,5 +1,5 @@
 git:
-  commit_message: Update doctrine docs
+  commit-message: Update doctrine docs
 sync:
   - target: docs
     store: felixsebastian/zapper
