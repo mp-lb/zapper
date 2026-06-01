@@ -1,0 +1,15 @@
+{
+  type: 'fssstack',
+  name: 'Zapper',
+  emoji: '⚡️',
+  description: 'Zapper process manager CLI (cannot supervise itself)',
+  projectSlug: 'zapper',
+  packagePrefix: '@mp-lb',
+  homepageUrl: 'https://zapper.mp-lb.dev/',
+  frontends: [],
+  backends: [],
+  clis: ['zapper'],
+  libs: [],
+  extensions: [],
+  internalDeps: [],
+}
