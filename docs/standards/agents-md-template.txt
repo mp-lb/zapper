@@ -49,9 +49,8 @@ Read these before making changes:
 
 ## Releases
 
-For package releases, read the relevant release standard:
-- docs/standards/cli-release.md - For publishable CLI packages
-- docs/standards/lib-release.md - For publishable library packages
+For package releases, read the release standard:
+- docs/standards/lib-release.md - For publishable library packages (including those that ship a `bin`)
 
 ## Tech stack
 
@@ -98,3 +97,5 @@ The critical validation boundary is at the tRPC procedure level, tRPC procedure 
 - For every change, run `zap t check -- foo.ts bar.ts` to run linting and typechecking on all touched files
 - For meaningful behaviour changes run `zap t test` to run tests
 - For system level changes run `zap t build` to check that all the builds still succeed
+
+@AGENTS.local.md

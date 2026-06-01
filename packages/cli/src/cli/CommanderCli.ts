@@ -285,33 +285,64 @@ export class CommanderCli {
         await this.executeCommand("init", undefined, command);
       });
 
-    this.program
-      .command("instance <action> [label...]")
+    const instanceCmd = this.program
+      .command("instance")
       .description("Manage the selected local instance")
+      .action(async (options, command) => {
+        await this.executeCommand("instance", undefined, command);
+      });
+
+    instanceCmd
+      .command("label")
+      .description("Show or set the label for the selected instance")
+      .argument("[label...]", "New label (omit to show the current label)")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (action, labelParts, options, command) => {
+      .action(async (labelParts, options, command) => {
         await this.executeCommand(
           "instance",
-          [action, ...(labelParts || [])],
+          ["label", ...(labelParts || [])],
           command,
         );
       });
 
-    this.program
-      .command("volume <subcommand> [services...]")
+    const volumeCmd = this.program
+      .command("volume")
       .description(
         "Manage Zapper-generated Docker volumes (list, prune, reset)",
       )
-      .option("--managed", "Only list Zapper-managed generated volumes")
-      .option("--id-only", "Only print Docker volume names")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (subcommand, services, options, command) => {
-        await this.executeCommand(
-          "volume",
-          [subcommand, ...(services || [])],
-          command,
-        );
+      .action(async (options, command) => {
+        // No subcommand defaults to prune (matches VolumeCommand).
+        await this.executeCommand("volume", undefined, command);
+      });
+
+    volumeCmd
+      .command("list")
+      .description("List Docker volumes for a service")
+      .argument("<service>", "Docker service name")
+      .option("--managed", "Only list Zapper-managed generated volumes")
+      .option("--id-only", "Only print Docker volume names")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (service, options, command) => {
+        await this.executeCommand("volume", ["list", service], command);
+      });
+
+    volumeCmd
+      .command("prune")
+      .description("Remove stale managed Docker volumes after confirmation")
+      .option("-y, --force", "Force the operation")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("volume", ["prune"], command);
+      });
+
+    volumeCmd
+      .command("reset")
+      .description("Reset managed Docker volume state for the instance")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("volume", ["reset"], command);
       });
 
     this.program
@@ -348,16 +379,47 @@ export class CommanderCli {
         await this.executeCommand("task", task, command);
       });
 
-    this.program
-      .command("profile [action] [name]")
+    const profileCmd = this.program
+      .command("profile")
       .alias("p")
       .description("Manage profiles")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (action, name, options, command) => {
-        const service = [action, name].filter(
-          (part): part is string => typeof part === "string" && part.length > 0,
-        );
-        await this.executeCommand("profile", service, command);
+      .action(async (options, command) => {
+        // No subcommand defaults to showing the current profile.
+        await this.executeCommand("profile", undefined, command);
+      });
+
+    profileCmd
+      .command("list")
+      .description("List configured profiles")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("profile", ["list"], command);
+      });
+
+    profileCmd
+      .command("current")
+      .description("Show the current profile")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("profile", ["current"], command);
+      });
+
+    profileCmd
+      .command("use")
+      .description("Switch the saved profile for this project")
+      .argument("<name>", "Profile name to select")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (name, options, command) => {
+        await this.executeCommand("profile", ["use", name], command);
+      });
+
+    profileCmd
+      .command("reset")
+      .description("Reset to the default profile")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("profile", ["reset"], command);
       });
 
     this.program
@@ -368,12 +430,37 @@ export class CommanderCli {
         await this.executeCommand("state", undefined, command);
       });
 
-    this.program
-      .command("stack [action]")
+    const stackCmd = this.program
+      .command("stack")
       .description("Inspect the selected stack id and known profile stacks")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (action, options, command) => {
-        await this.executeCommand("stack", action, command);
+      .action(async (options, command) => {
+        // No subcommand defaults to showing the current stack.
+        await this.executeCommand("stack", undefined, command);
+      });
+
+    stackCmd
+      .command("id")
+      .description("Print the current stack id")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("stack", ["id"], command);
+      });
+
+    stackCmd
+      .command("current")
+      .description("Show the current stack")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("stack", ["current"], command);
+      });
+
+    stackCmd
+      .command("list")
+      .description("List known profile stacks")
+      .option("-j, --json", "Output as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("stack", ["list"], command);
       });
 
     const gitCmd = this.program
@@ -528,27 +615,74 @@ export class CommanderCli {
         await this.executeCommand("notes", undefined, command);
       });
 
-    this.program
-      .command("global <subcommand> [project]")
+    const globalCmd = this.program
+      .command("global")
       .alias("g")
       .description(
         "Global operations across projects (info, list, prune, kill)",
       )
-      .option(
-        "-a, --all",
-        "Legacy no-op for list; apply to all projects for kill",
-      )
+      .action(async (options, command) => {
+        // No subcommand routes through the handler, which reports usage.
+        await this.executeCommand("global", undefined, command);
+      });
+
+    globalCmd
+      .command("list")
+      .alias("ls")
+      .alias("l")
+      .description("List all global Zapper resources, or a single project")
+      .argument("[project]", "Project name to inspect")
+      .option("-a, --all", "Legacy no-op; always lists all projects")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (project, options, command) => {
+        await this.executeCommand(
+          "global",
+          project ? ["list", project] : ["list"],
+          command,
+        );
+      });
+
+    globalCmd
+      .command("info")
+      .description("Show global resources for a project")
+      .argument("[project]", "Project name to inspect")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (project, options, command) => {
+        await this.executeCommand(
+          "global",
+          project ? ["info", project] : ["info"],
+          command,
+        );
+      });
+
+    globalCmd
+      .command("prune")
+      .description("Prune stale registry entries and orphaned resources")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (subcommand, project, options, command) => {
+      .action(async (options, command) => {
+        await this.executeCommand("global", ["prune"], command);
+      });
+
+    globalCmd
+      .command("kill")
+      .description("Kill all PM2 + Docker resources for a project")
+      .argument("[project]", "Project name to kill")
+      .option("-a, --all", "Kill all projects")
+      .option("-y, --force", "Force the operation")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (project, options, command) => {
         // Validate mutually exclusive options
-        if (subcommand === "kill" && options.all && project) {
+        if (options.all && project) {
           throw new Error(
-            `Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global ${subcommand} ${project}' or 'zap global ${subcommand} --all'.`,
+            `Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global kill ${project}' or 'zap global kill --all'.`,
           );
         }
-        const service = project ? [subcommand, project] : [subcommand];
-        await this.executeCommand("global", service, command);
+        await this.executeCommand(
+          "global",
+          project ? ["kill", project] : ["kill"],
+          command,
+        );
       });
 
     // Additional shortcuts for common global operations
@@ -591,20 +725,90 @@ export class CommanderCli {
         await this.executeCommand("global", ["prune"], command);
       });
 
-    this.program
-      .command("system [area] [action] [target]")
+    const systemCmd = this.program
+      .command("system")
       .description(
         "Machine-wide Zapper project registry and orphaned resource audit",
       )
       .option("--prune", "Deprecated no-op; stale projects are always labeled")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        // No subcommand defaults to listing registered projects.
+        await this.executeCommand("system", undefined, command);
+      });
+
+    systemCmd
+      .command("projects")
+      .description("List registered Zapper projects and validate their roots")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("system", ["projects"], command);
+      });
+
+    const registryCmd = systemCmd
+      .command("registry")
+      .description("Manage the machine-wide project registry")
+      .action(async (options, command) => {
+        // No subcommand routes through the handler, which reports usage.
+        await this.executeCommand("system", ["registry"], command);
+      });
+
+    registryCmd
+      .command("prune")
+      .description("Remove stale entries from the project registry")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("system", ["registry", "prune"], command);
+      });
+
+    registryCmd
+      .command("forget")
+      .description(
+        "Forget a registry entry by id, project root, or config path",
+      )
+      .argument("<target>", "Registry id, project root, or config path")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (target, options, command) => {
+        await this.executeCommand(
+          "system",
+          ["registry", "forget", target],
+          command,
+        );
+      });
+
+    registryCmd
+      .command("repair")
+      .description("Prune stale entries and re-validate all projects")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("system", ["registry", "repair"], command);
+      });
+
+    const resourcesCmd = systemCmd
+      .command("resources")
+      .description("Audit and clean up orphaned system resources")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        // No subcommand defaults to an audit.
+        await this.executeCommand("system", ["resources"], command);
+      });
+
+    resourcesCmd
+      .command("audit")
+      .description("Audit orphaned PM2 processes and Docker containers")
+      .option("-j, --json", "Output command result as minified JSON")
+      .action(async (options, command) => {
+        await this.executeCommand("system", ["resources", "audit"], command);
+      });
+
+    resourcesCmd
+      .command("cleanup")
+      .description("Delete orphaned system resources after confirmation")
       .option("--include-volumes", "Include generated Docker volumes")
       .option("-y, --force", "Force cleanup operations")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (area, action, target, options, command) => {
-        const service = [area, action, target].filter(
-          (part): part is string => typeof part === "string" && part.length > 0,
-        );
-        await this.executeCommand("system", service, command);
+      .action(async (options, command) => {
+        await this.executeCommand("system", ["resources", "cleanup"], command);
       });
   }
 
@@ -613,12 +817,11 @@ export class CommanderCli {
     service: string | string[] | undefined,
     commandInstance: Command,
   ): Promise<void> {
-    const parent = commandInstance.parent!;
-    const globalOpts = parent.opts() as Record<string, unknown>;
-    const commandOpts = commandInstance.opts() as Record<string, unknown>;
+    // optsWithGlobals merges options from this command and every ancestor
+    // (root program globals, command group, and leaf), so flags resolve
+    // regardless of how deeply the subcommand is nested.
     const allOptions: Record<string, unknown> = {
-      ...globalOpts,
-      ...commandOpts,
+      ...(commandInstance.optsWithGlobals() as Record<string, unknown>),
       __command: command,
     };
 

@@ -5,11 +5,31 @@ export default defineConfig({
   description: "A lightweight dev environment runner for local multi-service projects",
   cleanUrls: true,
   lastUpdated: true,
+  // VitePress compiles every Markdown file under the docs/ source dir into a
+  // published page. This folder also holds doctrine-synced working material
+  // (standards/rules, value docs, drafts) that must NOT ship on the public
+  // site, so exclude those directories and stray drafts here. Only the curated
+  // product docs (index, commands, configuration, services, tasks,
+  // project-metadata, instances, resource-management, global-registry,
+  // env-var-mgmt, local-runtime, healthchecks, output, profiles, project-roots,
+  // cli-development, macos-development) remain published.
   srcExclude: [
+    // Internal/never-publish single pages
     "development.md",
     "releases.md",
     "orphaned-processes.md",
     "tech-debt.md",
+    // Doctrine-synced working material — keep in repo, never publish
+    "standards/**",
+    "value/**",
+    "extensions/**",
+    "skills/**",
+    "x-posts/**",
+    "x-posts.md",
+    // Drafts / studies
+    "compose-study.md",
+    "taskfile-study.md",
+    "landing-page-v2-copy.md",
   ],
   themeConfig: {
     logoLink: {

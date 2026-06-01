@@ -201,14 +201,25 @@ struct ZapperCLI {
         process.standardOutput = stdout
         process.standardError = stderr
 
+        let startedAt = Date()
         try process.run()
         process.waitUntilExit()
 
         let output = stdout.fileHandleForReading.readDataToEndOfFile()
         let errorOutput = stderr.fileHandleForReading.readDataToEndOfFile()
+        let stderrText = String(data: errorOutput, encoding: .utf8) ?? ""
+
+        CommandLog.record(
+            executable: executable,
+            arguments: arguments,
+            exitCode: process.terminationStatus,
+            stdout: String(data: output, encoding: .utf8) ?? "",
+            stderr: stderrText,
+            durationSeconds: Date().timeIntervalSince(startedAt),
+            startedAt: startedAt
+        )
 
         guard process.terminationStatus == 0 else {
-            let stderrText = String(data: errorOutput, encoding: .utf8) ?? ""
             throw ZapperCLIError.failed(
                 command: ([executable] + arguments).joined(separator: " "),
                 status: process.terminationStatus,

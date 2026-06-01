@@ -9,6 +9,6 @@ Extension docs should be abstract. No project-specific references. Include all c
 Each extension introduces environment variables. After adding an extension:
 
 1. Update [env-vars.md](env-vars.md) - Add new variables to the registry table
-2. Update [deployment-runbook.md](./deployment-runbook.md) - Add any secrets to the secrets table
+2. Update the deployment runbook - Add any secrets to the secrets table
 
 Extension docs include a summary table of their environment variables to make this easy.

@@ -4,18 +4,3 @@ Raw documentation for agents and automation:
 
 - Full raw bundle: /llms-full.txt
 - index.md: /
-- commands.md: /commands
-- configuration.md: /configuration
-- services.md: /services
-- healthchecks.md: /healthchecks
-- tasks.md: /tasks
-- project-metadata.md: /project-metadata
-- instances.md: /instances
-- resource-management.md: /resource-management
-- global-registry.md: /global-registry
-- project-roots.md: /project-roots
-- env-var-mgmt.md: /env-var-mgmt
-- local-runtime.md: /local-runtime
-- output.md: /output
-- cli-development.md: /cli-development
-- macos-development.md: /macos-development

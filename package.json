@@ -12,6 +12,8 @@
     "dev:renderer": "pnpm --filter @mp-lb/zapper dev:renderer",
     "docs:build": "pnpm --filter @mp-lb/zapper-docs build",
     "docs:preview": "pnpm --filter @mp-lb/zapper-docs preview",
+    "docs:gen": "pnpm --filter @mp-lb/zapper docs:gen",
+    "docs:check": "pnpm --filter @mp-lb/zapper docs:check",
     "test": "pnpm --filter @mp-lb/zapper test",
     "test:watch": "pnpm --filter @mp-lb/zapper test:watch",
     "test:e2e": "pnpm --filter @mp-lb/zapper test:e2e",

@@ -104,7 +104,7 @@ Use boundaries to match the user's mental model:
 
 Do not wrap every component in its own boundary. Too many boundaries create fragmented pages and unclear ownership.
 
-Modals follow the same rules. Their content may need loading, empty, error, pending, and toast feedback, but the decision rules do not change. See [modals.md](./modals.md) for modal-specific behavior.
+Modals follow the same rules. Their content may need loading, empty, error, pending, and toast feedback, but the decision rules do not change. See [modal-layer.md](./modal-layer.md) for modal-specific behavior.
 
 ## Copy
 

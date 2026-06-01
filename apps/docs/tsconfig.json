@@ -1,0 +1,12 @@
+{
+  "extends": "../../etc/tsconfig.frontend.json",
+  "include": ["**/*", "**/.server/**/*", "**/.client/**/*", ".react-router/types/**/*"],
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "rootDirs": [".", "./.react-router/types"],
+    "paths": {
+      "@/*": ["./app/*"],
+      "collections/*": ["./.source/*"]
+    }
+  }
+}

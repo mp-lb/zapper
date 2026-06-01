@@ -36,9 +36,12 @@ struct DashboardView: View {
             VStack(spacing: 0) {
                 HeaderView(model: model, viewMode: $viewMode)
                 Divider()
-                if viewMode == .settings {
-                    SettingsView(model: model)
-                } else {
+                switch viewMode {
+                case .settings:
+                    SettingsView(model: model, viewMode: $viewMode)
+                case .debug:
+                    DebugConsoleView()
+                case .dashboard:
                     content
                 }
             }
@@ -62,6 +65,10 @@ struct DashboardView: View {
     private var currentContentHeight: CGFloat {
         if viewMode == .settings {
             return 300
+        }
+
+        if viewMode == .debug {
+            return maxDashboardContentHeight
         }
 
         if model.projects.isEmpty {
@@ -424,6 +431,7 @@ private struct MissingStackSectionView: View {
 private enum DashboardViewMode {
     case dashboard
     case settings
+    case debug
 }
 
 private struct VisualEffectBackground: NSViewRepresentable {
@@ -527,7 +535,7 @@ private struct HeaderView: View {
 
             Spacer()
 
-            if viewMode == .settings {
+            if viewMode != .dashboard {
                 Button {
                     viewMode = .dashboard
                 } label: {
@@ -562,6 +570,9 @@ private struct HeaderView: View {
         if viewMode == .settings {
             return "Settings"
         }
+        if viewMode == .debug {
+            return "Debug console"
+        }
         if counts.total == 0 {
             return "No services loaded"
         }
@@ -592,6 +603,7 @@ private struct HeaderRefreshIndicator: View {
 
 private struct SettingsView: View {
     @ObservedObject var model: DashboardModel
+    @Binding var viewMode: DashboardViewMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -637,6 +649,11 @@ private struct SettingsView: View {
                 }
                 .disabled(model.isRefreshing)
 
+                Button("Debug Console") {
+                    viewMode = .debug
+                }
+                .help("Inspect the zap commands the app is running")
+
                 Spacer()
 
                 Button("Quit") {
@@ -647,6 +664,146 @@ private struct SettingsView: View {
         .buttonStyle(.borderless)
         .padding(12)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct DebugConsoleView: View {
+    @ObservedObject private var log = CommandLog.shared
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 10) {
+                Text("\(log.entries.count) recorded \(log.entries.count == 1 ? "command" : "commands")")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                Button("Copy All") {
+                    copyToPasteboard(log.transcript)
+                }
+                .disabled(log.entries.isEmpty)
+
+                Button("Clear") {
+                    log.clear()
+                }
+                .disabled(log.entries.isEmpty)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .padding(12)
+
+            Divider()
+
+            if log.entries.isEmpty {
+                VStack(spacing: 6) {
+                    Image(systemName: "terminal")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("No commands recorded yet")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text("Refresh or run an action to see what the app executes.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 24)
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 6) {
+                        ForEach(log.entries) { entry in
+                            CommandLogRow(entry: entry)
+                        }
+                    }
+                    .padding(12)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+}
+
+private struct CommandLogRow: View {
+    let entry: CommandLogEntry
+    @State private var isExpanded = false
+    @State private var isHovering = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Button {
+                isExpanded.toggle()
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Image(systemName: entry.succeeded ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(entry.succeeded ? Color.green : Color.red)
+
+                    Text(entry.commandLine)
+                        .font(.system(size: 11, design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .lineLimit(isExpanded ? nil : 1)
+                        .truncationMode(.middle)
+                        .multilineTextAlignment(.leading)
+
+                    Spacer(minLength: 0)
+
+                    Text("\(entry.durationMs) ms")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Text("exit \(entry.exitCode)")
+                            .font(.caption2)
+                            .foregroundStyle(entry.succeeded ? Color.secondary : Color.red)
+                        Text(entry.date.formatted(date: .abbreviated, time: .standard))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer(minLength: 0)
+                        Button("Copy") {
+                            copyToPasteboard(entry.commandLine)
+                        }
+                        .font(.caption2)
+                        .buttonStyle(.borderless)
+                        .controlSize(.small)
+                    }
+
+                    if !entry.stdout.isEmpty {
+                        outputBlock(title: "stdout", text: entry.stdout)
+                    }
+                    if !entry.stderr.isEmpty {
+                        outputBlock(title: "stderr", text: entry.stderr)
+                    }
+                }
+                .padding(.leading, 18)
+            }
+        }
+        .padding(8)
+        .background {
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(isHovering ? 0.8 : 0.45))
+        }
+        .onHover { isHovering = $0 }
+    }
+
+    private func outputBlock(title: String, text: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(title)
+                .font(.caption2.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(text.count > 4000 ? String(text.prefix(4000)) + "\n… (truncated)" : text)
+                .font(.system(size: 10, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 

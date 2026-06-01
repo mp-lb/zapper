@@ -67,5 +67,3 @@ zap up my-service
 ## Environment Variables Checklist
 
 Add env vars to `.env.production` (if non sensitive) and `env-map.yaml` (always) which routes vars to services for security reasons in prod.
-
-See [zapper.md](./zapper.md) for more about zapper.

@@ -140,4 +140,45 @@ describe("SystemInventory", () => {
       }),
     ]);
   });
+
+  it("does not flag live resources as dangling when the owning project fails to load", async () => {
+    const projectRoot = path.join(tempDir, "registered");
+    fs.mkdirSync(projectRoot, { recursive: true });
+    const context = makeContext(projectRoot);
+    // Register the project, then leave its config in a state that cannot load.
+    // The config path still exists (so the project is "unresolved", not
+    // "stale"), but parsing throws, so we never learn its current services.
+    fs.writeFileSync(
+      path.join(projectRoot, "zap.yaml"),
+      "project: registered\n",
+    );
+    touchSystemProject({ context, configPath: context.configPath! });
+    fs.writeFileSync(
+      path.join(projectRoot, "zap.yaml"),
+      "project: [unclosed\n",
+    );
+
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+      {
+        name: "zap.registered.known123.api",
+        pid: 1,
+        status: "online",
+        uptime: 100,
+        memory: 1,
+        cpu: 0,
+        restarts: 0,
+      },
+    ]);
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    const audit = await auditSystemResources();
+
+    // The running service belongs to a known, registered instance whose config
+    // simply could not be parsed right now. It must not be offered for pruning.
+    expect(
+      audit.resources.find((r) => r.name === "zap.registered.known123.api"),
+    ).toBeUndefined();
+    expect(audit.resources).toEqual([]);
+  });
 });

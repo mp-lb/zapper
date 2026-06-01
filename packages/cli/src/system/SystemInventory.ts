@@ -156,6 +156,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
   projectNames: Set<string>;
   instanceIds: Set<string>;
   projectInstanceKeys: Set<string>;
+  loadedInstanceKeys: Set<string>;
   serviceKeys: Set<string>;
   projectLocations: Map<string, string>;
   instanceLocations: Map<string, string>;
@@ -163,6 +164,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
   const projectNames = new Set<string>();
   const instanceIds = new Set<string>();
   const projectInstanceKeys = new Set<string>();
+  const loadedInstanceKeys = new Set<string>();
   const serviceKeys = new Set<string>();
   const projectLocations = new Map<string, string>();
   const instanceLocations = new Map<string, string>();
@@ -178,6 +180,12 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
           `${project.project}:${instance.instanceId}`,
           `${project.projectRoot} (${instance.instanceKey})`,
         );
+        // Only instances whose config actually loaded can tell us which
+        // services are current. An instance that failed to load (no `list`)
+        // must not be used to judge a live resource as dangling.
+        if (instance.list) {
+          loadedInstanceKeys.add(`${project.project}:${instance.instanceId}`);
+        }
       }
       for (const service of instance.list?.services || []) {
         serviceKeys.add(
@@ -191,6 +199,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
     projectNames,
     instanceIds,
     projectInstanceKeys,
+    loadedInstanceKeys,
     serviceKeys,
     projectLocations,
     instanceLocations,
@@ -283,6 +292,16 @@ function classifyServiceResource(
       `${parsed.project}:${parsed.instanceId}:${parsed.service}`,
     )
   ) {
+    // Without a successful project load we cannot know the current service
+    // list, so we must not declare a live, running resource dangling: doing so
+    // would let `global prune` delete the real resources of a project that is
+    // merely failing to load right now (bad config, missing dep, mid-edit).
+    if (
+      !index.loadedInstanceKeys.has(`${parsed.project}:${parsed.instanceId}`)
+    ) {
+      return null;
+    }
+
     return {
       type,
       name,

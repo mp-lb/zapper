@@ -34,6 +34,12 @@ uses a fixed-size spinner/check indicator to avoid layout shifts. The popover
 uses the native macOS popover material and grows to fit its content until it
 reaches a capped height, then scrolls.
 
+Settings includes a **Debug Console** that records every `zap` command the app
+runs this session, with the full command line, exit code, duration, and raw
+stdout/stderr per invocation. Rows expand to show output and can be copied
+individually or as a full transcript. The log is in-memory only and is not
+persisted. It is the first stop when the app's view disagrees with the CLI.
+
 ## Build
 
 ```bash

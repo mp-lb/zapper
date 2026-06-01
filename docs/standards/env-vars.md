@@ -61,7 +61,7 @@ TODO: Add `zap env export` command to eliminate duplication.
     
 4.  Update `deploy.yml` to pass the secret to the service
     
-5.  **Add to [deployment-runbook.md](./deployment-runbook.md)** "Production Secrets" table — this is what developers check when deploying
+5.  **Add to the deployment runbook's** "Production Secrets" table — this is what developers check when deploying
     
 
 ### Local-only variable
