@@ -6,12 +6,12 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 
 **Status:** WIP, basic start/stop of PM2 processes working.
 
-@agents-md/documentation.md
+@documentation.md
 
-@agents-md/documentation-freshness.md
+@documentation-freshness.md
 
-@agents-md/development.md
+@development.md
 
-@agents-md/commands.md
+@commands.md
 
-@agents-md/verification.md
+@verification.md

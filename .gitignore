@@ -1,7 +1,8 @@
 node_modules/
 dist/
 .turbo/
-# Compiled from CLAUDE.md (the import-shell) via `zap t compile-agents`; not committed.
+# Agent files are compiled from agents-md/index.md via `zap t compile-agents`; not committed.
+/CLAUDE.md
 /AGENTS.md
 docs/.vitepress/dist/
 docs/.vitepress/cache/
