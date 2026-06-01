@@ -8,7 +8,7 @@ on:
       - "docs/**"
       - "infra/**"
       - "docs/secrets.txt.enc"
-      - ".github/workflows/deploy-web.yml"
+      - ".github/workflows/deploy.yaml"
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
