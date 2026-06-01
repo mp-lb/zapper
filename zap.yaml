@@ -7,6 +7,18 @@ native:
     cmd: pnpm dev
     env: "*"
 tasks:
+  secrets-unlock:
+    cmds:
+      - dx decrypt --file docs/env.local.enc > .env
+  secrets-lock:
+    cmds:
+      - dx encrypt --file .env > docs/env.local.enc
+  secrets-check:
+    cmds:
+      - |
+        dx decrypt --file docs/env.local.enc > /tmp/.env.check 2>/dev/null || { echo "no docs/env.local.enc"; exit 0; }
+        if ! diff -q /tmp/.env.check .env >/dev/null 2>&1; then echo "WARN: .env differs from docs/env.local.enc - run: zap t secrets-lock"; rm -f /tmp/.env.check; exit 1; fi
+        rm -f /tmp/.env.check; echo "secrets in sync"
   setup:
     cmds:
       - pnpm install
