@@ -21,4 +21,4 @@ tasks:
       - pnpm lint
   compile-agents:
     cmds:
-      - mdcompile CLAUDE.md -o AGENTS.md --optional --silent
+      - npx -y @mp-lb/mdcompile CLAUDE.md -o AGENTS.md --optional --silent
