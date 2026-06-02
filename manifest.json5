@@ -8,8 +8,6 @@
   homepageUrl: 'https://zapper.mp-lb.dev/',
   frontends: [],
   backends: [],
-  clis: ['zapper'],
-  libs: [],
+  libs: ['zapper'],
   extensions: [],
-  internalDeps: [],
 }
