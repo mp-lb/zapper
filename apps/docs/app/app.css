@@ -1,25 +1,11 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/vitepress.css';
 @import 'fumadocs-ui/css/preset.css';
+@import '@mp-lb/tools-fumadocs-preset/css';
 
 :root {
   --zog-black: #020202;
   --zog-white: #f8f8f8;
-}
-
-html {
-  scrollbar-gutter: stable;
-}
-
-html > body[data-scroll-locked] {
-  margin-right: 0px !important;
-  --removed-body-scroll-bar-size: 0px !important;
-}
-
-code {
-  font-family:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
-    Courier New, monospace;
 }
 
 ::selection {
