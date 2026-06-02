@@ -4,6 +4,7 @@ import { CommandResult } from "./CommandResult";
 export class CheckoutCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service } = context;
+
     if (Array.isArray(service)) {
       throw new Error("Branch name required: provide a single branch name");
     }

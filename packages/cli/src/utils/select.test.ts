@@ -42,6 +42,7 @@ describe("toEnquirerChoices", () => {
     const error = Object.assign(new Error("readline was closed"), {
       code: "ERR_USE_AFTER_CLOSE",
     });
+
     vi.mocked(Enquirer.prompt).mockRejectedValueOnce(error);
 
     await expect(

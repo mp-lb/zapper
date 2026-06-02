@@ -41,6 +41,7 @@ describe("KillCommand", () => {
       defaultYes: false,
       force: undefined,
     });
+
     expect(killProjectResources).not.toHaveBeenCalled();
     expect(result).toEqual({
       kind: "kill",
@@ -79,6 +80,7 @@ describe("KillCommand", () => {
       defaultYes: false,
       force: true,
     });
+
     expect(killProjectResources).toHaveBeenCalledWith(targets);
     expect(result).toEqual({
       kind: "kill",

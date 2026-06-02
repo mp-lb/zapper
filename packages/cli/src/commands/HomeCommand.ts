@@ -4,6 +4,7 @@ import { CommandResult } from "./CommandResult";
 export class HomeCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service } = context;
+
     if (service) {
       throw new Error("Home command does not accept arguments");
     }

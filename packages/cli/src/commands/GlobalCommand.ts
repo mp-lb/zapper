@@ -1,12 +1,11 @@
 import { CommandHandler, CommandContext } from "./CommandHandler";
 import { CommandResult } from "./CommandResult";
 import { confirm } from "../utils/confirm";
-import { ProjectKillTargets } from "../core/Zapper";
+import { ProjectKillTargets, Zapper } from "../core/Zapper";
 import { buildPrefix, parseServiceName } from "../utils/nameBuilder";
 import { Pm2Manager } from "../core/process/Pm2Manager";
 import { DockerManager } from "../core/docker/DockerManager";
 import { renderer } from "../ui/renderer";
-import { Zapper } from "../core/Zapper";
 import {
   auditSystemResources,
   cleanupSystemResources,
@@ -20,6 +19,7 @@ export class GlobalCommand extends CommandHandler {
 
     // Parse subcommand from service parameter
     const subcommand = Array.isArray(service) ? service[0] : service;
+
     const projectName =
       Array.isArray(service) && service.length > 1 ? service[1] : undefined;
 
@@ -39,6 +39,7 @@ export class GlobalCommand extends CommandHandler {
         if (projectName) {
           throw new Error("Global prune does not accept a project argument");
         }
+
         return await this.handlePrune(options.force);
       case "kill":
         return await this.handleKill(
@@ -118,6 +119,7 @@ export class GlobalCommand extends CommandHandler {
       resources.length > 0
         ? await cleanupSystemResources({ includeVolumes: true })
         : { resources: [] };
+
     const removedProjects = pruneSystemRegistry();
 
     return {
@@ -138,6 +140,7 @@ export class GlobalCommand extends CommandHandler {
     if (all) {
       // Kill all projects
       const projects = await this.getAllProjects();
+
       if (projects.length === 0) {
         return {
           kind: "global.kill",
@@ -148,6 +151,7 @@ export class GlobalCommand extends CommandHandler {
       }
 
       const totalPm2 = projects.reduce((sum, p) => sum + p.pm2.length, 0);
+
       const totalContainers = projects.reduce(
         (sum, p) => sum + p.containers.length,
         0,
@@ -161,6 +165,7 @@ export class GlobalCommand extends CommandHandler {
           containerCount: totalContainers,
         }),
       );
+
       renderer.log.report(renderer.command.globalListText(projects, true));
 
       const proceed = await confirm(
@@ -206,11 +211,13 @@ export class GlobalCommand extends CommandHandler {
         try {
           await zapper.loadConfig();
           const resolvedProject = zapper.getProject();
+
           if (!resolvedProject) {
             throw new Error(
               "No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>",
             );
           }
+
           projectName = resolvedProject;
         } catch (error) {
           if (
@@ -219,6 +226,7 @@ export class GlobalCommand extends CommandHandler {
           ) {
             throw error;
           }
+
           throw new Error(
             "No project name provided and not in a project directory. Use --all flag or specify: zap global kill <project>",
           );
@@ -226,6 +234,7 @@ export class GlobalCommand extends CommandHandler {
       }
 
       const targets = await this.getProjectTargets(projectName!);
+
       const projects = [
         {
           name: targets.projectName,
@@ -309,6 +318,7 @@ export class GlobalCommand extends CommandHandler {
     // Process PM2 processes
     for (const process of allPm2) {
       const parsed = parseServiceName(process.name);
+
       if (parsed) {
         if (!projectMap.has(parsed.project)) {
           projectMap.set(parsed.project, {
@@ -318,6 +328,7 @@ export class GlobalCommand extends CommandHandler {
             containers: [],
           });
         }
+
         projectMap.get(parsed.project)!.pm2.push(process.name);
       }
     }
@@ -325,6 +336,7 @@ export class GlobalCommand extends CommandHandler {
     // Process Docker containers
     for (const container of allContainers) {
       const parsed = parseServiceName(container.name);
+
       if (parsed) {
         if (!projectMap.has(parsed.project)) {
           projectMap.set(parsed.project, {
@@ -334,6 +346,7 @@ export class GlobalCommand extends CommandHandler {
             containers: [],
           });
         }
+
         projectMap.get(parsed.project)!.containers.push(container.name);
       }
     }

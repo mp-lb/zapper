@@ -12,6 +12,7 @@ const ansi = {
   cyan: "\u001B[36m",
   grey: "\u001B[90m",
 } as const;
+
 const ansiEscape = String.fromCharCode(27);
 
 function stripAnsi(text: string): string {
@@ -148,6 +149,7 @@ export class TaskRunner {
     context["ARGS"] = params.rest
       .map((arg) => this.shellQuoteArg(arg))
       .join(" ");
+
     context["CLI_ARGS"] = context["ARGS"];
     context["ROOT_DIR"] = this.baseCwd;
     context["CWD"] = cwd;
@@ -191,6 +193,7 @@ export class TaskRunner {
     param: TaskParam,
   ): Promise<string> {
     const label = param.desc ? `${param.name} (${param.desc})` : param.name;
+
     const rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -199,11 +202,13 @@ export class TaskRunner {
     try {
       return await new Promise<string>((resolve, reject) => {
         let settled = false;
+
         const finish = (value: string) => {
           if (settled) return;
           settled = true;
           resolve(value);
         };
+
         const cancel = () => {
           if (settled) return;
           settled = true;
@@ -239,6 +244,7 @@ export class TaskRunner {
               taskName,
               param,
             );
+
             if (value.length > 0) {
               nextParams.named[param.name] = value;
               continue;
@@ -256,6 +262,7 @@ export class TaskRunner {
 
     // Warn about unknown params
     const knownParams = new Set(taskParams.map((p) => p.name));
+
     for (const key of Object.keys(nextParams.named)) {
       if (
         !knownParams.has(key) &&
@@ -358,11 +365,13 @@ export class TaskRunner {
     for (const precondition of task.preconditions) {
       const command =
         typeof precondition === "string" ? precondition : precondition.sh;
+
       const message =
         typeof precondition === "string"
           ? `Precondition failed for task '${taskName}': ${command}`
           : precondition.msg ||
             `Precondition failed for task '${taskName}': ${command}`;
+
       const interpolated = this.interpolate(
         command,
         task.params,
@@ -370,6 +379,7 @@ export class TaskRunner {
         taskName,
         cwd,
       );
+
       const passed = await this.runCheckCommand(interpolated, cwd, env);
       if (!passed) throw new Error(message);
     }
@@ -392,6 +402,7 @@ export class TaskRunner {
         taskName,
         cwd,
       );
+
       const passed = await this.runCheckCommand(interpolated, cwd, env);
       if (!passed) return false;
     }
@@ -407,9 +418,11 @@ export class TaskRunner {
     cwd: string,
   ): Record<string, string> {
     const result: Record<string, string> = {};
+
     for (const [key, value] of Object.entries(vars || {})) {
       result[key] = this.interpolate(value, taskParams, params, taskName, cwd);
     }
+
     return result;
   }
 
@@ -444,6 +457,7 @@ export class TaskRunner {
 
     const task = this.tasks[name];
     const cwd = this.resolveCwd(task.cwd);
+
     const params = await this.validateParams(
       name,
       task.params,
@@ -452,6 +466,7 @@ export class TaskRunner {
     );
 
     const env = this.taskEnv(task, name, cwd);
+
     if (!execution.silent && !task.silent) {
       renderer.log.info(
         `Running task: ${name}${task.desc ? ` — ${task.desc}` : ""}`,
@@ -474,6 +489,7 @@ export class TaskRunner {
           name,
           cwd,
         );
+
         await this.runCommand(name, interpolatedCmd, cwd, env, {
           silent: execution.silent || task.silent,
           interactive: task.interactive,
@@ -486,6 +502,7 @@ export class TaskRunner {
           name,
           cwd,
         );
+
         await this.runCommand(name, interpolatedCmd, cwd, env, {
           silent: execution.silent || task.silent || cmd.silent,
           interactive: task.interactive || cmd.interactive,
@@ -498,6 +515,7 @@ export class TaskRunner {
           params,
           cwd,
         );
+
         await this.execTask(cmd.task, [...stack, name], {
           params: {
             named: {
@@ -535,6 +553,7 @@ export class TaskRunner {
     const restPatterns = ["REST", "ARGS", "CLI_ARGS"].map(
       (name) => `${delimiters[0]}${name}${delimiters[1]}`,
     );
+
     return task.cmds.some(
       (cmd) =>
         (typeof cmd === "string" &&

@@ -7,11 +7,10 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", ".vitepress/dist/**", "!.next/cache/**"]
+      "outputs": [".next/**", "dist/**", "build/**", ".vitepress/dist/**", "!.next/cache/**"]
     },
-    "lint": {},
-    "lint:fix": {
-      "cache": false
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
     },
     "test": {},
     "test:e2e": {

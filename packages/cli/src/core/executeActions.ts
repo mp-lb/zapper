@@ -54,12 +54,14 @@ function resolveBuildConfig(
   build: Container["build"],
 ) {
   if (!build) return undefined;
+
   if (typeof build === "string") {
     return {
       context: path.resolve(projectRoot, build),
       tag: image,
     };
   }
+
   const context = path.resolve(projectRoot, build.context);
   return {
     context,
@@ -82,13 +84,16 @@ function resolveSecretVolumes({
   serviceSecrets?: Container["secrets"];
 }): string[] {
   const volumes: string[] = [];
+
   for (const serviceSecret of serviceSecrets || []) {
     const source =
       typeof serviceSecret === "string" ? serviceSecret : serviceSecret.source;
+
     const target =
       typeof serviceSecret === "string"
         ? `/run/secrets/${source}`
         : serviceSecret.target || `/run/secrets/${source}`;
+
     const secret = secrets?.[source];
     if (!secret) throw new Error(`Secret not found: ${source}`);
 
@@ -104,11 +109,13 @@ function resolveSecretVolumes({
 
     if (secret.env) {
       const value = process.env[secret.env];
+
       if (value === undefined) {
         throw new Error(
           `Secret ${source} references missing environment variable ${secret.env}`,
         );
       }
+
       const secretDir = path.join(projectRoot, ".zap", "secrets");
       mkdirSync(secretDir, { recursive: true, mode: 0o700 });
       const secretPath = path.join(secretDir, source);
@@ -116,6 +123,7 @@ function resolveSecretVolumes({
       volumes.push(`${secretPath}:${target}:ro`);
     }
   }
+
   return volumes;
 }
 
@@ -131,9 +139,11 @@ function normalizeHealthcheck(healthcheck: Healthcheck): NormalizedHealthcheck {
   if (typeof healthcheck === "number") {
     return { type: "delay", seconds: healthcheck, timeout: 0, interval: 0 };
   }
+
   if (typeof healthcheck === "string") {
     return { type: "http", url: healthcheck, timeout: 120, interval: 1 };
   }
+
   if (healthcheck.type === "delay") {
     return {
       type: "delay",
@@ -142,6 +152,7 @@ function normalizeHealthcheck(healthcheck: Healthcheck): NormalizedHealthcheck {
       interval: 0,
     };
   }
+
   return {
     type: "http",
     url: healthcheck.url,
@@ -163,6 +174,7 @@ async function checkHealthUrl(url: string): Promise<boolean> {
       method: "GET",
       signal: AbortSignal.timeout(2000),
     });
+
     return res.ok;
   } catch {
     return false;
@@ -257,11 +269,13 @@ async function executeAction(
     const pair = findContainer(config, action.name);
     if (!pair) throw new Error(`Docker service not found: ${action.name}`);
     const [name, c] = pair;
+
     const runtimeConfig = config as ZapperConfig & {
       instanceId?: string;
       instanceKey?: string;
       configPath?: string;
     };
+
     const instanceId = runtimeConfig.instanceId;
     const instanceKey = runtimeConfig.instanceKey || DEFAULT_INSTANCE_KEY;
     const dockerName = buildServiceName(projectName, name, instanceId);
@@ -270,9 +284,11 @@ async function executeAction(
       const ports = Array.isArray(c.ports) ? c.ports : [];
       const image = getDockerImageName(projectName, name, c);
       const buildConfig = resolveBuildConfig(configDir || ".", image, c.build);
+
       if (buildConfig) {
         await DockerManager.buildImage(buildConfig);
       }
+
       const resolvedVolumes = resolveContainerVolumes({
         projectRoot: configDir || ".",
         projectName,
@@ -288,6 +304,7 @@ async function executeAction(
       }
 
       const envMap = c.resolvedEnv || {};
+
       const secretVolumes = resolveSecretVolumes({
         projectRoot: configDir || ".",
         secrets: runtimeConfig.secrets,
@@ -302,11 +319,13 @@ async function executeAction(
         "com.zapper.instance-id": instanceId || "",
         "com.zapper.instance-key": instanceKey,
       } as Record<string, string>;
+
       if (runtimeConfig.configPath) {
         labels["com.zapper.registry-id"] = getSystemRegistryId(
           configDir || ".",
           runtimeConfig.configPath,
         );
+
         labels["com.zapper.project-root-hash"] = getProjectRootHash(
           configDir || ".",
         );
@@ -344,8 +363,10 @@ export async function executeActions(
 ): Promise<ServiceExecutionReport> {
   const instanceId = (config as ZapperConfig & { instanceId?: string })
     .instanceId;
+
   const pm2 = new Pm2Executor(projectName, configDir || undefined, instanceId);
   const report = emptyServiceExecutionReport();
+
   const emit = (event: ServiceActionEvent) => {
     applyServiceActionEventToExecutionReport(report, event);
     reporter?.onEvent(event);

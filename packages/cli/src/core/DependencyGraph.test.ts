@@ -37,6 +37,7 @@ describe("DependencyGraph", () => {
         healthcheck: 5,
         depends_on: ["database", "redis"],
       });
+
       graph.addProcess("frontend", {
         cmd: "npm run dev",
         healthcheck: 5,
@@ -61,6 +62,7 @@ describe("DependencyGraph", () => {
         healthcheck: 5,
         depends_on: ["b"],
       });
+
       graph.addProcess("b", {
         cmd: "npm start",
         healthcheck: 5,
@@ -79,11 +81,13 @@ describe("DependencyGraph", () => {
         healthcheck: 5,
         depends_on: ["b"],
       });
+
       graph.addProcess("b", {
         cmd: "npm start",
         healthcheck: 5,
         depends_on: ["c"],
       });
+
       graph.addProcess("c", {
         cmd: "npm start",
         healthcheck: 5,
@@ -139,6 +143,7 @@ describe("DependencyGraph", () => {
         image: "postgres:15",
         healthcheck: { type: "delay", seconds: 10 },
       });
+
       graph.addProcess("api", {
         cmd: "npm start",
         depends_on: ["database"],
@@ -177,6 +182,7 @@ describe("DependencyGraph", () => {
         healthcheck: 5,
         depends_on: ["database"],
       });
+
       graph.addProcess("worker", {
         cmd: "npm run worker",
         healthcheck: 5,
@@ -201,6 +207,7 @@ describe("DependencyGraph", () => {
         healthcheck: 5,
         depends_on: ["database"],
       });
+
       graph.addProcess("frontend", {
         cmd: "npm run dev",
         healthcheck: 5,

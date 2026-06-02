@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { mkdtempSync, rmSync } from "fs";
 import { tmpdir } from "os";
@@ -49,6 +48,7 @@ vi.mock("../config/stateLoader", () => ({
   updateServiceState: vi.fn(),
   clearServiceState: vi.fn(),
 }));
+
 vi.mock("../utils/logger", () => ({
   logger: {
     info: vi.fn(),
@@ -123,7 +123,10 @@ describe("executeActions", () => {
       restartProcess: vi.fn().mockResolvedValue(undefined),
       showLogs: vi.fn().mockResolvedValue(undefined),
     };
-    vi.mocked(Pm2Executor).mockImplementation(() => mockPm2Executor as any);
+
+    vi.mocked(Pm2Executor).mockImplementation(function () {
+      return mockPm2Executor as any;
+    });
 
     vi.mocked(DockerManager.createVolume).mockResolvedValue(undefined);
     vi.mocked(DockerManager.buildImage).mockResolvedValue(undefined);
@@ -463,6 +466,7 @@ describe("executeActions", () => {
       expect(DockerManager.createVolume).toHaveBeenCalledWith(
         "zap.test-project.inst123.vol1",
       );
+
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
         "zap.test-project.inst123.test",
         expect.objectContaining({
@@ -521,6 +525,7 @@ describe("executeActions", () => {
     it("should build Docker images and mount env-backed secrets", async () => {
       process.env.TEST_DB_PASSWORD = "secret-value";
       const projectRoot = mkdtempSync(path.join(tmpdir(), "zapper-actions-"));
+
       const mockContainer = {
         build: {
           context: "./api",
@@ -574,6 +579,7 @@ describe("executeActions", () => {
         args: { NODE_ENV: "development" },
         tag: "zap.test-project.api:dev",
       });
+
       expect(DockerManager.createVolume).toHaveBeenCalledWith("shared-cache");
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
         "zap.test-project.api",
@@ -602,6 +608,7 @@ describe("executeActions", () => {
         name: "api",
         cmd: "npm start",
       };
+
       const mockContainer = mockConfig.docker!.redis;
 
       vi.mocked(findProcess).mockReturnValue(mockProcess);
@@ -634,6 +641,7 @@ describe("executeActions", () => {
         mockProcess,
         "test-project",
       );
+
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
         "zap.test-project.redis",
         expect.any(Object),
@@ -717,6 +725,7 @@ describe("executeActions", () => {
         name: "api",
         cmd: "npm start",
       });
+
       mockFetch
         .mockResolvedValueOnce({ ok: false })
         .mockResolvedValueOnce({ ok: true });
@@ -755,6 +764,7 @@ describe("executeActions", () => {
         name: "api",
         cmd: "npm start",
       });
+
       mockFetch.mockResolvedValue({ ok: false });
       const reporter = { onEvent: vi.fn() };
 

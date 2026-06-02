@@ -52,6 +52,7 @@ describe("Pm2Executor", () => {
         name: "test-service",
         cmd: "echo 'test'",
       };
+
       const projectName = "override-project";
 
       await executor.startProcess(mockProcess, projectName);
@@ -62,15 +63,18 @@ describe("Pm2Executor", () => {
         testConfigDir,
         undefined,
       );
+
       expect(Pm2Manager.startProcessWithTempEcosystem).toHaveBeenCalledTimes(1);
     });
 
     it("should pass undefined configDir when executor was created without it", async () => {
       executor = new Pm2Executor(testProjectName);
+
       const mockProcess: Process = {
         name: "test-service",
         cmd: "echo 'test'",
       };
+
       const projectName = "test-project";
 
       await executor.startProcess(mockProcess, projectName);
@@ -100,6 +104,7 @@ describe("Pm2Executor", () => {
         testConfigDir,
         undefined,
       );
+
       expect(Pm2Manager.deleteAllMatchingProcesses).toHaveBeenCalledTimes(1);
     });
 
@@ -133,6 +138,7 @@ describe("Pm2Executor", () => {
         testProjectName,
         undefined,
       );
+
       expect(Pm2Manager.restartProcess).toHaveBeenCalledTimes(1);
     });
 
@@ -167,6 +173,7 @@ describe("Pm2Executor", () => {
         testConfigDir,
         undefined,
       );
+
       expect(Pm2Manager.showLogs).toHaveBeenCalledTimes(1);
     });
 

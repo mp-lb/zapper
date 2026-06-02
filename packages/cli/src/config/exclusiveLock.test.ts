@@ -20,6 +20,7 @@ describe("exclusiveLock", () => {
     if (existsSync(testHome)) {
       rmSync(testHome, { recursive: true, force: true });
     }
+
     mkdirSync(testHome, { recursive: true });
 
     // Mock os.homedir to return our test directory
@@ -30,6 +31,7 @@ describe("exclusiveLock", () => {
     if (existsSync(testHome)) {
       rmSync(testHome, { recursive: true, force: true });
     }
+
     vi.restoreAllMocks();
   });
 
@@ -51,11 +53,13 @@ describe("exclusiveLock", () => {
     it("should return null for stale lock (dead PID)", () => {
       mkdirSync(locksDir, { recursive: true });
       const lockPath = path.join(locksDir, `${projectName}.lock.json`);
+
       const staleLock = {
         projectRoot: projectRoot1,
         pid: 99999, // Extremely unlikely to exist
         timestamp: new Date().toISOString(),
       };
+
       writeFileSync(lockPath, JSON.stringify(staleLock, null, 2));
 
       const result = checkExclusiveLock(projectName);
@@ -65,11 +69,13 @@ describe("exclusiveLock", () => {
     it("should return lock info for active lock", () => {
       mkdirSync(locksDir, { recursive: true });
       const lockPath = path.join(locksDir, `${projectName}.lock.json`);
+
       const activeLock = {
         projectRoot: projectRoot1,
         pid: process.pid, // Current process
         timestamp: new Date().toISOString(),
       };
+
       writeFileSync(lockPath, JSON.stringify(activeLock, null, 2));
 
       const result = checkExclusiveLock(projectName);
@@ -115,11 +121,13 @@ describe("exclusiveLock", () => {
       // Create a stale lock manually
       mkdirSync(locksDir, { recursive: true });
       const lockPath = path.join(locksDir, `${projectName}.lock.json`);
+
       const staleLock = {
         projectRoot: projectRoot1,
         pid: 99999, // Dead PID
         timestamp: new Date().toISOString(),
       };
+
       writeFileSync(lockPath, JSON.stringify(staleLock, null, 2));
 
       // Should be able to acquire the lock
@@ -160,11 +168,13 @@ describe("exclusiveLock", () => {
       // Manually create a lock owned by a different PID
       mkdirSync(locksDir, { recursive: true });
       const lockPath = path.join(locksDir, `${projectName}.lock.json`);
+
       const otherLock = {
         projectRoot: projectRoot1,
         pid: process.pid + 1, // Different PID
         timestamp: new Date().toISOString(),
       };
+
       writeFileSync(lockPath, JSON.stringify(otherLock, null, 2));
 
       releaseExclusiveLock(projectName);

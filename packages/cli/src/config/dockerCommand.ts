@@ -33,6 +33,7 @@ export function parseDockerCommandString(command: string): string[] {
         args.push(current);
         current = "";
       }
+
       continue;
     }
 

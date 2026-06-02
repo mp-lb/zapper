@@ -66,6 +66,7 @@ function normalizeWslPath(
   if (!isWindowsAbsolutePath(value)) return value;
 
   const runExecFileSync = context.execFileSync || execFileSync;
+
   try {
     return runExecFileSync("wslpath", ["-u", value], {
       encoding: "utf8",

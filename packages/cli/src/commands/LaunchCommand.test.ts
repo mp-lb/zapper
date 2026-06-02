@@ -23,6 +23,7 @@ describe("LaunchCommand", () => {
 
   it("opens homepage when no name is provided", async () => {
     const command = new LaunchCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -55,6 +56,7 @@ describe("LaunchCommand", () => {
         },
       },
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3000");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -64,6 +66,7 @@ describe("LaunchCommand", () => {
 
   it("opens a named project link", async () => {
     const command = new LaunchCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -97,6 +100,7 @@ describe("LaunchCommand", () => {
         },
       },
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3001/docs");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -106,6 +110,7 @@ describe("LaunchCommand", () => {
 
   it("throws when no homepage is configured and no name is provided", async () => {
     const command = new LaunchCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -132,6 +137,7 @@ describe("LaunchCommand", () => {
 
   it("throws when named link does not exist", async () => {
     const command = new LaunchCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",

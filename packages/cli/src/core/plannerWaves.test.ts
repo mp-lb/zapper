@@ -3,8 +3,7 @@ import { Planner } from "./Planner";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
-import { ProcessInfo } from "../types/index";
-import { Action } from "../types";
+import { ProcessInfo, Action } from "../types";
 
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");
@@ -112,6 +111,7 @@ describe("Planner Wave Generation", () => {
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.worker", "online"),
       ]);
+
       mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.redis", "running"),
         createMockDockerContainer("zap.test-project.postgres", "running"),
@@ -245,6 +245,7 @@ describe("Planner Wave Generation", () => {
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "online"),
       ]);
+
       mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.database", "running"),
       ]);
@@ -311,6 +312,7 @@ describe("Planner Wave Generation", () => {
       ]);
 
       const planner = new Planner(config);
+
       const plan = await planner.plan(
         "start",
         undefined,

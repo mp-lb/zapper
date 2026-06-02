@@ -32,8 +32,10 @@ export function parseServiceName(
 ): ParsedServiceName | null {
   const parts = prefixedName.split(".");
   if (parts[0] !== "zap" || parts.length < 3 || parts.length > 4) return null;
+
   if (parts.length === 4) {
     return { project: parts[1], instanceId: parts[2], service: parts[3] };
   }
+
   return { project: parts[1], service: parts[2] };
 }

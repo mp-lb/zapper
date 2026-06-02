@@ -62,8 +62,10 @@ async function loadProjectInstance(
 ): Promise<SystemProjectInstanceStatus> {
   const registryInstance = project.instances[instanceKey];
   const instanceId = registryInstance?.id || "";
+
   const profileOption =
     instanceKey === "default" ? {} : { profile: instanceKey };
+
   try {
     const zapper = new Zapper();
     await zapper.loadConfig(project.configPath, {
@@ -72,6 +74,7 @@ async function loadProjectInstance(
       ...profileOption,
       instance: instanceKey,
     });
+
     const context = zapper.getContext();
     if (!context) throw new Error("Project context did not load");
     return {
@@ -112,15 +115,18 @@ export async function getSystemProjects(): Promise<SystemProjectStatus[]> {
         instances: [],
         error: "Project root or config path no longer exists",
       });
+
       continue;
     }
 
     const instanceKeys = Object.keys(project.instances);
+
     const instances = await Promise.all(
       (instanceKeys.length > 0 ? instanceKeys : ["default"]).map((key) =>
         loadProjectInstance(project, key),
       ),
     );
+
     const unresolved = instances.every((instance) => instance.error);
 
     results.push({
@@ -172,6 +178,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
   for (const project of projects) {
     projectNames.add(project.project);
     projectLocations.set(project.project, project.projectRoot);
+
     for (const instance of project.instances) {
       if (instance.instanceId) {
         instanceIds.add(instance.instanceId);
@@ -180,6 +187,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
           `${project.project}:${instance.instanceId}`,
           `${project.projectRoot} (${instance.instanceKey})`,
         );
+
         // Only instances whose config actually loaded can tell us which
         // services are current. An instance that failed to load (no `list`)
         // must not be used to judge a live resource as dangling.
@@ -187,6 +195,7 @@ function buildRegistryIndex(projects: SystemProjectStatus[]): {
           loadedInstanceKeys.add(`${project.project}:${instance.instanceId}`);
         }
       }
+
       for (const service of instance.list?.services || []) {
         serviceKeys.add(
           `${project.project}:${instance.instanceId}:${service.service}`,
@@ -361,6 +370,7 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
       DockerManager.listContainers(),
       DockerManager.listVolumes(),
     ]);
+
   const index = buildRegistryIndex(projects);
   const resources: SystemResourceAuditEntry[] = [];
 
@@ -368,10 +378,12 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
     const entry = classifyServiceResource("pm2", process.name, index);
     if (entry) resources.push(entry);
   }
+
   for (const container of dockerContainers) {
     const entry = classifyServiceResource("container", container.name, index);
     if (entry) resources.push(entry);
   }
+
   for (const volume of dockerVolumes) {
     const entry = classifyVolumeResource(volume.name, index);
     if (entry) resources.push(entry);
@@ -386,6 +398,7 @@ export async function cleanupSystemResources(options: {
   includeVolumes?: boolean;
 }): Promise<SystemResourceAuditResult> {
   const audit = await auditSystemResources();
+
   const resources = audit.resources.filter(
     (resource) => options.includeVolumes || resource.type !== "volume",
   );

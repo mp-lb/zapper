@@ -12,6 +12,7 @@ export function buildAliasMap(
 
   for (const p of processes) {
     aliasToName.set(p.name as string, p.name as string);
+
     if (Array.isArray(p.aliases)) {
       for (const a of p.aliases) aliasToName.set(a, p.name as string);
     }

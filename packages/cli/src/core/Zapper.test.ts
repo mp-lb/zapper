@@ -34,6 +34,7 @@ vi.mock("./instanceResolver", async (importOriginal) => {
     validateInstanceKey: vi.fn(),
   };
 });
+
 vi.mock("../config/yamlParser");
 
 const mockPlanner = vi.mocked(Planner);
@@ -71,10 +72,12 @@ describe("Zapper", () => {
         database: { image: "postgres:15" },
       },
     });
+
     mockResolveInstance.mockResolvedValue({
       instanceKey: "default",
       instanceId: "inst123",
     });
+
     mockCreateInstance.mockReturnValue("inst123");
     mockValidateInstanceKey.mockImplementation(() => undefined);
   });
@@ -88,6 +91,7 @@ describe("Zapper", () => {
 
   function createTempConfig(config: object, filename = "zap.yaml"): string {
     const configPath = path.join(tempDir, filename);
+
     const yamlContent = `project: test-project
 native:
   api:
@@ -98,16 +102,19 @@ docker:
   database:
     image: postgres:15
 `;
+
     fs.writeFileSync(configPath, yamlContent);
     return configPath;
   }
 
   function createMinimalTempConfig(projectName = "test-project"): string {
     const configPath = path.join(tempDir, "zap.yaml");
+
     const yamlContent = `project: ${projectName}
 native:
   api:
     cmd: npm start`;
+
     fs.writeFileSync(configPath, yamlContent);
     return configPath;
   }
@@ -132,10 +139,18 @@ native:
     });
 
     it("should throw when no config found without custom path", async () => {
-      // Test the case where no configPath is provided and no config is found
-      await expect(zapper.loadConfig()).rejects.toThrow(
-        "No zap.yaml config file found in current directory or parent directories",
-      );
+      // Run from an isolated temp dir so the search doesn't walk up into a
+      // real zap.yaml (e.g. this repo's own root config).
+      const originalCwd = process.cwd();
+      process.chdir(tempDir);
+
+      try {
+        await expect(zapper.loadConfig()).rejects.toThrow(
+          "No zap.yaml config file found in current directory or parent directories",
+        );
+      } finally {
+        process.chdir(originalCwd);
+      }
     });
 
     it("should throw for invalid config path (directory that doesn't contain config)", async () => {
@@ -229,6 +244,7 @@ native:
         },
         native: { api: { cmd: "npm start" } },
       });
+
       mockResolveInstance.mockResolvedValue({
         instanceKey: "e2e",
         instanceId: "inst123",
@@ -243,6 +259,7 @@ native:
         autoCreate: true,
         allowMissing: false,
       });
+
       expect(zapper.getContext()?.instanceKey).toBe("e2e");
       expect(zapper.getContext()?.state.stacks?.e2e).toEqual({
         stackId: "inst123",
@@ -276,11 +293,13 @@ native:
     it("should resolve service aliases to canonical names", () => {
       // Mock the context to have aliases
       const context = zapper.getContext();
+
       if (context) {
         context.processes = [
           { name: "api", cmd: "npm start", aliases: ["backend", "server"] },
           { name: "frontend", cmd: "npm run dev", aliases: ["web"] },
         ];
+
         context.containers = [
           {
             name: "database",
@@ -334,6 +353,7 @@ native:
         project: "test-project",
         native: { api: { cmd: "npm start" } },
       });
+
       await zapper.loadConfig(configPath);
 
       await expect(zapper.runTask("seed")).rejects.toThrow(TaskNotFoundError);
@@ -354,11 +374,13 @@ native:
           },
         },
       });
+
       await zapper.loadConfig(configPath);
 
       await expect(zapper.runTask("missing")).rejects.toThrow(
         TaskNotFoundError,
       );
+
       await expect(zapper.runTask("missing")).rejects.toThrow(
         "Task not found: missing. Check task names or aliases",
       );
@@ -391,7 +413,11 @@ native:
       mockPlannerInstance = {
         plan: vi.fn().mockResolvedValue(mockPlan),
       };
-      mockPlanner.mockImplementation(() => mockPlannerInstance);
+
+      mockPlanner.mockImplementation(function () {
+        return mockPlannerInstance;
+      });
+
       mockExecuteActions.mockResolvedValue(undefined);
     });
 
@@ -425,6 +451,7 @@ native:
 
       it("should resolve aliases and pass to planner", async () => {
         const context = zapper.getContext();
+
         if (context) {
           context.processes = [
             { name: "api", cmd: "npm start", aliases: ["backend"] },
@@ -443,6 +470,7 @@ native:
 
       it("should throw ServiceNotFoundError when no processes defined", async () => {
         const context = zapper.getContext();
+
         if (context) {
           context.processes = [];
           context.containers = [];
@@ -457,6 +485,7 @@ native:
         const warnSpy = vi
           .spyOn(renderer.log, "warn")
           .mockImplementation(() => {});
+
         mockPlan.waves = []; // No actions planned
 
         await zapper.startProcesses(["nonexistent"]);
@@ -464,6 +493,7 @@ native:
         expect(warnSpy).toHaveBeenCalledWith(
           "Service not found: nonexistent. Skipping.",
         );
+
         expect(mockPlannerInstance.plan).toHaveBeenCalledWith(
           "start",
           ["nonexistent"],
@@ -482,6 +512,7 @@ native:
         expect(warnSpy).toHaveBeenCalledWith(
           "Service not found: missing. Skipping.",
         );
+
         expect(mockPlannerInstance.plan).toHaveBeenCalledWith(
           "start",
           ["api", "missing"],
@@ -517,6 +548,7 @@ native:
         const warnSpy = vi
           .spyOn(renderer.log, "warn")
           .mockImplementation(() => {});
+
         mockPlan.waves = []; // No actions planned
 
         await zapper.stopProcesses(["nonexistent"]);
@@ -570,6 +602,7 @@ native:
         expect(warnSpy).toHaveBeenCalledWith(
           "Service not found: missing. Skipping.",
         );
+
         expect(mockPlannerInstance.plan).toHaveBeenCalledWith(
           "restart",
           ["api", "missing"],
@@ -682,6 +715,7 @@ native:
       const deleteProcessMock = vi
         .spyOn(Pm2Manager, "deleteProcess")
         .mockResolvedValue(undefined);
+
       const removeContainerMock = vi
         .spyOn(DockerManager, "removeContainer")
         .mockResolvedValue(undefined);
@@ -699,13 +733,16 @@ native:
         1,
         "zap.test-project.api",
       );
+
       expect(deleteProcessMock).toHaveBeenNthCalledWith(
         2,
         "zap.test-project.worker",
       );
+
       expect(removeContainerMock).toHaveBeenCalledWith(
         "zap.test-project.redis",
       );
+
       expect(result).toEqual(targets);
     });
   });
@@ -770,9 +807,11 @@ native:
 
     it("kills explicit project resources without loading config", async () => {
       const unloadedZapper = new Zapper();
+
       const deleteProcessMock = vi
         .spyOn(Pm2Manager, "deleteProcess")
         .mockResolvedValue(undefined);
+
       const removeContainerMock = vi
         .spyOn(DockerManager, "removeContainer")
         .mockResolvedValue(undefined);
@@ -853,7 +892,11 @@ native:
           ],
         }),
       };
-      mockPlanner.mockImplementation(() => mockPlannerInstance);
+
+      mockPlanner.mockImplementation(function () {
+        return mockPlannerInstance;
+      });
+
       mockExecuteActions.mockResolvedValue(undefined);
 
       // Start processes

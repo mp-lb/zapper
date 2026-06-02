@@ -2,41 +2,47 @@ import { renderer } from "./ui/renderer";
 import type { ZodIssue } from "zod";
 
 export class ConfigFileNotFoundError extends Error {
-  constructor(
-    public configPath: string,
-    message?: string,
-  ) {
+  public configPath: string;
+
+  constructor(configPath: string, message?: string) {
     super(message || `Config file not found: ${configPath}`);
+    this.configPath = configPath;
     this.name = "ConfigFileNotFoundError";
   }
 }
 
 export class ConfigParseError extends Error {
-  constructor(
-    public configPath: string,
-    public cause?: unknown,
-    message?: string,
-  ) {
+  public configPath: string;
+  public cause?: unknown;
+
+  constructor(configPath: string, cause?: unknown, message?: string) {
     super(message || `Failed to parse config file: ${configPath}`);
+    this.configPath = configPath;
+    this.cause = cause;
     this.name = "ConfigParseError";
   }
 }
 
 export class ConfigValidationError extends Error {
+  public issues: string[];
   public zodIssues?: ZodIssue[];
 
   constructor(
-    public issues: string[],
+    issues: string[],
     zodIssuesOrMessage?: ZodIssue[] | string,
     message?: string,
   ) {
     const resolvedMessage =
       typeof zodIssuesOrMessage === "string" ? zodIssuesOrMessage : message;
+
     super(
       resolvedMessage ||
         `Configuration validation failed: ${issues.join(", ")}`,
     );
+
+    this.issues = issues;
     this.name = "ConfigValidationError";
+
     if (Array.isArray(zodIssuesOrMessage)) {
       this.zodIssues = zodIssuesOrMessage;
     }
@@ -44,36 +50,43 @@ export class ConfigValidationError extends Error {
 }
 
 export class ServiceNotFoundError extends Error {
-  constructor(
-    public serviceName: string,
-    message?: string,
-  ) {
+  public serviceName: string;
+
+  constructor(serviceName: string, message?: string) {
     super(
       message ||
         `Service not found: ${serviceName}. Check service names or aliases`,
     );
+
+    this.serviceName = serviceName;
     this.name = "ServiceNotFoundError";
   }
 }
 
 export class TaskNotFoundError extends Error {
-  constructor(
-    public taskName: string,
-    message?: string,
-  ) {
+  public taskName: string;
+
+  constructor(taskName: string, message?: string) {
     super(
       message || `Task not found: ${taskName}. Check task names or aliases`,
     );
+
+    this.taskName = taskName;
     this.name = "TaskNotFoundError";
   }
 }
 
 export class WhitelistReferenceError extends Error {
+  public whitelistName: string;
+  public entityType: string;
+  public entityName: string;
+  public availableWhitelists?: string[];
+
   constructor(
-    public whitelistName: string,
-    public entityType: string,
-    public entityName: string,
-    public availableWhitelists?: string[],
+    whitelistName: string,
+    entityType: string,
+    entityName: string,
+    availableWhitelists?: string[],
     message?: string,
   ) {
     super(
@@ -83,30 +96,41 @@ export class WhitelistReferenceError extends Error {
             ? `. Available whitelists: ${availableWhitelists.join(", ")}`
             : ""),
     );
+
+    this.whitelistName = whitelistName;
+    this.entityType = entityType;
+    this.entityName = entityName;
+    this.availableWhitelists = availableWhitelists;
     this.name = "WhitelistReferenceError";
   }
 }
 
 export class ContainerNotRunningError extends Error {
-  constructor(
-    public containerName: string,
-    public dockerName?: string,
-    message?: string,
-  ) {
+  public containerName: string;
+  public dockerName?: string;
+
+  constructor(containerName: string, dockerName?: string, message?: string) {
     super(
       message ||
         `Container not running: ${containerName}` +
           (dockerName ? ` (${dockerName})` : ""),
     );
+
+    this.containerName = containerName;
+    this.dockerName = dockerName;
     this.name = "ContainerNotRunningError";
   }
 }
 
 export class ContainerStartError extends Error {
+  public serviceName: string;
+  public dockerName: string;
+  public summary: string;
+
   constructor(
-    public serviceName: string,
-    public dockerName: string,
-    public summary: string,
+    serviceName: string,
+    dockerName: string,
+    summary: string,
     message?: string,
   ) {
     super(
@@ -114,6 +138,10 @@ export class ContainerStartError extends Error {
         `Failed to start Docker service: ${serviceName} (${dockerName}). ${summary}` +
           ` Run \`zap startup-log ${serviceName}\` for details.`,
     );
+
+    this.serviceName = serviceName;
+    this.dockerName = dockerName;
+    this.summary = summary;
     this.name = "ContainerStartError";
   }
 }
@@ -126,27 +154,35 @@ export class ContextNotLoadedError extends Error {
 }
 
 export class GitOperationError extends Error {
-  constructor(
-    public operation: string,
-    public repoPath?: string,
-    message?: string,
-  ) {
+  public operation: string;
+  public repoPath?: string;
+
+  constructor(operation: string, repoPath?: string, message?: string) {
     super(
       message ||
         `Git ${operation} failed` + (repoPath ? ` for ${repoPath}` : ""),
     );
+
+    this.operation = operation;
+    this.repoPath = repoPath;
     this.name = "GitOperationError";
   }
 }
 
 export class ExclusiveLockError extends Error {
+  public projectName: string;
+  public lockInfo: { projectRoot: string; pid: number; timestamp: string };
+
   constructor(
-    public projectName: string,
-    public lockInfo: { projectRoot: string; pid: number; timestamp: string },
+    projectName: string,
+    lockInfo: { projectRoot: string; pid: number; timestamp: string },
   ) {
     super(
       `Project "${projectName}" is already running from ${lockInfo.projectRoot}. Stop it first or use --force to take over.`,
     );
+
+    this.projectName = projectName;
+    this.lockInfo = lockInfo;
     this.name = "ExclusiveLockError";
   }
 }

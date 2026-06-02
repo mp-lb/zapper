@@ -8,6 +8,7 @@ vi.mock("../config/stateLoader", async () => {
   const actual = await vi.importActual<typeof import("../config/stateLoader")>(
     "../config/stateLoader",
   );
+
   return {
     ...actual,
     saveState: vi.fn(),
@@ -95,6 +96,7 @@ describe("ProfilesCommand", () => {
     expect(saveState).toHaveBeenCalledWith("/test", {
       selectedProfile: "e2e",
     });
+
     expect(result).toEqual({
       kind: "profiles.selected",
       profile: "e2e",
@@ -115,6 +117,7 @@ describe("ProfilesCommand", () => {
     expect(saveState).toHaveBeenCalledWith("/test", {
       selectedProfile: undefined,
     });
+
     expect(result).toEqual({
       kind: "profiles.reset",
       profile: "default",

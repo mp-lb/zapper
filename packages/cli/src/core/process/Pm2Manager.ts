@@ -92,15 +92,19 @@ export class Pm2Manager {
           interpreter: resolveBashRuntime([]).command,
           cwd: (() => {
             if (!processConfig.cwd) return configDir;
+
             const resolved = path.isAbsolute(processConfig.cwd)
               ? processConfig.cwd
               : path.join(configDir, processConfig.cwd);
+
             if (!existsSync(resolved)) {
               renderer.log.warn(
                 `cwd path does not exist for ${processConfig.name as string}: ${resolved} (skipping)`,
               );
+
               return configDir;
             }
+
             return resolved;
           })(),
           env: processConfig.resolvedEnv || {},
@@ -203,10 +207,12 @@ export class Pm2Manager {
   ): Promise<void> {
     try {
       const info = await this.getProcessInfo(prefixedName);
+
       if (info?.pid && info.pid > 0) {
         renderer.log.debug(
           `Killing process tree for ${prefixedName} (PID ${info.pid})`,
         );
+
         this.killProcessTree(info.pid);
         // Give processes a moment to exit cleanly
         await new Promise((r) => setTimeout(r, 300));
@@ -227,6 +233,7 @@ export class Pm2Manager {
     const prefixedName = projectName
       ? buildServiceName(projectName, name, instanceId)
       : name;
+
     await this.killManagedProcessTree(prefixedName);
     await this.runPm2Command(["stop", prefixedName]);
 
@@ -244,6 +251,7 @@ export class Pm2Manager {
     const prefixedName = projectName
       ? buildServiceName(projectName, name, instanceId)
       : name;
+
     await this.killManagedProcessTree(prefixedName);
     await this.runPm2Command(["restart", prefixedName]);
   }
@@ -257,6 +265,7 @@ export class Pm2Manager {
     const prefixedName = projectName
       ? buildServiceName(projectName, name, instanceId)
       : name;
+
     await this.killManagedProcessTree(prefixedName);
     await this.runPm2Command(["delete", prefixedName]);
 
@@ -278,6 +287,7 @@ export class Pm2Manager {
 
     try {
       const processes = await this.listProcesses();
+
       const matchingProcesses = processes.filter(
         (p) => p.name === prefixedName,
       );
@@ -328,11 +338,12 @@ export class Pm2Manager {
       try {
         const { readdirSync } = await import("fs");
         const remainingFiles = readdirSync(logsDir);
+
         if (remainingFiles.length === 0) {
           rmSync(logsDir, { recursive: true, force: true });
           renderer.log.debug(`Cleaned up empty logs directory: ${logsDir}`);
         }
-      } catch (e) {
+      } catch {
         // Directory not empty or other error, that's fine
       }
     } catch (error) {
@@ -358,6 +369,7 @@ export class Pm2Manager {
       for (const file of files) {
         if (file.startsWith(scriptPattern) && file.endsWith(".sh")) {
           const scriptPath = path.join(zapDir, file);
+
           try {
             unlinkSync(scriptPath);
             renderer.log.debug(`Cleaned up wrapper script: ${scriptPath}`);
@@ -394,6 +406,7 @@ export class Pm2Manager {
     const prefixedName = projectName
       ? buildServiceName(projectName, name, instanceId)
       : name;
+
     const processInfo = await this.getProcessInfo(prefixedName);
 
     if (!processInfo) {
@@ -427,7 +440,7 @@ export class Pm2Manager {
       const process = processes.find((p) => p.name === name);
 
       return process || null;
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -439,6 +452,7 @@ export class Pm2Manager {
       const rawList = JSON.parse(this.sanitizeJsonOutput(output)) as Array<
         Record<string, unknown>
       >;
+
       const processes: ProcessInfo[] = rawList.map((proc) => ({
         name: String(proc["name"]),
         pid: Number(proc["pid"]),
@@ -457,7 +471,7 @@ export class Pm2Manager {
       }));
 
       return processes;
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -475,15 +489,18 @@ export class Pm2Manager {
         processName.startsWith(buildPrefix(projectName, instanceId) + ".")
       ) {
         const logsDir = path.join(configDir || ".", ".zap", "logs");
+
         const baseName = processName.replace(
           buildPrefix(projectName, instanceId) + ".",
           "",
         );
+
         return path.join(logsDir, `${projectName}.${baseName}.log`);
       }
 
       // For non-Zapper processes, fall back to PM2's default paths
       const output = await this.runPm2Command(["jlist", "--silent"]);
+
       const processes = JSON.parse(this.sanitizeJsonOutput(output)) as Array<
         Record<string, unknown>
       >;
@@ -518,6 +535,7 @@ export class Pm2Manager {
 
       if (follow) {
         const tail = resolveTailRuntime(["-n", "50", "-f", logFile]);
+
         const child = spawn(tail.command, tail.argsPrefix, {
           stdio: ["ignore", "pipe", "inherit"],
         });
@@ -527,6 +545,7 @@ export class Pm2Manager {
           buffer += data.toString();
           const parts = buffer.split(/\r?\n/);
           buffer = parts.pop() || "";
+
           for (const line of parts) {
             if (line) globalThis.process?.stdout?.write(line + "\n");
           }
@@ -543,6 +562,7 @@ export class Pm2Manager {
             } catch (e) {
               void e;
             }
+
             resolve();
           };
 
@@ -586,108 +606,6 @@ export class Pm2Manager {
     });
   }
 
-  private static async runPm2CommandFollow(args: string[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const pm2 = this.resolvePm2Command(args);
-      renderer.log.debug(`Running: ${pm2.label}`);
-      const child = spawn(pm2.command, pm2.argsPrefix, {
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-
-      child.stdout.on("data", (data) => {
-        const lines = data.toString().split("\n");
-        for (const line of lines) {
-          if (line.trim()) {
-            // Strip PM2 prefix (e.g., "555|zap.le | hello world" -> "hello world")
-            const strippedLine = line.replace(/^\d+\|[^|]*\|\s*/, "");
-            globalThis.process?.stdout?.write(strippedLine + "\n");
-          }
-        }
-      });
-
-      child.stderr.on("data", (data) => {
-        const lines = data.toString().split("\n");
-        for (const line of lines) {
-          if (line.trim()) {
-            // Strip PM2 prefix from stderr as well
-            const strippedLine = line.replace(/^\d+\|[^|]*\|\s*/, "");
-            globalThis.process?.stderr?.write(strippedLine + "\n");
-          }
-        }
-      });
-
-      child.on("error", (error) => {
-        reject(error);
-      });
-
-      child.on("exit", (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(
-            new Error(
-              `PM2 command exited with code ${code} (args: ${args.join(" ")})`,
-            ),
-          );
-        }
-      });
-
-      // Handle process interruption
-      globalThis.process?.on("SIGINT", () => {
-        child.kill("SIGINT");
-        resolve();
-      });
-    });
-  }
-
-  private static async runPm2CommandStream(args: string[]): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const pm2 = this.resolvePm2Command(args);
-      renderer.log.debug(`Running: ${pm2.label}`);
-      const child = spawn(pm2.command, pm2.argsPrefix, {
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-
-      child.stdout.on("data", (data) => {
-        const lines = data.toString().split("\n");
-        for (const line of lines) {
-          if (line.trim()) {
-            // Strip PM2 prefix (e.g., "555|zap.le | hello world" -> "hello world")
-            const strippedLine = line.replace(/^\d+\|[^|]*\|\s*/, "");
-            globalThis.process?.stdout?.write(strippedLine + "\n");
-          }
-        }
-      });
-
-      child.stderr.on("data", (data) => {
-        const lines = data.toString().split("\n");
-        for (const line of lines) {
-          if (line.trim()) {
-            // Strip PM2 prefix from stderr as well
-            const strippedLine = line.replace(/^\d+\|[^|]*\|\s*/, "");
-            globalThis.process?.stderr?.write(strippedLine + "\n");
-          }
-        }
-      });
-
-      child.on("close", (code) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(
-            new Error(
-              `PM2 command failed with code ${code} (args: ${args.join(" ")})`,
-            ),
-          );
-        }
-      });
-
-      child.on("error", (err) => {
-        reject(new Error(`Failed to run PM2 command: ${err.message}`));
-      });
-    });
-  }
-
   private static runPm2Command(
     args: string[],
     retryCount = 0,
@@ -695,6 +613,7 @@ export class Pm2Manager {
     return new Promise((resolve, reject) => {
       const pm2 = this.resolvePm2Command(args);
       renderer.log.debug(`Running: ${pm2.label}`);
+
       const child = spawn(pm2.command, pm2.argsPrefix, {
         stdio: ["pipe", "pipe", "pipe"],
       });
@@ -776,12 +695,15 @@ export class Pm2Manager {
     const filePath = path.join(zapDir, fileName);
 
     let content = "#!/usr/bin/env bash\n";
+
     // Export PATH from the shell that ran `zap up` to ensure consistent tool versions
     if (process.env.PATH) {
       content += `export PATH="${process.env.PATH}"\n`;
     }
+
     // Redirect stderr through a colorizer so it appears red in combined logs
     content += `exec 2> >(while IFS= read -r line; do printf '\\033[31m%s\\033[0m\\n' "$line"; done)\n`;
+
     if (processConfig.source) {
       content += `source ${processConfig.source}\n`;
     }

@@ -1,0 +1,3 @@
+{
+  "extends": "@mp-lb/fssstack-config/tsconfig/node.json"
+}

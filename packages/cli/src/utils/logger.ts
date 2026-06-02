@@ -1,9 +1,11 @@
-export enum LogLevel {
-  ERROR = 0,
-  WARN = 1,
-  INFO = 2,
-  DEBUG = 3,
-}
+export const LogLevel = {
+  ERROR: 0,
+  WARN: 1,
+  INFO: 2,
+  DEBUG: 3,
+} as const;
+
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 export interface LoggerOptions {
   level?: LogLevel;
@@ -61,10 +63,12 @@ export class Logger {
 
   private formatData(data?: unknown): string {
     if (data === undefined) return "";
+
     if (data instanceof Error) {
       const stack = data.stack ? `\n${data.stack}` : "";
       return ` ${data.name}: ${data.message}${stack}`;
     }
+
     try {
       return ` ${JSON.stringify(data)}`;
     } catch {

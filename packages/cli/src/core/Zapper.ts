@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { parseYamlFile } from "../config/yamlParser";
 import { EnvResolver } from "../config/EnvResolver";
 import { Pm2Executor } from "./process/Pm2Executor";
@@ -47,7 +46,7 @@ import {
   getSystemRegistryId,
   touchSystemProject,
 } from "../system/SystemRegistry";
-import packageJson from "../../package.json";
+import { VERSION } from "../version";
 
 const READ_ONLY_STATE_COMMANDS = new Set([
   "config",
@@ -78,6 +77,7 @@ export class Zapper {
     cliOptions?: Record<string, any>,
   ): Promise<void> {
     const resolvedPath = resolveConfigPath(configPath);
+
     if (!resolvedPath) {
       throw new Error(
         configPath
@@ -85,6 +85,7 @@ export class Zapper {
           : "No zap.yaml config file found in current directory or parent directories",
       );
     }
+
     const absoluteConfigPath = path.resolve(resolvedPath);
     const projectRoot = path.dirname(absoluteConfigPath);
     const config = parseYamlFile(resolvedPath);
@@ -102,26 +103,33 @@ export class Zapper {
     this.context = createContext(configWithOverrides, projectRoot, {
       profileName,
     });
+
     this.context.configPath = absoluteConfigPath;
 
     const profileStackKey = this.context.profile?.isolate
       ? this.context.profile.name
       : DEFAULT_INSTANCE_KEY;
+
     const rawInstanceOpt = cliOptions?.instance;
+
     const explicitInstanceKey =
       typeof rawInstanceOpt === "string" && rawInstanceOpt.trim().length > 0
         ? rawInstanceOpt.trim()
         : undefined;
+
     const selectedInstanceKey = explicitInstanceKey ?? profileStackKey;
+
     if (selectedInstanceKey) {
       validateInstanceKey(selectedInstanceKey);
       this.context.instanceKey = selectedInstanceKey;
     }
 
     const commandName = cliOptions?.__command;
+
     const readOnlyStateCommand =
       typeof commandName === "string" &&
       READ_ONLY_STATE_COMMANDS.has(commandName);
+
     const instanceResolution = await resolveInstance(
       projectRoot,
       selectedInstanceKey,
@@ -130,6 +138,7 @@ export class Zapper {
         allowMissing: readOnlyStateCommand,
       },
     );
+
     this.context.instanceKey = instanceResolution.instanceKey;
     this.context.instanceId = instanceResolution.instanceId;
 
@@ -142,6 +151,7 @@ export class Zapper {
         this.context.ports || [],
         instanceResolution.instanceKey,
       );
+
       if (commandName !== "volume") {
         initializeManagedVolumes(
           projectRoot,
@@ -174,6 +184,7 @@ export class Zapper {
           },
         };
       });
+
       this.context.state = loadState(projectRoot);
     }
 
@@ -201,7 +212,7 @@ export class Zapper {
           typeof cliOptions?.__command === "string"
             ? cliOptions.__command
             : undefined,
-        zapperVersion: packageJson.version,
+        zapperVersion: VERSION,
       });
 
       if (touchResult.projectNameChanged) {
@@ -224,6 +235,7 @@ export class Zapper {
     if (cliOptions.http && cliOptions.ssh) {
       throw new Error("Cannot specify both --http and --ssh options");
     }
+
     if (cliOptions.http) {
       configWithOverrides.git_method = "http";
     } else if (cliOptions.ssh) {
@@ -249,6 +261,7 @@ export class Zapper {
     if (!this.context) {
       throw new ContextNotLoadedError();
     }
+
     return this.context.processes;
   }
 
@@ -266,6 +279,7 @@ export class Zapper {
     if (!names || !this.context) return names;
 
     const aliasMap = buildServiceAliasMap(this.context);
+
     const existingServices = new Set([
       ...this.context.processes.map((p) => p.name),
       ...this.context.containers.map((c) => c.name),
@@ -273,6 +287,7 @@ export class Zapper {
 
     for (const requestedName of names) {
       const canonicalName = aliasMap[requestedName] || requestedName;
+
       if (!existingServices.has(canonicalName)) {
         renderer.log.warn(`Service not found: ${requestedName}. Skipping.`);
       }
@@ -293,6 +308,7 @@ export class Zapper {
 
     for (const task of this.context.tasks) {
       aliasToName.set(task.name, task.name);
+
       if (Array.isArray(task.aliases)) {
         for (const alias of task.aliases) {
           aliasToName.set(alias, task.name);
@@ -312,13 +328,16 @@ export class Zapper {
   // TODO: Remove this once all components are updated to use Context
   private createLegacyConfig(): ZapperConfig {
     if (!this.context) throw new ContextNotLoadedError();
+
     const registryId = this.context.configPath
       ? getSystemRegistryId(this.context.projectRoot, this.context.configPath)
       : undefined;
+
     const projectRootHash = getProjectRootHash(this.context.projectRoot);
 
     // Convert processes to native format
     const native: Record<string, any> = {};
+
     for (const process of this.context.processes) {
       native[process.name] = {
         ...process,
@@ -337,6 +356,7 @@ export class Zapper {
 
     // Convert containers back to docker format
     const docker: Record<string, any> = {};
+
     for (const container of this.context.containers) {
       docker[container.name] = {
         ...container,
@@ -346,6 +366,7 @@ export class Zapper {
 
     // Convert tasks back to tasks format
     const tasks: Record<string, any> = {};
+
     for (const task of this.context.tasks) {
       tasks[task.name] = {
         ...task,
@@ -386,6 +407,7 @@ export class Zapper {
     const legacyConfig = this.createLegacyConfig();
     const planner = new Planner(legacyConfig);
     const canonical = this.resolveActionTargets(processNames);
+
     const plan = await planner.plan(
       "start",
       canonical,
@@ -416,6 +438,7 @@ export class Zapper {
     const legacyConfig = this.createLegacyConfig();
     const planner = new Planner(legacyConfig);
     const canonical = this.resolveActionTargets(processNames);
+
     const plan = await planner.plan(
       "stop",
       canonical,
@@ -445,6 +468,7 @@ export class Zapper {
     const legacyConfig = this.createLegacyConfig();
     const planner = new Planner(legacyConfig);
     const canonical = this.resolveActionTargets(processNames);
+
     const plan = await planner.plan(
       "restart",
       canonical,
@@ -471,6 +495,7 @@ export class Zapper {
 
     const canonical = this.resolveActionTargets(serviceNames);
     const selected = new Set(canonical);
+
     const containers = this.context.containers.filter((container) => {
       if (!container.watch || container.watch.length === 0) return false;
       return (
@@ -498,6 +523,7 @@ export class Zapper {
         serviceName,
         previous === "rebuild" || action === "rebuild" ? "rebuild" : "restart",
       );
+
       const existing = pending.get(serviceName);
       if (existing) clearTimeout(existing);
       pending.set(
@@ -511,6 +537,7 @@ export class Zapper {
               ? `Rebuilding ${serviceName} after file change...`
               : `Restarting ${serviceName} after file change...`,
           );
+
           if (nextAction === "rebuild") {
             await this.restartProcesses([serviceName]);
           } else {
@@ -531,17 +558,21 @@ export class Zapper {
         const watchPath = path.isAbsolute(rule.path)
           ? rule.path
           : path.join(this.context.projectRoot, rule.path);
+
         if (!fs.existsSync(watchPath)) {
           renderer.log.warn(
             `Watch path does not exist for ${container.name}: ${rule.path}`,
           );
+
           continue;
         }
+
         watchers.push(
           fs.watch(watchPath, { recursive: true }, () => {
             schedule(container.name, rule.action);
           }),
         );
+
         renderer.log.info(
           `Watching ${rule.path} for ${container.name} (${rule.action})`,
         );
@@ -558,6 +589,7 @@ export class Zapper {
         for (const timeout of pending.values()) clearTimeout(timeout);
         resolve();
       };
+
       process.once("SIGINT", stop);
       process.once("SIGTERM", stop);
     });
@@ -567,9 +599,11 @@ export class Zapper {
     if (projectName && projectName.trim().length > 0) {
       return projectName.trim();
     }
+
     if (this.context?.projectName) {
       return this.context.projectName;
     }
+
     throw new Error(
       "No project name provided. Run from a project with zap.yaml or pass one explicitly: zap kill <project>",
     );
@@ -628,6 +662,7 @@ export class Zapper {
     const isContainer = this.context.containers.some(
       (c) => c.name === resolvedName,
     );
+
     const isProcess = this.context.processes.some(
       (p) => p.name === resolvedName,
     );
@@ -638,6 +673,7 @@ export class Zapper {
         resolvedName,
         this.context.instanceId,
       );
+
       const exists = await DockerManager.containerExists(dockerName);
       if (!exists) throw new ContainerNotRunningError(resolvedName, dockerName);
       await DockerManager.showLogs(dockerName, follow);
@@ -647,6 +683,7 @@ export class Zapper {
         projectRoot,
         this.context.instanceId,
       );
+
       await pm2Executor.showLogs(resolvedName, follow);
     } else {
       throw new ServiceNotFoundError(processName);
@@ -657,6 +694,7 @@ export class Zapper {
     if (!this.context) throw new ContextNotLoadedError();
 
     const resolvedName = this.resolveServiceName(serviceName);
+
     const isKnownService =
       this.context.containers.some((c) => c.name === resolvedName) ||
       this.context.processes.some((p) => p.name === resolvedName);
@@ -708,6 +746,7 @@ export class Zapper {
       this.context.projectRoot,
       this.context.instanceKey,
     );
+
     this.context.instanceId = instanceId;
     this.context.instance = {
       key: this.context.instanceKey,
@@ -721,6 +760,7 @@ export class Zapper {
         this.context.instanceKey,
       ),
     };
+
     return instanceId;
   }
 
@@ -755,6 +795,7 @@ export class Zapper {
 
     // Convert tasks array back to object format for TaskRunner
     const tasks: Record<string, any> = {};
+
     for (const task of this.context.tasks) {
       tasks[task.name] = task;
     }

@@ -45,6 +45,7 @@ describe("volumeManager", () => {
       "postgres:/var/lib/postgresql/data": "zap.myproject.abc123.vol1",
       "redis:/data": "zap.myproject.abc123.vol2",
     });
+
     expect(loadState(projectRoot).instances?.default?.volumes).toEqual({
       "zap.myproject.abc123.vol1": {
         service: "postgres",
@@ -87,6 +88,7 @@ describe("volumeManager", () => {
     initializeManagedVolumes(projectRoot, "myproject", "default", "abc123", [
       { serviceName: "postgres", internalDir: "/var/lib/postgresql/data" },
     ]);
+
     const otherVolumes = initializeManagedVolumes(
       projectRoot,
       "myproject",
@@ -146,6 +148,7 @@ describe("volumeManager", () => {
       "zap.myproject.abc123.vol1",
       "zap.myproject.abc123.vol2",
     ]);
+
     expect(loadState(projectRoot).instances?.default?.volumes).toEqual({});
   });
 

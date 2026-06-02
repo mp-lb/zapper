@@ -638,6 +638,7 @@ describe("ZodConfigValidator", () => {
         ".env.backend",
         ".env.backend.user",
       ]);
+
       expect(result.docker?.database.env).toEqual(".zap/env/database.yaml");
       expect(result.tasks?.build.env).toEqual(".zap/env/build.yaml");
       expect(result.native?.frontend.name).toBe("frontend");

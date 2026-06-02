@@ -205,6 +205,7 @@ describe("TaskRunner", () => {
       const runner = new TaskRunner(tasks, "/project", {
         context: { projectName: "myapp", instanceKey: "e2e" },
       });
+
       await runner.run("inspect");
 
       expect(childProcess.spawn).toHaveBeenCalledWith(
@@ -245,6 +246,7 @@ describe("TaskRunner", () => {
         delimiters: ["<<", ">>"],
         params,
       });
+
       await runner.run("build");
 
       expect(childProcess.spawn).toHaveBeenCalledWith(
@@ -279,16 +281,19 @@ describe("TaskRunner", () => {
       };
 
       const promptParam = vi.fn().mockResolvedValue("staging");
+
       const runner = new TaskRunner(tasks, "/project", {
         promptMissingParams: true,
         promptParam,
       });
+
       await runner.run("deploy");
 
       expect(promptParam).toHaveBeenCalledWith("deploy", {
         name: "env",
         required: true,
       });
+
       expect(childProcess.spawn).toHaveBeenCalledWith(
         "echo staging",
         expect.objectContaining({ cwd: "/project", shell: true }),
@@ -353,6 +358,7 @@ describe("TaskRunner", () => {
           child.stdout.emit("data", "hello\n");
           child.emit("close", 0, null);
         });
+
         return child as unknown as ReturnType<typeof childProcess.spawn>;
       });
 
@@ -366,6 +372,7 @@ describe("TaskRunner", () => {
       expect(process.stdout.write).toHaveBeenCalledWith(
         "\u001B[1m\u001B[36mtask: [build] echo hello\u001B[0m\n",
       );
+
       expect(process.stdout.write).toHaveBeenCalledWith(
         "\u001B[90mhello\n\u001B[0m",
       );
@@ -378,6 +385,7 @@ describe("TaskRunner", () => {
           child.stdout.emit("data", "hello\n");
           child.emit("close", 0, null);
         });
+
         return child as unknown as ReturnType<typeof childProcess.spawn>;
       });
 
@@ -391,9 +399,11 @@ describe("TaskRunner", () => {
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         "\u001B[1m\u001B[36mtask: [build] echo hello\u001B[0m\n",
       );
+
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         expect.stringContaining("Running task: build"),
       );
+
       expect(process.stdout.write).toHaveBeenCalledWith(
         "\u001B[90mhello\n\u001B[0m",
       );
@@ -477,6 +487,7 @@ describe("TaskRunner", () => {
       const runner = new TaskRunner(tasks, "/project", {
         context: { projectName: "myapp", instanceKey: "abc123" },
       });
+
       await runner.run("inspect");
 
       expect(childProcess.spawn).toHaveBeenCalledWith(
@@ -513,6 +524,7 @@ describe("TaskRunner", () => {
         'test -n "$DATABASE_URL"',
         expect.objectContaining({ stdio: ["ignore", "ignore", "ignore"] }),
       );
+
       expect(childProcess.spawn).toHaveBeenNthCalledWith(
         2,
         "echo deploy",
@@ -543,6 +555,7 @@ describe("TaskRunner", () => {
       await expect(runner.run("deploy")).rejects.toThrow(
         "Application binary missing",
       );
+
       expect(childProcess.spawn).toHaveBeenCalledTimes(1);
     });
   });
@@ -653,6 +666,7 @@ describe("TaskRunner", () => {
         "echo build",
         expect.any(Object),
       );
+
       expect(childProcess.spawn).toHaveBeenNthCalledWith(
         2,
         "echo deploy",
@@ -695,6 +709,7 @@ describe("TaskRunner", () => {
       const runner = new TaskRunner(tasks, "/project", {
         params: { named: { env: "staging" }, rest: [] },
       });
+
       await runner.run("deploy");
 
       expect(childProcess.spawn).toHaveBeenCalledWith(
@@ -715,6 +730,7 @@ describe("TaskRunner", () => {
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         "\u001B[1m\u001B[36mtask: [build] echo build\u001B[0m\n",
       );
+
       expect(process.stdout.write).not.toHaveBeenCalledWith(
         expect.stringContaining("Running task: build"),
       );

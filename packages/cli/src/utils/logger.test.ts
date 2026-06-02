@@ -18,6 +18,7 @@ describe("Logger", () => {
       warn: vi.fn(),
       error: vi.fn(),
     };
+
     logger.setSink(consoleSpy);
   });
 
@@ -77,9 +78,11 @@ describe("Logger", () => {
     expect(consoleSpy.log).not.toHaveBeenCalledWith(
       expect.stringContaining("debug message"),
     );
+
     expect(consoleSpy.log).not.toHaveBeenCalledWith(
       expect.stringContaining("info message"),
     );
+
     expect(warnCall).toContain("⚠️");
     expect(errorCall).toContain("❌");
   });

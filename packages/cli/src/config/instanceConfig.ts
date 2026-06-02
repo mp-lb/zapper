@@ -11,8 +11,10 @@ export interface InstanceConfig {
  */
 export function loadInstanceConfig(projectRoot: string): InstanceConfig | null {
   const state = loadState(projectRoot);
+
   const instanceId =
     state.instances?.[DEFAULT_INSTANCE_KEY]?.id || state.instanceId;
+
   if (!instanceId) return null;
 
   return {

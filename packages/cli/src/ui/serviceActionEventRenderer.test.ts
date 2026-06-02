@@ -1,5 +1,4 @@
-import { describe, expect, it } from "vitest";
-import { vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   serviceActionEventToLines,
   serviceActionJsonlReporter,
@@ -38,6 +37,7 @@ describe("serviceActionEventToLines", () => {
 
   it("streams events as JSONL", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
     const event = {
       type: "services.wave" as const,
       start: ["api"],

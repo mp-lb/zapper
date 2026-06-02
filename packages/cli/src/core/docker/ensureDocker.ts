@@ -22,6 +22,7 @@ function runCommand(command: string, args: string[]): Promise<CommandResult> {
     child.stdout.on("data", (data) => {
       stdout += data.toString();
     });
+
     child.stderr.on("data", (data) => {
       stderr += data.toString();
     });
@@ -31,6 +32,7 @@ function runCommand(command: string, args: string[]): Promise<CommandResult> {
         resolve({ code: 127, stdout, stderr });
         return;
       }
+
       resolve({ code: 1, stdout, stderr: `${stderr}\n${err.message}`.trim() });
     });
 
@@ -48,12 +50,15 @@ async function hasDockerCli(): Promise<boolean> {
 
 function missingDockerMessage(): string {
   const platform = process.platform;
+
   if (platform === "darwin") {
     return "Docker is required but not installed. Install Docker Desktop with `brew install --cask docker`, then open Docker Desktop and retry.";
   }
+
   if (platform === "linux") {
     return "Docker is required but not installed. Install Docker Engine + Docker CLI for your distro, then retry.";
   }
+
   return "Docker is required but not installed. Install Docker and retry.";
 }
 
@@ -64,6 +69,7 @@ async function tryInstallDocker(): Promise<void> {
 
   const brew = resolveBrewRuntime(["--version"]);
   const brewAvailable = await runCommand(brew.command, brew.argsPrefix);
+
   if (brewAvailable.code !== 0) {
     throw new Error(
       "Docker is required but Homebrew is not available. Install Docker Desktop manually from https://www.docker.com/products/docker-desktop/ and retry.",
@@ -82,6 +88,7 @@ async function tryInstallDocker(): Promise<void> {
   }
 
   const installed = await hasDockerCli();
+
   if (!installed) {
     throw new Error(
       "Docker install command completed, but Docker CLI is still unavailable. Open Docker Desktop and ensure `docker --version` works, then retry.",

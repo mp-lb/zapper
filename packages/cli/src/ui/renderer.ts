@@ -57,6 +57,7 @@ const ansi = {
   cyan: "\u001B[36m",
   grey: "\u001B[90m",
 } as const;
+
 const ansiEscape = String.fromCharCode(27);
 
 type Tone = "info" | "ok" | "warn" | "error" | "muted" | "accent";
@@ -218,9 +219,11 @@ function serviceListTables(
 ): Array<{ heading: string; rows: string[][] }> {
   const tables = [{ heading, rows: serviceListRows(result.services) }];
   const portsRows = portListRows(result);
+
   if (portsRows.length > 1) {
     tables.push({ heading: "Ports", rows: portsRows });
   }
+
   return tables;
 }
 
@@ -239,6 +242,7 @@ function systemProjectRows(projects: SystemProjectStatus[]): string[][] {
         (sum, instance) => sum + (instance.list?.services.length || 0),
         0,
       );
+
       return [
         project.project,
         project.state.toUpperCase(),
@@ -305,12 +309,15 @@ function multiTableView(
   footer?: string,
 ): string {
   const sections = [header(title, subtitle)];
+
   for (const tableDef of tables) {
     sections.push("", bold(tableDef.heading), table(tableDef.rows));
   }
+
   if (footer) {
     sections.push("", footer);
   }
+
   return sections.join("\n");
 }
 
@@ -346,6 +353,7 @@ function formatContextSubtitle(context: Context): string {
     if (context.instanceId && stackCount > 1) {
       return `${context.projectName} [${profileName} - ${context.instanceId} - ${stackCount} stacks]`;
     }
+
     return `${context.projectName} [${profileName}]`;
   }
 
@@ -358,8 +366,10 @@ function formatContextSubtitle(context: Context): string {
       id: context.instanceId,
       label: context.instance?.label,
     });
+
     const suffix =
       label === context.instanceId ? label : `${label} (${context.instanceId})`;
+
     return `${context.projectName} · ${suffix}`;
   }
 
@@ -404,9 +414,11 @@ function renderError(error: unknown, showStackTrace = false): string {
   if (known) {
     const code = errorCodeFromName(known.name);
     let out = `${color("error", "ERROR")}  ${bold(`${code}:`)} ${known.message}`;
+
     if (showStackTrace && known.stack) {
       out += `\n${dim(known.stack)}`;
     }
+
     return out;
   }
 
@@ -416,9 +428,11 @@ function renderError(error: unknown, showStackTrace = false): string {
   let out = `${color("error", "ERROR")}  ${bold("RuntimeError:")} ${msg || "Unexpected failure"}${dim(
     name && msg ? ` (${name})` : name ? ` (${name})` : "",
   )}`;
+
   if (showStackTrace && error instanceof Error && error.stack) {
     out += `\n${dim(error.stack)}`;
   }
+
   return out;
 }
 
@@ -700,6 +714,7 @@ export const renderer = {
       resources: SystemResourceAuditEntry[];
     }): string {
       const resourceCount = data.resources.length;
+
       if (data.status === "aborted") {
         const projectCount = data.staleProjects.length;
         return [
@@ -774,6 +789,7 @@ export const renderer = {
         lines.push(`  Status:     ${color("ok", "Ready")}`);
         lines.push(`  Instance:   ${bold(data.instanceId!)}`);
         lines.push(`  Mode:       ${data.mode}`);
+
         if (data.configPath) {
           lines.push(`  Config:     ${dim(data.configPath)}`);
         }
@@ -806,6 +822,7 @@ export const renderer = {
       const titleSubtitle = context
         ? formatContextSubtitle(context)
         : undefined;
+
       const sections: string[] = [header("Status", titleSubtitle)];
 
       const addSection = (
@@ -826,6 +843,7 @@ export const renderer = {
           const pad = " ".repeat(
             Math.max(0, nameWidth - stripAnsi(r.name).length + 2),
           );
+
           return `  ${r.name}${pad}${r.state}`;
         });
 
@@ -848,6 +866,7 @@ export const renderer = {
       const subtitle = formatContextSubtitle(context);
 
       const resources = result.resources;
+
       if (!resources) {
         return multiTableView(
           "Services",
@@ -879,6 +898,7 @@ export const renderer = {
             entry.reason,
           ]),
         ];
+
         tables.push({ heading: "Dangling Resources", rows: danglingRows });
       }
 
@@ -1033,8 +1053,10 @@ export const renderer = {
 
       for (const t of tasks) {
         const desc = t.desc ?? "";
+
         const aliases =
           t.aliases && t.aliases.length > 0 ? t.aliases.join(", ") : "";
+
         rows.push([t.name, desc, aliases]);
       }
 

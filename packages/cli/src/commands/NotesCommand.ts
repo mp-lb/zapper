@@ -4,6 +4,7 @@ import { CommandResult } from "./CommandResult";
 export class NotesCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service } = context;
+
     if (service) {
       throw new Error("Notes command does not accept arguments");
     }

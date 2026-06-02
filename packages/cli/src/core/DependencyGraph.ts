@@ -32,8 +32,10 @@ export class DependencyGraph {
 
   private buildEdges(): void {
     this.edges.clear();
+
     for (const [name, node] of this.nodes) {
       this.edges.set(name, new Set());
+
       for (const dep of node.depends_on) {
         if (!this.nodes.has(dep))
           throw new Error(
@@ -148,9 +150,11 @@ export class DependencyGraph {
     const remaining = new Set(servicesToStop);
 
     const reverseDeps = new Map<string, Set<string>>();
+
     for (const name of this.nodes.keys()) {
       reverseDeps.set(name, new Set());
     }
+
     for (const [name, node] of this.nodes) {
       for (const dep of node.depends_on) {
         reverseDeps.get(dep)?.add(name);

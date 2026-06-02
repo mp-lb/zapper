@@ -36,11 +36,13 @@ describe("CLI reference / command tree", () => {
     walk(program, ["zap"], (cmd, path) => {
       if (!cmd.description()) missing.push(path.join(" "));
     });
+
     expect(missing).toEqual([]);
   });
 
   it("registers the formerly positional groups as real subcommands", () => {
     const program = getProgram();
+
     const expectations: Record<string, string[]> = {
       volume: ["list", "prune", "reset"],
       profile: ["list", "current", "use", "reset"],
@@ -53,6 +55,7 @@ describe("CLI reference / command tree", () => {
     for (const [group, subs] of Object.entries(expectations)) {
       const groupCmd = findCommand(program, group);
       expect(groupCmd, `group ${group} should exist`).toBeDefined();
+
       for (const sub of subs) {
         expect(
           findCommand(groupCmd!, sub),
@@ -63,13 +66,16 @@ describe("CLI reference / command tree", () => {
 
     const system = findCommand(program, "system")!;
     const registry = findCommand(system, "registry")!;
+
     for (const sub of ["prune", "forget", "repair"]) {
       expect(
         findCommand(registry, sub),
         `system registry ${sub}`,
       ).toBeDefined();
     }
+
     const resources = findCommand(system, "resources")!;
+
     for (const sub of ["audit", "cleanup"]) {
       expect(
         findCommand(resources, sub),

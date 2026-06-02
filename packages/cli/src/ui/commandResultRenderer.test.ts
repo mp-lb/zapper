@@ -85,6 +85,7 @@ describe("renderCommandResult", () => {
       },
       { json: true },
     );
+
     renderCommandResult(
       {
         kind: "profiles.selected",
@@ -92,6 +93,7 @@ describe("renderCommandResult", () => {
       },
       { json: true },
     );
+
     renderCommandResult(
       {
         kind: "volume.prune",
@@ -106,6 +108,7 @@ describe("renderCommandResult", () => {
       1,
       JSON.stringify({ status: "success", action: "git.pull" }),
     );
+
     expect(logSpy).toHaveBeenNthCalledWith(
       2,
       JSON.stringify({
@@ -114,6 +117,7 @@ describe("renderCommandResult", () => {
         profile: "dev",
       }),
     );
+
     expect(logSpy).toHaveBeenNthCalledWith(
       3,
       JSON.stringify({

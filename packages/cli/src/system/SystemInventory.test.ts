@@ -63,6 +63,7 @@ describe("SystemInventory", () => {
         restarts: 0,
       },
     ]);
+
     vi.spyOn(DockerManager, "listContainers").mockResolvedValue([
       {
         id: "container-id",
@@ -73,6 +74,7 @@ describe("SystemInventory", () => {
         created: "",
       },
     ]);
+
     vi.spyOn(DockerManager, "listVolumes").mockResolvedValue([
       { name: "zap.unregistered.abc123.vol1" },
     ]);
@@ -120,6 +122,7 @@ describe("SystemInventory", () => {
       path.join(projectRoot, "zap.yaml"),
       "project: registered\n",
     );
+
     const context = makeContext(projectRoot);
     touchSystemProject({ context, configPath: context.configPath! });
 
@@ -152,6 +155,7 @@ describe("SystemInventory", () => {
       path.join(projectRoot, "zap.yaml"),
       "project: registered\n",
     );
+
     touchSystemProject({ context, configPath: context.configPath! });
     fs.writeFileSync(
       path.join(projectRoot, "zap.yaml"),
@@ -169,6 +173,7 @@ describe("SystemInventory", () => {
         restarts: 0,
       },
     ]);
+
     vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
     vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
 
@@ -179,6 +184,7 @@ describe("SystemInventory", () => {
     expect(
       audit.resources.find((r) => r.name === "zap.registered.known123.api"),
     ).toBeUndefined();
+
     expect(audit.resources).toEqual([]);
   });
 });

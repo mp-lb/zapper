@@ -50,6 +50,7 @@ describe("InstanceCommand", () => {
 
   it("prints the selected instance display label when no label is provided", async () => {
     const command = new InstanceCommand();
+
     const zapper = {
       getContext: () => makeContext(tempDir, "local checkout"),
     };
@@ -72,6 +73,7 @@ describe("InstanceCommand", () => {
 
   it("falls back to the instance id when no label is set", async () => {
     const command = new InstanceCommand();
+
     const zapper = {
       getContext: () => makeContext(tempDir),
     };
@@ -100,8 +102,10 @@ describe("InstanceCommand", () => {
         },
       },
     });
+
     const context = makeContext(tempDir);
     const command = new InstanceCommand();
+
     const zapper = {
       getContext: () => context,
     };
@@ -120,6 +124,7 @@ describe("InstanceCommand", () => {
       displayLabel: "local checkout",
       updated: true,
     });
+
     expect(loadState(tempDir).instances?.default.label).toBe("local checkout");
   });
 });

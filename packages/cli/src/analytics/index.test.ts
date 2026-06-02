@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { buildCommandRunEvent, captureCommandRun } from "./index";
+import { buildCommandRunEvent, captureCommandRun } from ".";
 
 describe("analytics", () => {
   const originalNodeEnv = process.env.NODE_ENV;

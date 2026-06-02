@@ -2,10 +2,11 @@
   "name": "@mp-lb/zapper",
   "version": "0.18.1",
   "description": "A lightweight dev environment runner for local multi-service projects",
-  "type": "commonjs",
-  "main": "dist/index.js",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "bin": {
-    "zap": "dist/index.js"
+    "zap": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -17,7 +18,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "tsc && node scripts/inject-analytics-config.mjs",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs && node scripts/inject-analytics-config.mjs && chmod +x dist/index.js",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:renderer": "NODE_ENV=development tsx src/dev/rendererVibeSheet.ts",
@@ -42,23 +44,13 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@changesets/cli": "^2.27.0",
-    "@eslint/js": "^9.0.0",
     "@mp-lb/cli-docs": "^0.0.1",
     "@types/commander": "^2.12.5",
     "@types/dotenv": "^8.2.3",
     "@types/mustache": "^4.2.5",
-    "@types/node": "^20.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "eslint": "^9.0.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.0",
-    "globals": "^16.3.0",
-    "prettier": "^3.0.0",
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "tsx": "4.20.6",
+    "typescript": "6.0.3",
+    "vitest": "4.1.5"
   },
   "dependencies": {
     "commander": "^14.0.0",

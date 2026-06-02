@@ -20,6 +20,7 @@ export const COMMANDS_DOC_PATH = join(
   "..",
   "..",
   "docs",
+  "internals",
   "commands.md",
 );
 
@@ -46,6 +47,7 @@ function readTemplate(file: string): string {
 export function buildCommandsDoc(): string {
   const program = (new CommanderCli() as unknown as { program: Command })
     .program;
+
   const header = readTemplate("cli-reference.header.md");
   const footer = readTemplate("cli-reference.footer.md");
   const reference = generateCliReference(program, { aliasOf: ALIAS_OF }).trim();

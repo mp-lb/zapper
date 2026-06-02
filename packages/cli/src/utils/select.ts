@@ -76,6 +76,7 @@ export async function select<T>(
   }
 
   let answers: SelectAnswer;
+
   try {
     answers = await Enquirer.prompt<SelectAnswer>({
       type: "select",
@@ -96,11 +97,13 @@ export async function select<T>(
     if (error === "" || isPromptCancelledError(error)) {
       throw new PromptCancelledError();
     }
+
     throw error;
   }
 
   const selectedIndex = Number(answers.selected);
   const selectedOption = options[selectedIndex];
+
   if (!selectedOption) {
     throw new Error("No link selected.");
   }

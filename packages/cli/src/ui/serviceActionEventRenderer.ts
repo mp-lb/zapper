@@ -22,6 +22,7 @@ export function serviceActionEventToLines(event: ServiceActionEvent): string[] {
 
       return lines;
     }
+
     case "services.wave.completed":
       return [];
     case "service.healthcheck.timeout":
@@ -31,6 +32,7 @@ export function serviceActionEventToLines(event: ServiceActionEvent): string[] {
 
 export function renderServiceActionEvent(event: ServiceActionEvent): void {
   const lines = serviceActionEventToLines(event);
+
   for (const line of lines) {
     if (event.type === "service.healthcheck.timeout") {
       renderer.log.warn(line);

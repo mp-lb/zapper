@@ -52,9 +52,11 @@ export const ContainerVolumeSchema = z.union([
       (value) => {
         const parts = value.split(":");
         if (parts.length === 1) return value.startsWith("/");
+
         if (parts.length === 2 && parts[0].startsWith("/")) {
           return parts[1].length > 0 && !parts[1].startsWith("/");
         }
+
         if (parts.length < 2 || parts.length > 3) return false;
         return (
           parts[0].length > 0 &&

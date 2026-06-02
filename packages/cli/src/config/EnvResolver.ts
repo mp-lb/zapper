@@ -29,8 +29,10 @@ export class EnvResolver {
     const assignedPorts = projectRoot ? loadPorts(projectRoot) : {};
 
     const defaultEnvFiles = resolvedConfig.env ?? resolvedConfig.env_files;
+
     const hasGlobalEnvSource =
       Array.isArray(defaultEnvFiles) && defaultEnvFiles.length > 0;
+
     const mergedEnvFromFiles = this.loadAndMergeEnvFiles(
       defaultEnvFiles,
       assignedPorts,
@@ -100,9 +102,11 @@ export class EnvResolver {
       resolvedContext.envFiles,
       assignedPorts,
     );
+
     const hasGlobalEnvSource =
       Array.isArray(resolvedContext.envFiles) &&
       resolvedContext.envFiles.length > 0;
+
     const interpolationEnv = {
       ...process.env,
       ...mergedEnvFromFiles,
@@ -168,6 +172,7 @@ export class EnvResolver {
     for (const proc of context.processes) {
       this.interpolateObjectStrings(proc, env, new Set(["env", "resolvedEnv"]));
     }
+
     for (const container of context.containers) {
       this.interpolateObjectStrings(
         container,
@@ -175,15 +180,19 @@ export class EnvResolver {
         new Set(["env", "resolvedEnv"]),
       );
     }
+
     for (const task of context.tasks) {
       this.interpolateObjectStrings(task, env, new Set(["env", "resolvedEnv"]));
     }
+
     context.homepage = context.homepage
       ? this.expandConfigString(context.homepage, env)
       : context.homepage;
+
     context.notes = context.notes
       ? this.expandConfigString(context.notes, env)
       : context.notes;
+
     for (const link of context.links) {
       link.url = this.expandConfigString(link.url, env);
     }
@@ -195,13 +204,17 @@ export class EnvResolver {
     skipKeys: Set<string>,
   ): unknown {
     if (typeof value === "string") return this.expandConfigString(value, env);
+
     if (Array.isArray(value)) {
       for (let i = 0; i < value.length; i += 1) {
         value[i] = this.interpolateObjectStrings(value[i], env, skipKeys);
       }
+
       return value;
     }
+
     if (!value || typeof value !== "object") return value;
+
     for (const [key, child] of Object.entries(value)) {
       if (skipKeys.has(key)) continue;
       (value as Record<string, unknown>)[key] = this.interpolateObjectStrings(
@@ -210,6 +223,7 @@ export class EnvResolver {
         skipKeys,
       );
     }
+
     return value;
   }
 
@@ -226,12 +240,14 @@ export class EnvResolver {
           const envValue = env[name];
           const hasValue = envValue !== undefined && envValue !== "";
           if (operator === ":-") return hasValue ? envValue : operand || "";
+
           if (operator === "?") {
             if (hasValue) return envValue;
             throw new Error(
               operand || `Missing required config variable ${name}`,
             );
           }
+
           return envValue ?? "";
         },
       )
@@ -246,6 +262,7 @@ export class EnvResolver {
       parsed: { ...env, __value__: value },
       processEnv: {},
     });
+
     return result.parsed?.__value__ ?? value;
   }
 
@@ -277,6 +294,7 @@ export class EnvResolver {
       assignedPorts,
       hasGlobalEnvSource,
     );
+
     container.ports = this.expandPorts(container.ports, mergedEnvFromFiles);
 
     renderer.log.debug(`Final resolved env for docker ${container.name}:`, {
@@ -297,6 +315,7 @@ export class EnvResolver {
       assignedPorts,
       hasGlobalEnvSource,
     );
+
     renderer.log.debug(`Final resolved env for task ${task.name}:`, {
       data: task.resolvedEnv,
     });
@@ -332,6 +351,7 @@ export class EnvResolver {
       assignedPorts,
       hasGlobalEnvSource,
     );
+
     container.ports = this.expandPorts(container.ports, mergedEnvFromFiles);
 
     renderer.log.debug(`Final resolved env for docker ${container.name}:`, {
@@ -386,10 +406,12 @@ export class EnvResolver {
     const whitelistPath = this.resolvePath(env, projectRoot);
     const vars = this.loadWhitelistFile(whitelistPath);
     const resolved: Record<string, string> = {};
+
     for (const key of vars) {
       const value = globalEnv[key];
       if (value !== undefined) resolved[key] = value;
     }
+
     return resolved;
   }
 
@@ -408,6 +430,7 @@ export class EnvResolver {
     }
 
     const ext = path.extname(filePath).toLowerCase();
+
     if (ext !== ".yaml" && ext !== ".yml") {
       throw new Error(`Environment whitelist file must be YAML: ${filePath}`);
     }
@@ -428,12 +451,14 @@ export class EnvResolver {
     }
 
     const vars = data.vars;
+
     for (const value of vars) {
       if (typeof value !== "string" || value.length === 0) {
         throw new Error(
           `Environment whitelist vars must be non-empty strings: ${filePath}`,
         );
       }
+
       if (value === "*") {
         throw new Error(
           `Environment whitelist variable "*" is reserved: ${filePath}`,
@@ -463,6 +488,7 @@ export class EnvResolver {
         renderer.log.debug(`Env file does not exist: ${file}`);
         continue;
       }
+
       const ext = path.extname(file).toLowerCase();
 
       try {
@@ -489,6 +515,7 @@ export class EnvResolver {
           if (hasPorts) {
             // Remove keys from parsed that overlap with ports - ports always win
             const parsedWithoutPorts = { ...parsed };
+
             for (const key of Object.keys(ports)) {
               delete parsedWithoutPorts[key];
             }
@@ -507,6 +534,7 @@ export class EnvResolver {
         renderer.log.debug(`Failed to read env file ${file}: ${e}`);
       }
     }
+
     return merged;
   }
 

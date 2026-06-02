@@ -21,10 +21,12 @@ export async function cloneRepos(
 
   // Build alias map for resolution
   const processes = allNative;
+
   const containers =
     config.docker || config.containers
       ? Object.entries(config.docker || config.containers || {})
       : [];
+
   const aliasMap = buildAliasMap(processes, containers);
   const canonical = resolveAliasesToCanonical(processNames, aliasMap);
 

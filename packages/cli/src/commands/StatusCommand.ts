@@ -7,11 +7,13 @@ export class StatusCommand extends CommandHandler {
     const { zapper, service, options } = context;
     const all = !!options.all;
     const zapperContext = zapper.getContext() || undefined;
+
     const services = service
       ? Array.isArray(service)
         ? service
         : [service]
       : undefined;
+
     const statusResult = await getStatus(zapperContext, services, all);
     return {
       kind: "status",

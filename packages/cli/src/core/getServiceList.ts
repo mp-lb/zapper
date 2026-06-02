@@ -69,14 +69,17 @@ function normalizePorts(
   if (!ports || ports.length === 0) return [];
   return ports.map((port) => {
     let resolved = port;
+
     if (statePorts) {
       for (const [name, value] of Object.entries(statePorts)) {
         const token = `$${name}`;
+
         if (resolved.includes(token)) {
           resolved = resolved.split(token).join(value);
         }
       }
     }
+
     return resolved;
   });
 }
@@ -135,11 +138,14 @@ async function getResourceInventory(
   service?: string | string[],
 ): Promise<ResourceInventory> {
   const stateInstances = context.state.instances || {};
+
   const configuredServices = new Set([
     ...context.processes.map((process) => process.name),
     ...context.containers.map((container) => container.name),
   ]);
+
   const currentSpecs = collectManagedVolumeSpecs(context.containers);
+
   const currentSpecKeys = new Set(
     currentSpecs.map((spec) => `${spec.serviceName}:${spec.internalDir}`),
   );
@@ -151,6 +157,7 @@ async function getResourceInventory(
   ]);
 
   const instances = new Map<string, InstanceResourceInventory>();
+
   for (const [instanceKey, instance] of Object.entries(stateInstances)) {
     const instanceContext: Context = {
       ...context,
@@ -164,6 +171,7 @@ async function getResourceInventory(
         volumes: instance.volumes || {},
       },
     };
+
     instances.set(instance.id, {
       instanceKey,
       instanceId: instance.id,
@@ -186,12 +194,14 @@ async function getResourceInventory(
     if (!parsed || parsed.project !== context.projectName) return;
 
     const instanceId = parsed.instanceId;
+
     if (!instanceId) {
       alien.push({ type, name, reason: "legacy unscoped resource" });
       return;
     }
 
     const instance = instances.get(instanceId);
+
     if (!instance) {
       alien.push({ type, name, reason: "instance not in this repo state" });
       return;
@@ -209,6 +219,7 @@ async function getResourceInventory(
   for (const process of pm2Processes) {
     classifyServiceResource("pm2", process.name);
   }
+
   for (const container of dockerContainers) {
     classifyServiceResource("container", container.name);
   }
@@ -218,12 +229,14 @@ async function getResourceInventory(
     if (!parsed || parsed.project !== context.projectName) continue;
 
     const instance = instances.get(parsed.instanceId);
+
     if (!instance) {
       alien.push({
         type: "volume",
         name: volume.name,
         reason: "instance not in this repo state",
       });
+
       continue;
     }
 
@@ -240,6 +253,7 @@ async function getResourceInventory(
     stateInstances[context.instanceKey]?.volumes || {},
     currentSpecKeys,
   );
+
   for (const volume of staleVolumes) {
     dangling.push({
       type: "volume",
@@ -267,6 +281,7 @@ function buildServiceEntries(
   const nativeStatus = new Map(
     statusResult.native.map((item) => [item.service, item]),
   );
+
   const dockerStatus = new Map(
     statusResult.docker.map((item) => [item.service, item]),
   );
@@ -317,15 +332,19 @@ export async function getServiceList(
   const resolvedService = resolveServiceTargets(context, service);
   const statusResult = await getStatus(context, resolvedService, false);
   const instancePorts = context.instance?.ports;
+
   const loadedPorts =
     instancePorts && Object.keys(instancePorts).length > 0
       ? instancePorts
       : loadPortsForInstance(context.projectRoot, context.instanceKey);
+
   const instanceVolumes = context.instance?.volumes;
+
   const loadedVolumes =
     instanceVolumes && Object.keys(instanceVolumes).length > 0
       ? instanceVolumes
       : loadVolumesForInstance(context.projectRoot, context.instanceKey);
+
   const entries = buildServiceEntries(
     context,
     statusResult,

@@ -7,6 +7,7 @@ import { Context } from "../types";
 describe("TaskCommand", () => {
   it("throws TaskNotFoundError when listing params for an unknown task", async () => {
     const zapper = new Zapper();
+
     const mockContext: Context = {
       projectName: "test",
       profiles: [],
@@ -34,6 +35,7 @@ describe("TaskCommand", () => {
 
   it("lists params for a task alias", async () => {
     const zapper = new Zapper();
+
     const mockContext: Context = {
       projectName: "test",
       profiles: [],

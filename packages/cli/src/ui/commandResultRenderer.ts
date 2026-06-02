@@ -213,6 +213,7 @@ export function renderCommandResult(
         action: result.action,
         report: result.report,
       });
+
       return;
     }
 
@@ -237,11 +238,13 @@ export function renderCommandResult(
       renderer.log.report(
         renderer.status.toText(result.statusResult, result.context),
       );
+
       return;
     case "list":
       renderer.log.report(
         renderer.list.toText(result.listResult, result.context),
       );
+
       return;
     case "tasks.list":
       renderer.log.report(renderer.tasks.toText(result.tasks));
@@ -272,10 +275,12 @@ export function renderCommandResult(
         renderer.log.info("No stacks initialized.");
         return;
       }
+
       for (const stack of result.stacks) {
         const marker = stack.current ? "*" : " ";
         renderer.log.report(`${marker} ${stack.profile}\t${stack.stackId}`);
       }
+
       return;
     case "config":
       renderer.machine.json(result.filteredConfig, result.pretty);
@@ -299,12 +304,14 @@ export function renderCommandResult(
       if (result.status === "aborted") {
         renderer.log.info(renderer.command.abortedText());
       }
+
       return;
     case "kill":
       if (result.status === "aborted") {
         renderer.log.info(renderer.command.abortedText());
         return;
       }
+
       if (result.pm2.length === 0 && result.containers.length === 0) {
         renderer.log.info(
           renderer.command.killNoResourcesText(
@@ -312,8 +319,10 @@ export function renderCommandResult(
             result.prefix,
           ),
         );
+
         return;
       }
+
       renderer.log.info(
         renderer.command.killCompletedText({
           projectName: result.projectName,
@@ -322,27 +331,33 @@ export function renderCommandResult(
           containerCount: result.containers.length,
         }),
       );
+
       return;
     case "global.list":
       if (result.projects.length === 0) {
         renderer.log.info(renderer.command.noProjectsFoundText());
         return;
       }
+
       renderer.log.report(
         renderer.command.globalListText(result.projects, result.allProjects),
       );
+
       return;
+
     case "global.kill": {
       if (result.status === "aborted") {
         renderer.log.info(renderer.command.abortedText());
         return;
       }
+
       if (result.projects.length === 0) {
         if (result.allProjects) {
           renderer.log.info(renderer.command.noProjectsFoundToKillText());
         } else {
           renderer.log.info(renderer.command.noResourcesFoundToKillText());
         }
+
         return;
       }
 
@@ -350,10 +365,12 @@ export function renderCommandResult(
         (sum, p) => sum + p.pm2.length,
         0,
       );
+
       const totalContainers = result.projects.reduce(
         (sum, p) => sum + p.containers.length,
         0,
       );
+
       if (result.allProjects) {
         renderer.log.info(
           renderer.command.globalKillAllCompletedText({
@@ -373,8 +390,10 @@ export function renderCommandResult(
           }),
         );
       }
+
       return;
     }
+
     case "global.prune":
       renderer.log.report(
         renderer.command.globalPruneCompletedText({
@@ -384,6 +403,7 @@ export function renderCommandResult(
           resources: result.resources,
         }),
       );
+
       return;
     case "system.projects":
       renderer.log.report(renderer.system.projectsToText(result.projects));
@@ -401,11 +421,13 @@ export function renderCommandResult(
           projects: result.projects,
         }),
       );
+
       return;
     case "system.resources.audit":
       renderer.log.report(
         renderer.system.resourcesToText(result.audit.resources),
       );
+
       return;
     case "system.resources.cleanup":
       renderer.log.report(
@@ -414,6 +436,7 @@ export function renderCommandResult(
           resources: result.cleanup.resources,
         }),
       );
+
       return;
     case "init":
       renderer.log.info(
@@ -422,6 +445,7 @@ export function renderCommandResult(
           result.instanceId,
         ),
       );
+
       renderer.log.info(
         renderer.command.initPortsText({
           randomized: result.randomized,
@@ -429,9 +453,11 @@ export function renderCommandResult(
           path: result.path,
         }),
       );
+
       for (const [name, value] of Object.entries(result.ports)) {
         renderer.log.report(renderer.command.envAssignmentText(name, value));
       }
+
       return;
     case "instance.label":
       if (result.updated) {
@@ -445,39 +471,47 @@ export function renderCommandResult(
       } else {
         renderer.log.report(result.displayLabel);
       }
+
       return;
     case "volume.reset":
       renderer.log.info(
         `Reset ${Object.keys(result.volumes).length} managed volume assignment(s) for instance "${result.instanceKey}".`,
       );
+
       return;
     case "volume.prune":
       if (result.status === "aborted") {
         renderer.log.info(renderer.command.abortedText());
         return;
       }
+
       renderer.log.info(
         `Pruned ${Object.keys(result.volumes).length} stale managed volume(s) for instance "${result.instanceKey}".`,
       );
+
       return;
     case "volume.list":
       if (result.volumes.length === 0) {
         renderer.log.info(
           `No Docker volumes configured for service "${result.service}".`,
         );
+
         return;
       }
+
       for (const volume of result.volumes) {
         if (result.idOnly) {
           renderer.log.report(volume.name);
           continue;
         }
+
         const mode = volume.mode ? `:${volume.mode}` : "";
         const kind = volume.managed ? "managed" : "named";
         renderer.log.report(
           `${volume.name}:${volume.internalDir}${mode} (${kind})`,
         );
       }
+
       return;
     case "services.action":
       if (result.report.opened?.status === "success") {
@@ -487,6 +521,7 @@ export function renderCommandResult(
       } else if (result.report.opened?.status === "skipped") {
         renderer.log.warn(result.report.opened.reason);
       }
+
       return;
     case "clone.completed":
     case "git.checkout.completed":

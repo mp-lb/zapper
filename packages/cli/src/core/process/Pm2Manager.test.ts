@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { existsSync, mkdirSync, rmSync, readdirSync, writeFileSync } from "fs";
 import path from "path";
@@ -13,6 +12,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     mkdirSync(zapDir, { recursive: true });
 
     const runPm2Spy = vi.spyOn(Pm2Manager as any, "runPm2Command");
@@ -24,6 +24,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
@@ -34,10 +35,12 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       path.join(zapDir, "test-project.test-service.123.sh"),
       "#!/bin/bash\necho test",
     );
+
     writeFileSync(
       path.join(zapDir, "test-project.test-service.456.sh"),
       "#!/bin/bash\necho test",
     );
+
     writeFileSync(
       path.join(zapDir, "other-project.other-service.789.sh"),
       "#!/bin/bash\necho test",
@@ -72,6 +75,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     );
 
     const files = readdirSync(zapDir);
+
     const wrapperScripts = files.filter(
       (f) => f.includes("test-project.test-service") && f.endsWith(".sh"),
     );
@@ -134,6 +138,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     );
 
     const filesAfterDelete = readdirSync(zapDir);
+
     const scriptsAfterDelete = filesAfterDelete.filter((f) =>
       f.endsWith(".sh"),
     );
@@ -157,6 +162,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       process1,
       testDir,
     );
+
     await Pm2Manager.startProcessWithTempEcosystem(
       "test-project",
       process2,
@@ -175,9 +181,11 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     );
 
     const filesAfterDelete = readdirSync(zapDir);
+
     const scriptsAfterDelete = filesAfterDelete.filter((f) =>
       f.endsWith(".sh"),
     );
+
     expect(scriptsAfterDelete.length).toBe(1);
     expect(scriptsAfterDelete[0]).toContain("service-two");
   });

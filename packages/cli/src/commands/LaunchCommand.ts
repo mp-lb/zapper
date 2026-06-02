@@ -6,10 +6,12 @@ import { resolveOpenUrlRuntime } from "../runtime";
 
 export function openUrl(link: string): void {
   const opener = resolveOpenUrlRuntime(link);
+
   const child = spawn(opener.command, opener.argsPrefix, {
     detached: true,
     stdio: "ignore",
   });
+
   child.unref();
 }
 
@@ -34,6 +36,7 @@ export function resolveLaunchLink(zapper: Zapper, name?: string): string {
 export class LaunchCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service: name } = context;
+
     if (Array.isArray(name)) {
       throw new Error("Launch command accepts a single link name");
     }

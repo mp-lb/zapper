@@ -155,6 +155,7 @@ function main(): void {
   renderer.log.error("Could not connect to upstream", {
     data: { retryInSeconds: 5, endpoint: "http://localhost:8080/health" },
   });
+
   renderer.log.debug("Planner wave details", {
     data: { wave: 2, actions: ["api", "worker"] },
   });
@@ -204,6 +205,7 @@ function main(): void {
       containerCount: 2,
     }),
   );
+
   renderer.log.report(
     renderer.command.globalListText(
       [
@@ -226,6 +228,7 @@ function main(): void {
       true,
     ),
   );
+
   renderer.machine.line(
     renderer.confirm.promptText(renderer.confirm.deleteResourcesPromptText()),
   );
@@ -241,6 +244,7 @@ function main(): void {
       containerCount: 2,
     }),
   );
+
   renderer.log.report(
     renderer.command.globalListText(
       [
@@ -266,6 +270,7 @@ function main(): void {
       "docker.redis.image must be a string",
     ]),
   );
+
   renderer.errors.print(new ServiceNotFoundError("dashboard"));
   renderer.errors.print(new Error("Unexpected low-level runtime failure"));
 }

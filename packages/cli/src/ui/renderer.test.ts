@@ -14,12 +14,14 @@ function createContext(
   } = {},
 ): Context {
   const instanceKey = options.instanceKey ?? "default";
+
   const stacks =
     options.stackCount && instanceId
       ? Object.fromEntries(
           Array.from({ length: options.stackCount }, (_, index) => {
             const profile =
               index === 0 ? options.profileName || "default" : `p${index}`;
+
             return [
               profile,
               {
@@ -137,6 +139,7 @@ describe("renderer", () => {
     expect(
       renderer.status.contextHeaderText(createContext("inst123")),
     ).toContain("demo");
+
     expect(text).toContain("demo");
     expect(text).not.toContain("inst123");
   });
@@ -181,9 +184,11 @@ describe("renderer", () => {
     expect(renderer.confirm.promptText("Continue?", false)).toBe(
       "Continue? [y/N] ",
     );
+
     expect(renderer.confirm.promptText("Line 1\nContinue?", false)).toBe(
       "Line 1\nContinue?\n[y/N] ",
     );
+
     expect(
       renderer.confirm.globalKillAllPromptText({
         projectCount: 2,
@@ -192,6 +197,7 @@ describe("renderer", () => {
         containerCount: 1,
       }),
     ).toContain("\n  - alpha\n  - beta\n");
+
     expect(renderer.confirm.deleteResourcesPromptText()).toBe(
       "Delete these resources?",
     );

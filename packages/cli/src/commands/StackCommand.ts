@@ -14,12 +14,14 @@ export class StackCommand extends CommandHandler {
     const action = args[0] ?? "current";
 
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Context not loaded");
     }
 
     const currentProfile = zapperContext.profile?.name ?? "default";
     const currentStackId = zapperContext.instanceId ?? null;
+
     const stacks = this.getStacks(
       zapperContext.state.stacks,
       currentProfile,
@@ -32,6 +34,7 @@ export class StackCommand extends CommandHandler {
           "Current stack is not initialized. Run zap init first.",
         );
       }
+
       return {
         kind: "stack.id",
         stackId: currentStackId,
@@ -45,6 +48,7 @@ export class StackCommand extends CommandHandler {
           "Current stack is not initialized. Run zap init first.",
         );
       }
+
       return {
         kind: "stack.current",
         stack: {

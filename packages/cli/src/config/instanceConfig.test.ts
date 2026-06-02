@@ -11,6 +11,7 @@ describe("instanceConfig", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     mkdirSync(testDir, { recursive: true });
   });
 
@@ -31,6 +32,7 @@ describe("instanceConfig", () => {
       instanceId: "wt-abc123",
       mode: "isolate",
     });
+
     expect(loadState(testDir).instanceId).toBe("wt-abc123");
   });
 

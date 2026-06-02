@@ -5,6 +5,7 @@ import type { Zapper } from "../core/Zapper";
 describe("NotesCommand", () => {
   it("prints notes value", async () => {
     const command = new NotesCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -33,6 +34,7 @@ describe("NotesCommand", () => {
 
   it("throws when notes is not configured", async () => {
     const command = new NotesCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",

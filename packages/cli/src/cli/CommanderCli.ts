@@ -42,7 +42,7 @@ import {
   CommandHandler,
   TaskParams,
 } from "../commands";
-import packageJson from "../../package.json";
+import { VERSION } from "../version";
 
 function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
   const named: Record<string, string> = {};
@@ -52,6 +52,7 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
   const taskIdx = rawArgv.findIndex((arg) =>
     ["task", "t", "run"].includes(arg),
   );
+
   if (taskIdx === -1) return { named, rest };
 
   // Get everything after the task name
@@ -62,8 +63,10 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
 
   // Find the -- separator in raw args
   const separatorIdx = argsAfterTask.indexOf("--");
+
   const namedArgs =
     separatorIdx >= 0 ? argsAfterTask.slice(0, separatorIdx) : argsAfterTask;
+
   const restArgs =
     separatorIdx >= 0 ? argsAfterTask.slice(separatorIdx + 1) : [];
 
@@ -74,9 +77,11 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
     "json",
     "list-params",
   ]);
+
   for (const arg of namedArgs) {
     if (arg.startsWith("--")) {
       const eqIdx = arg.indexOf("=");
+
       if (eqIdx !== -1) {
         const key = arg.slice(2, eqIdx);
         if (reservedTaskOptions.has(key)) continue;
@@ -143,7 +148,7 @@ export class CommanderCli {
     this.program
       .name("zap")
       .description("Lightweight dev environment runner")
-      .version(packageJson.version);
+      .version(VERSION);
 
     this.program
       .option("--config <file>", "Use a specific config file")
@@ -163,7 +168,7 @@ export class CommanderCli {
       .option("-o, --open", "Open the configured homepage after starting")
       .option("-j, --json", "Output command result as minified JSON")
       .option("--jsonl", "Stream command events as JSON Lines")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("up", services, command);
       });
 
@@ -176,7 +181,7 @@ export class CommanderCli {
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
       .option("--jsonl", "Stream command events as JSON Lines")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("down", services, command);
       });
 
@@ -191,7 +196,7 @@ export class CommanderCli {
       )
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (project, options, command) => {
+      .action(async (project, _options, command) => {
         await this.executeCommand("kill", project, command);
       });
 
@@ -202,7 +207,7 @@ export class CommanderCli {
       .argument("[services...]", "Services to restart (space-separated)")
       .option("-j, --json", "Output command result as minified JSON")
       .option("--jsonl", "Stream command events as JSON Lines")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("restart", services, command);
       });
 
@@ -213,7 +218,7 @@ export class CommanderCli {
         "Watch Docker service paths and restart or rebuild on changes",
       )
       .argument("[services...]", "Services to watch")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("watch", services, command);
       });
 
@@ -226,7 +231,7 @@ export class CommanderCli {
       .argument("[services...]", "Services to show status for")
       .option("-a, --all", "Include processes from all projects")
       .option("-j, --json", "Output status as minified JSON")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("status", services, command);
       });
 
@@ -237,7 +242,7 @@ export class CommanderCli {
       .option("-e, --extended", "Show instance and dangling resource inventory")
       .option("-a, --all", "Alias for --extended")
       .option("-j, --json", "Output list as minified JSON")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("ls", services, command);
       });
 
@@ -248,7 +253,7 @@ export class CommanderCli {
       .argument("<services...>", "Services to show logs for")
       .option("-f, --follow", "Follow logs (default)", true)
       .option("--no-follow", "Do not follow logs (print and exit)")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("logs", services, command);
       });
 
@@ -256,7 +261,7 @@ export class CommanderCli {
       .command("startup-log")
       .description("Show saved startup output for one or more services")
       .argument("<services...>", "Services to show startup logs for")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("startup-log", services, command);
       });
 
@@ -265,7 +270,7 @@ export class CommanderCli {
       .description("Stop all processes and delete the .zap directory")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("reset", undefined, command);
       });
 
@@ -281,14 +286,14 @@ export class CommanderCli {
         "Randomize all configured ports instead of preserving existing assignments",
       )
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("init", undefined, command);
       });
 
     const instanceCmd = this.program
       .command("instance")
       .description("Manage the selected local instance")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("instance", undefined, command);
       });
 
@@ -297,7 +302,7 @@ export class CommanderCli {
       .description("Show or set the label for the selected instance")
       .argument("[label...]", "New label (omit to show the current label)")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (labelParts, options, command) => {
+      .action(async (labelParts, _options, command) => {
         await this.executeCommand(
           "instance",
           ["label", ...(labelParts || [])],
@@ -312,7 +317,7 @@ export class CommanderCli {
       )
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand defaults to prune (matches VolumeCommand).
         await this.executeCommand("volume", undefined, command);
       });
@@ -324,7 +329,7 @@ export class CommanderCli {
       .option("--managed", "Only list Zapper-managed generated volumes")
       .option("--id-only", "Only print Docker volume names")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (service, options, command) => {
+      .action(async (service, _options, command) => {
         await this.executeCommand("volume", ["list", service], command);
       });
 
@@ -333,7 +338,7 @@ export class CommanderCli {
       .description("Remove stale managed Docker volumes after confirmation")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("volume", ["prune"], command);
       });
 
@@ -341,7 +346,7 @@ export class CommanderCli {
       .command("reset")
       .description("Reset managed Docker volume state for the instance")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("volume", ["reset"], command);
       });
 
@@ -357,7 +362,7 @@ export class CommanderCli {
       )
       .option("--ssh", "Use SSH for git cloning (overrides config git_method)")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (services, options, command) => {
+      .action(async (services, _options, command) => {
         await this.executeCommand("clone", services, command);
       });
 
@@ -375,7 +380,7 @@ export class CommanderCli {
       .option("--interactive", "Prompt for missing required task parameters")
       .allowUnknownOption()
       .allowExcessArguments()
-      .action(async (task, options, command) => {
+      .action(async (task, _options, command) => {
         await this.executeCommand("task", task, command);
       });
 
@@ -384,7 +389,7 @@ export class CommanderCli {
       .alias("p")
       .description("Manage profiles")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand defaults to showing the current profile.
         await this.executeCommand("profile", undefined, command);
       });
@@ -393,7 +398,7 @@ export class CommanderCli {
       .command("list")
       .description("List configured profiles")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("profile", ["list"], command);
       });
 
@@ -401,7 +406,7 @@ export class CommanderCli {
       .command("current")
       .description("Show the current profile")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("profile", ["current"], command);
       });
 
@@ -410,7 +415,7 @@ export class CommanderCli {
       .description("Switch the saved profile for this project")
       .argument("<name>", "Profile name to select")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (name, options, command) => {
+      .action(async (name, _options, command) => {
         await this.executeCommand("profile", ["use", name], command);
       });
 
@@ -418,7 +423,7 @@ export class CommanderCli {
       .command("reset")
       .description("Reset to the default profile")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("profile", ["reset"], command);
       });
 
@@ -426,7 +431,7 @@ export class CommanderCli {
       .command("state")
       .description("Show the current state JSON")
       .option("-j, --json", "Output state as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("state", undefined, command);
       });
 
@@ -434,7 +439,7 @@ export class CommanderCli {
       .command("stack")
       .description("Inspect the selected stack id and known profile stacks")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand defaults to showing the current stack.
         await this.executeCommand("stack", undefined, command);
       });
@@ -443,7 +448,7 @@ export class CommanderCli {
       .command("id")
       .description("Print the current stack id")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("stack", ["id"], command);
       });
 
@@ -451,7 +456,7 @@ export class CommanderCli {
       .command("current")
       .description("Show the current stack")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("stack", ["current"], command);
       });
 
@@ -459,7 +464,7 @@ export class CommanderCli {
       .command("list")
       .description("List known profile stacks")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("stack", ["list"], command);
       });
 
@@ -472,7 +477,7 @@ export class CommanderCli {
       .alias("gst")
       .description("List branch and dirty/clean for all native repos")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:status", undefined, command);
       });
 
@@ -481,7 +486,7 @@ export class CommanderCli {
       .alias("ggpur")
       .description("Pull latest for all native repos")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:pull", undefined, command);
       });
 
@@ -490,7 +495,7 @@ export class CommanderCli {
       .alias("gco")
       .description("Checkout a branch across all native repos")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (branch, options, command) => {
+      .action(async (branch, _options, command) => {
         await this.executeCommand("git:checkout", branch, command);
       });
 
@@ -499,7 +504,7 @@ export class CommanderCli {
       .alias("gsta")
       .description("Stash any dirty changes across all native repos")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:stash", undefined, command);
       });
 
@@ -507,28 +512,28 @@ export class CommanderCli {
     this.program
       .command("gst")
       .description("Alias for: git status")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:status", undefined, command);
       });
 
     this.program
       .command("ggpur")
       .description("Alias for: git pull")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:pull", undefined, command);
       });
 
     this.program
       .command("gsta")
       .description("Alias for: git stash")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("git:stash", undefined, command);
       });
 
     this.program
       .command("gco <branch>")
       .description("Alias for: git checkout")
-      .action(async (branch, options, command) => {
+      .action(async (branch, _options, command) => {
         await this.executeCommand("git:checkout", branch, command);
       });
 
@@ -540,7 +545,7 @@ export class CommanderCli {
         "Include environment variable configurations in output",
       )
       .option("--pretty", "Format JSON output with indentation")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("config", undefined, command);
       });
 
@@ -551,7 +556,7 @@ export class CommanderCli {
         "-j, --json",
         "Output validation result and full Zod issues as JSON",
       )
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("validate", undefined, command);
       });
 
@@ -561,7 +566,7 @@ export class CommanderCli {
       .argument("[service]", "Service to show environment variables for")
       .option("--service <name>", "Show env vars for a service")
       .option("-j, --json", "Output as minified JSON")
-      .action(async (service, options, command) => {
+      .action(async (service, _options, command) => {
         await this.executeCommand("env", service, command);
       });
 
@@ -572,7 +577,7 @@ export class CommanderCli {
       )
       .argument("[name]", "Link name to open")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (service, options, command) => {
+      .action(async (service, _options, command) => {
         await this.executeCommand("launch", service, command);
       });
 
@@ -587,7 +592,7 @@ export class CommanderCli {
         "Open the configured homepage or named link without prompting",
       )
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (service, options, command) => {
+      .action(async (service, _options, command) => {
         await this.executeCommand("open", service, command);
       });
 
@@ -595,7 +600,7 @@ export class CommanderCli {
       .command("home")
       .description("Print the configured homepage URL")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("home", undefined, command);
       });
 
@@ -603,7 +608,7 @@ export class CommanderCli {
       .command("links")
       .description("List configured links, including the homepage")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("links", undefined, command);
       });
 
@@ -611,7 +616,7 @@ export class CommanderCli {
       .command("notes")
       .description("Print configured project notes")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("notes", undefined, command);
       });
 
@@ -621,7 +626,7 @@ export class CommanderCli {
       .description(
         "Global operations across projects (info, list, prune, kill)",
       )
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand routes through the handler, which reports usage.
         await this.executeCommand("global", undefined, command);
       });
@@ -634,7 +639,7 @@ export class CommanderCli {
       .argument("[project]", "Project name to inspect")
       .option("-a, --all", "Legacy no-op; always lists all projects")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (project, options, command) => {
+      .action(async (project, _options, command) => {
         await this.executeCommand(
           "global",
           project ? ["list", project] : ["list"],
@@ -647,7 +652,7 @@ export class CommanderCli {
       .description("Show global resources for a project")
       .argument("[project]", "Project name to inspect")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (project, options, command) => {
+      .action(async (project, _options, command) => {
         await this.executeCommand(
           "global",
           project ? ["info", project] : ["info"],
@@ -660,7 +665,7 @@ export class CommanderCli {
       .description("Prune stale registry entries and orphaned resources")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("global", ["prune"], command);
       });
 
@@ -678,6 +683,7 @@ export class CommanderCli {
             `Cannot specify both a project name ('${project}') and --all flag. Use either 'zap global kill ${project}' or 'zap global kill --all'.`,
           );
         }
+
         await this.executeCommand(
           "global",
           project ? ["kill", project] : ["kill"],
@@ -690,7 +696,7 @@ export class CommanderCli {
       .command("ginfo [project]")
       .description("Show info for a project (shorthand for 'global info')")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (project, options, command) => {
+      .action(async (project, _options, command) => {
         const service = project ? ["info", project] : ["info"];
         await this.executeCommand("global", service, command);
       });
@@ -700,7 +706,7 @@ export class CommanderCli {
       .alias("gl")
       .description("List all projects (shorthand for 'global list')")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         const service = ["list"];
         await this.executeCommand("global", service, command);
       });
@@ -711,7 +717,7 @@ export class CommanderCli {
       .option("-a, --all", "Kill all projects")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (project, options, command) => {
+      .action(async (project, _options, command) => {
         const service = project ? ["kill", project] : ["kill"];
         await this.executeCommand("global", service, command);
       });
@@ -721,7 +727,7 @@ export class CommanderCli {
       .description("Prune stale registry entries and orphaned resources")
       .option("-y, --force", "Force the operation")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("global", ["prune"], command);
       });
 
@@ -732,7 +738,7 @@ export class CommanderCli {
       )
       .option("--prune", "Deprecated no-op; stale projects are always labeled")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand defaults to listing registered projects.
         await this.executeCommand("system", undefined, command);
       });
@@ -741,14 +747,14 @@ export class CommanderCli {
       .command("projects")
       .description("List registered Zapper projects and validate their roots")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("system", ["projects"], command);
       });
 
     const registryCmd = systemCmd
       .command("registry")
       .description("Manage the machine-wide project registry")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand routes through the handler, which reports usage.
         await this.executeCommand("system", ["registry"], command);
       });
@@ -757,7 +763,7 @@ export class CommanderCli {
       .command("prune")
       .description("Remove stale entries from the project registry")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("system", ["registry", "prune"], command);
       });
 
@@ -768,7 +774,7 @@ export class CommanderCli {
       )
       .argument("<target>", "Registry id, project root, or config path")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (target, options, command) => {
+      .action(async (target, _options, command) => {
         await this.executeCommand(
           "system",
           ["registry", "forget", target],
@@ -780,7 +786,7 @@ export class CommanderCli {
       .command("repair")
       .description("Prune stale entries and re-validate all projects")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("system", ["registry", "repair"], command);
       });
 
@@ -788,7 +794,7 @@ export class CommanderCli {
       .command("resources")
       .description("Audit and clean up orphaned system resources")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         // No subcommand defaults to an audit.
         await this.executeCommand("system", ["resources"], command);
       });
@@ -797,7 +803,7 @@ export class CommanderCli {
       .command("audit")
       .description("Audit orphaned PM2 processes and Docker containers")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("system", ["resources", "audit"], command);
       });
 
@@ -807,7 +813,7 @@ export class CommanderCli {
       .option("--include-volumes", "Include generated Docker volumes")
       .option("-y, --force", "Force cleanup operations")
       .option("-j, --json", "Output command result as minified JSON")
-      .action(async (options, command) => {
+      .action(async (_options, command) => {
         await this.executeCommand("system", ["resources", "cleanup"], command);
       });
   }
@@ -829,9 +835,11 @@ export class CommanderCli {
 
     const jsonMode = !!allOptions.json;
     const jsonlMode = !!allOptions.jsonl;
+
     if (jsonMode && jsonlMode) {
       throw new Error("Cannot specify both --json and --jsonl");
     }
+
     if (jsonlMode) {
       renderer.output.setJsonlMode(true);
     } else {
@@ -861,6 +869,7 @@ export class CommanderCli {
         command === "validate";
 
       const zapper = new Zapper();
+
       if (!skipConfigLoad) {
         await zapper.loadConfig(
           allOptions.config as string | undefined,
@@ -872,12 +881,14 @@ export class CommanderCli {
         Array.isArray(service) && service.length === 0 ? undefined : service;
 
       const handler = this.commandHandlers.get(command);
+
       if (!handler) {
         throw new Error(`No handler found for command: ${command}`);
       }
 
       // Parse task parameters for the task command
       let taskParams: TaskParams | undefined;
+
       if (command === "task" && typeof normalizedService === "string") {
         taskParams = parseTaskArgs(process.argv, normalizedService);
       }
@@ -890,11 +901,13 @@ export class CommanderCli {
       };
 
       const result = await handler.execute(context);
+
       if (result) {
         renderCommandResult(result, {
           json: jsonMode,
           jsonl: jsonlMode,
         });
+
         if (result.kind === "validate" && !result.valid) {
           process.exitCode = 1;
         }

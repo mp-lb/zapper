@@ -26,9 +26,11 @@ function resolveDefaultInstanceKey(
   if (explicitKey) return explicitKey;
   const state = loadState(projectRoot);
   const fromState = state.defaultInstance;
+
   if (fromState && fromState.trim().length > 0) {
     return fromState.trim();
   }
+
   return DEFAULT_INSTANCE_KEY;
 }
 
@@ -77,11 +79,13 @@ export function createInstance(
     instanceKey,
     projectRoot,
   );
+
   validateInstanceKey(resolvedInstanceKey);
   let resolvedId = "";
 
   updateState(projectRoot, (existingState) => {
     const existing = existingState.instances?.[resolvedInstanceKey];
+
     if (existing?.id) {
       resolvedId = existing.id;
       return {};
@@ -91,7 +95,9 @@ export function createInstance(
       resolvedInstanceKey === DEFAULT_INSTANCE_KEY
         ? existingState.instanceId
         : undefined;
+
     resolvedId = legacyId || generateInstanceId();
+
     const nextInstances: Record<string, InstanceEntry> = {
       ...(existingState.instances || {}),
       [resolvedInstanceKey]: {
@@ -148,11 +154,14 @@ export function ensureInstance(
     instanceKey,
     projectRoot,
   );
+
   validateInstanceKey(resolvedInstanceKey);
   const existing = loadState(projectRoot).instances?.[resolvedInstanceKey];
+
   if (existing?.id) {
     return { id: existing.id, created: false };
   }
+
   const id = createInstance(projectRoot, resolvedInstanceKey);
   return { id, created: true };
 }
@@ -163,10 +172,12 @@ export function setInstanceLabel(
   label: string,
 ): { instanceKey: string; instanceId: string; label: string } {
   validateInstanceLabel(label);
+
   const resolvedInstanceKey = resolveDefaultInstanceKey(
     instanceKey,
     projectRoot,
   );
+
   validateInstanceKey(resolvedInstanceKey);
   const { id } = ensureInstance(projectRoot, resolvedInstanceKey);
 
@@ -199,10 +210,12 @@ export async function resolveInstance(
     instanceKey,
     projectRoot,
   );
+
   validateInstanceKey(resolvedInstanceKey);
   const state = loadState(projectRoot);
 
   const existing = state.instances?.[resolvedInstanceKey];
+
   if (existing?.id) {
     return {
       instanceKey: resolvedInstanceKey,

@@ -25,6 +25,7 @@ describe("createContext", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     vi.restoreAllMocks();
   });
 
@@ -49,6 +50,7 @@ describe("createContext", () => {
         name: "api",
         cmd: "npm run dev",
       });
+
       expect(result.processes).toContainEqual({
         name: "worker",
         cmd: "npm run worker",
@@ -126,10 +128,12 @@ describe("createContext", () => {
         services: ["api", "postgres"],
         isolate: false,
       });
+
       expect(result.envFiles).toEqual([
         path.join(testDir, ".env.local"),
         path.join(testDir, ".env"),
       ]);
+
       expect(result.profiles).toEqual(["default", "e2e"]);
       expect(result.processes.map((process) => process.name)).toEqual(["api"]);
       expect(result.containers.map((container) => container.name)).toEqual([
@@ -175,6 +179,7 @@ describe("createContext", () => {
         "backend",
         "frontend",
       ]);
+
       expect(result.containers.map((container) => container.name)).toEqual([
         "mongodb",
         "redis",
@@ -331,6 +336,7 @@ describe("createContext", () => {
         name: "api",
         cmd: "npm run dev",
       });
+
       expect(result.processes).toContainEqual({
         name: "worker",
         cmd: "npm run worker",
@@ -375,6 +381,7 @@ describe("createContext", () => {
         name: "api",
         cmd: "native api",
       });
+
       expect(result.processes).toContainEqual({
         name: "legacy",
         cmd: "legacy process",
@@ -403,6 +410,7 @@ describe("createContext", () => {
         name: "postgres",
         image: "postgres:13",
       });
+
       expect(result.containers).toContainEqual({
         name: "redis",
         image: "redis:alpine",
@@ -482,6 +490,7 @@ describe("createContext", () => {
         name: "build",
         cmd: "npm run build",
       });
+
       expect(result.tasks).toContainEqual({
         name: "test",
         cmd: "npm test",
@@ -554,11 +563,13 @@ describe("createContext", () => {
           path.join(testDir, ".env"),
           path.join(testDir, "config/.env.local"),
         ]);
+
         expect(result.environments).toEqual([]);
       });
 
       it("should keep absolute paths unchanged", () => {
         const absolutePath = "/absolute/path/.env";
+
         const config: ZapperConfig = {
           project: "test-project",
           env_files: [absolutePath, ".env.local"],
@@ -851,6 +862,7 @@ describe("createContext", () => {
         path.join(testDir, ".env"),
         path.join(testDir, ".env.local"),
       ]);
+
       expect(result.environments).toEqual([]);
       expect(result.processes).toHaveLength(2);
       expect(result.containers).toHaveLength(1);

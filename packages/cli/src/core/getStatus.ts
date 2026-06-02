@@ -19,6 +19,7 @@ async function checkHealthUrl(url: string): Promise<boolean> {
       method: "GET",
       signal: AbortSignal.timeout(2000),
     });
+
     return res.ok;
   } catch {
     return false;
@@ -32,6 +33,7 @@ async function computeStatus(
 ): Promise<Status> {
   if (!running) return "down";
   if (healthcheck === undefined) return "up";
+
   if (
     typeof healthcheck === "string" ||
     (typeof healthcheck === "object" && healthcheck.type === "http")
@@ -40,9 +42,12 @@ async function computeStatus(
     const healthy = await checkHealthUrl(url);
     return healthy ? "up" : "pending";
   }
+
   if (!startedAtMs) return "up";
+
   const seconds =
     typeof healthcheck === "number" ? healthcheck : healthcheck.seconds;
+
   const elapsed = (Date.now() - startedAtMs) / 1000;
   return elapsed < seconds ? "pending" : "up";
 }
@@ -68,10 +73,12 @@ export async function getStatus(
   const resolvedService = context
     ? resolveServiceTargets(context, service)
     : service;
+
   const normalizedService =
     Array.isArray(resolvedService) && resolvedService.length === 0
       ? undefined
       : resolvedService;
+
   const serviceSet =
     normalizedService === undefined
       ? undefined
@@ -80,6 +87,7 @@ export async function getStatus(
             ? normalizedService
             : [normalizedService],
         );
+
   const matchesService = (name: string): boolean =>
     !serviceSet || serviceSet.has(name);
 
@@ -102,6 +110,7 @@ export async function getStatus(
       .filter((p) => matchesService(p.service));
 
     const allDocker = await DockerManager.listContainers();
+
     const docker = allDocker
       .map((c) => ({
         rawName: c.name,
@@ -118,6 +127,7 @@ export async function getStatus(
 
   const projectName = context.projectName;
   const native: ServiceStatus[] = [];
+
   for (const proc of context.processes) {
     if (!matchesService(proc.name)) continue;
 
@@ -126,15 +136,19 @@ export async function getStatus(
       proc.name,
       context.instanceId,
     );
+
     const runningProcess = pm2List.find((p) => p.name === expectedPm2Name);
     const healthcheck = proc.healthcheck;
 
     let status: Status = "down";
+
     if (runningProcess) {
       const running = isRunning(runningProcess.status, "native");
+
       const startedAtMs = running
         ? Date.now() - runningProcess.uptime
         : undefined;
+
       status = await computeStatus(running, startedAtMs, healthcheck);
     }
 
@@ -148,6 +162,7 @@ export async function getStatus(
   }
 
   const docker: ServiceStatus[] = [];
+
   for (const container of context.containers) {
     if (!matchesService(container.name)) continue;
 
@@ -156,16 +171,21 @@ export async function getStatus(
       container.name,
       context.instanceId,
     );
+
     const containerInfo =
       await DockerManager.getContainerInfo(expectedDockerName);
+
     const healthcheck = container.healthcheck;
 
     let status: Status = "down";
+
     if (containerInfo) {
       const running = isRunning(containerInfo.status, "docker");
+
       const startedAtMs = containerInfo.startedAt
         ? new Date(containerInfo.startedAt).getTime()
         : undefined;
+
       status = await computeStatus(running, startedAtMs, healthcheck);
     }
 

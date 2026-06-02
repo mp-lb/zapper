@@ -5,11 +5,13 @@ import { CommandResult } from "./CommandResult";
 export class EnvCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult | void> {
     const { zapper, service, options } = context;
+
     if (Array.isArray(service)) {
       throw new Error("Env command accepts a single service name");
     }
 
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Context not loaded");
     }
@@ -53,9 +55,11 @@ export class EnvCommand extends CommandHandler {
     serviceName: string,
   ): Promise<CommandResult> {
     const process = zapperContext.processes.find((p) => p.name === serviceName);
+
     const container = zapperContext.containers.find(
       (c) => c.name === serviceName,
     );
+
     const target = process || container;
 
     if (!target) {

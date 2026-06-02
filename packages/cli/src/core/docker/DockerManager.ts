@@ -76,6 +76,7 @@ export class DockerManager {
       .filter(Boolean);
 
     const lastLine = lines.at(-1);
+
     if (!lastLine) {
       return "Docker did not provide any error output.";
     }
@@ -93,6 +94,7 @@ export class DockerManager {
   ): string {
     this.ensureLogsDir(context.configDir);
     const logPath = this.getStartupLogPath(context);
+
     const contents = [
       `Startup log for service "${context.serviceName}" (${dockerName})`,
       "",
@@ -106,6 +108,7 @@ export class DockerManager {
       stderr.trim() || "(empty)",
       "",
     ].join("\n");
+
     writeFileSync(logPath, contents);
     return logPath;
   }
@@ -114,6 +117,7 @@ export class DockerManager {
     if (!context) return;
 
     const logPath = this.getStartupLogPath(context);
+
     if (existsSync(logPath)) {
       rmSync(logPath, { force: true });
     }
@@ -142,11 +146,13 @@ export class DockerManager {
     const args = ["build", "-t", config.tag];
     if (config.dockerfile) args.push("-f", config.dockerfile);
     if (config.target) args.push("--target", config.target);
+
     if (config.args) {
       for (const [key, value] of Object.entries(config.args)) {
         args.push("--build-arg", `${key}=${value}`);
       }
     }
+
     args.push(config.context);
     await runDocker(args);
   }
@@ -159,9 +165,10 @@ export class DockerManager {
 
     try {
       await runDocker(["rm", "-f", name]);
-    } catch (e) {
+    } catch {
       // ignore if container doesn't exist
     }
+
     const args = this.buildRunArgs(name, config);
     await runDocker(args);
   }
@@ -175,18 +182,21 @@ export class DockerManager {
 
     try {
       await runDocker(["rm", "-f", name]);
-    } catch (e) {
+    } catch {
       // ignore if container doesn't exist
     }
+
     const args = this.buildRunArgs(name, config);
     return new Promise((resolve, reject) => {
       let pid = -1;
       let stdout = "";
       let stderr = "";
       const docker = resolveDockerRuntime(args);
+
       const child = spawn(docker.command, docker.argsPrefix, {
         stdio: ["ignore", "pipe", "pipe"],
       });
+
       pid = child.pid || -1;
 
       child.stdout.on("data", (data) => {
@@ -199,6 +209,7 @@ export class DockerManager {
 
       child.once("error", (err) => {
         const summary = `Failed to run Docker command: ${err.message}`;
+
         if (!logContext) {
           reject(new Error(summary));
           return;
@@ -250,9 +261,11 @@ export class DockerManager {
         "{{json .}}",
         name,
       ]);
+
       const raw = JSON.parse(result) as Record<string, unknown>;
       const state = raw["State"] as Record<string, unknown> | undefined;
       const net = raw["NetworkSettings"] as Record<string, unknown> | undefined;
+
       const networks =
         (net?.["Networks"] as Record<string, unknown> | undefined) || {};
 
@@ -265,7 +278,7 @@ export class DockerManager {
         created: (raw["Created"] as string) || "",
         startedAt: (state?.["StartedAt"] as string) || undefined,
       };
-    } catch (error) {
+    } catch {
       return null;
     }
   }
@@ -273,13 +286,16 @@ export class DockerManager {
   static async listContainers(): Promise<DockerContainer[]> {
     try {
       const result = await runDocker(["ps", "-a", "--format", "{{json .}}"]);
+
       const lines = result
         .trim()
         .split("\n")
         .filter((l) => l.trim().length > 0);
+
       const containers = lines.map(
         (line) => JSON.parse(line) as Record<string, unknown>,
       );
+
       return containers.map((raw) => ({
         id: (raw["ID"] as string) || (raw["Id"] as string) || "",
         name: (raw["Names"] as string) || (raw["Name"] as string) || "",
@@ -297,7 +313,7 @@ export class DockerManager {
         created:
           (raw["CreatedAt"] as string) || (raw["Created"] as string) || "",
       }));
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -307,7 +323,7 @@ export class DockerManager {
 
     try {
       await runDocker(["network", "create", name]);
-    } catch (error) {
+    } catch {
       // ignore if exists
     }
   }
@@ -315,7 +331,7 @@ export class DockerManager {
   static async removeNetwork(name: string): Promise<void> {
     try {
       await runDocker(["network", "rm", name]);
-    } catch (error) {
+    } catch {
       // ignore if missing
     }
   }
@@ -325,7 +341,7 @@ export class DockerManager {
 
     try {
       await runDocker(["volume", "create", name]);
-    } catch (error) {
+    } catch {
       // ignore if exists
     }
   }
@@ -335,7 +351,7 @@ export class DockerManager {
 
     try {
       await runDocker(["volume", "rm", name]);
-    } catch (error) {
+    } catch {
       // ignore if missing or still in use
     }
   }
@@ -348,15 +364,17 @@ export class DockerManager {
         "--format",
         "{{json .}}",
       ]);
+
       const lines = result
         .trim()
         .split("\n")
         .filter((l) => l.trim().length > 0);
+
       return lines.map((line) => {
         const raw = JSON.parse(line) as Record<string, unknown>;
         return { name: (raw["Name"] as string) || "" };
       });
-    } catch (error) {
+    } catch {
       return [];
     }
   }
@@ -370,9 +388,11 @@ export class DockerManager {
 
     return new Promise((resolve, reject) => {
       const docker = resolveDockerRuntime(args);
+
       const child = spawn(docker.command, docker.argsPrefix, {
         stdio: "inherit",
       });
+
       child.on("close", () => resolve());
       child.on("error", (err) => reject(err));
     });
@@ -391,6 +411,7 @@ export class DockerManager {
 
     const contents = readFileSync(logPath, "utf8");
     globalThis.process?.stdout?.write(contents);
+
     if (!contents.endsWith("\n")) {
       globalThis.process?.stdout?.write("\n");
     }

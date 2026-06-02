@@ -68,10 +68,12 @@ describe("OpenCommand", () => {
         isHomepage: false,
       },
     ]);
+
     expect(result).toMatchObject({
       kind: "launch.opened",
       url: "http://localhost:3001/docs",
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3001/docs");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -93,6 +95,7 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3000",
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3000");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -114,6 +117,7 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3000",
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3000");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -136,6 +140,7 @@ describe("OpenCommand", () => {
   it("opens directly when homepage is the only available link", async () => {
     const selectLink = vi.fn();
     const command = new OpenCommand(selectLink);
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -161,6 +166,7 @@ describe("OpenCommand", () => {
       kind: "launch.opened",
       url: "http://localhost:3000",
     });
+
     const [commandName, args] = getOpenCommand("http://localhost:3000");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
@@ -199,6 +205,7 @@ describe("OpenCommand", () => {
 
   it("reports empty metadata before prompting", async () => {
     const command = new OpenCommand(vi.fn());
+
     const zapper = {
       getContext: () => ({
         projectName: "test",

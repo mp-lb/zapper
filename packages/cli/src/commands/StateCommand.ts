@@ -6,6 +6,7 @@ export class StateCommand extends CommandHandler {
     const { zapper } = context;
 
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Context not loaded");
     }

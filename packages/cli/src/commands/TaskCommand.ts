@@ -5,6 +5,7 @@ import { TaskNotFoundError } from "../errors";
 export class TaskCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult | void> {
     const { zapper, service, options, taskParams } = context;
+
     if (Array.isArray(service)) {
       throw new Error("Task command accepts a single task name");
     }

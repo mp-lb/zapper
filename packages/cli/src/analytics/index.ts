@@ -5,7 +5,7 @@ import { request as httpsRequest } from "https";
 import { homedir, platform, release } from "os";
 import { join } from "path";
 import { URL } from "url";
-import packageJson from "../../package.json";
+import { VERSION } from "../version";
 import { bundledPostHogHost, bundledPostHogKey } from "./buildConfig";
 import type { Command as ZapCommand } from "../types/index";
 
@@ -76,6 +76,7 @@ function getOrCreateAnalyticsId(): string | undefined {
 
   try {
     const idPath = analyticsIdPath();
+
     if (existsSync(idPath)) {
       const existing = readFileSync(idPath, "utf8").trim();
       if (existing) return existing;
@@ -109,6 +110,7 @@ function commandPathFor(input: CommandRunInput): string[] {
   }
 
   const subcommand = firstServicePart(input.service);
+
   if (
     subcommand &&
     ["profile", "global", "volume", "instance", "stack", "system"].includes(
@@ -171,7 +173,7 @@ export function buildCommandRunEvent(
       platform: "cli",
       env: sourceEnv(),
       os: `${platform()} ${release()}`,
-      version: packageJson.version,
+      version: VERSION,
     },
     details: commandDetails(input),
   };
@@ -199,8 +201,10 @@ export function captureCommandRun(input: CommandRunInput): void {
 function sendPostHogCapture(url: string, body: string): void {
   try {
     const endpoint = new URL(url);
+
     const requestFn =
       endpoint.protocol === "http:" ? httpRequest : httpsRequest;
+
     const request = requestFn(
       endpoint,
       {

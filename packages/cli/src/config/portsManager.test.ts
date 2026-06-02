@@ -87,6 +87,7 @@ describe("portsManager", () => {
 
   it("initializePorts randomizes all ports when requested", () => {
     const first = initializePorts(tempDir, ["PORT_A", "PORT_B"]);
+
     const second = initializePorts(tempDir, ["PORT_A", "PORT_B"], {
       randomizeAll: true,
     });

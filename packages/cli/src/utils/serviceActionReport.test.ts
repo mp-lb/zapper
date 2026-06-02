@@ -13,6 +13,7 @@ describe("service action report reducer", () => {
       started: ["web", "api"],
       stopped: ["worker"],
     });
+
     applyServiceActionEventToExecutionReport(report, {
       type: "services.wave.completed",
       started: ["db"],

@@ -25,9 +25,11 @@ vi.mock("../system", () => ({
 const mockedConfirm = vi.mocked(confirm);
 const mockedAuditSystemResources = vi.mocked(auditSystemResources);
 const mockedCleanupSystemResources = vi.mocked(cleanupSystemResources);
+
 const mockedGetStaleSystemRegistryProjects = vi.mocked(
   getStaleSystemRegistryProjects,
 );
+
 const mockedPruneSystemRegistry = vi.mocked(pruneSystemRegistry);
 
 describe("GlobalCommand", () => {
@@ -59,6 +61,7 @@ describe("GlobalCommand", () => {
         restarts: 0,
       },
     ]);
+
     vi.mocked(DockerManager.listContainers).mockResolvedValue([
       {
         id: "container-id",
@@ -69,6 +72,7 @@ describe("GlobalCommand", () => {
         created: "",
       },
     ]);
+
     const loadConfig = vi.fn();
 
     const result = await new GlobalCommand().execute({
@@ -123,6 +127,7 @@ describe("GlobalCommand", () => {
       lastSeenAt: "2026-01-01T00:00:00.000Z",
       instances: {},
     };
+
     const orphanedResource = {
       type: "pm2" as const,
       name: "zap.old.abc123.api",
@@ -133,14 +138,17 @@ describe("GlobalCommand", () => {
       location: "/tmp/old / instance abc123 / api",
       reason: "No registered project matches this resource name",
     };
+
     mockedGetStaleSystemRegistryProjects.mockReturnValue([removedProject]);
     mockedPruneSystemRegistry.mockReturnValue([removedProject]);
     mockedAuditSystemResources.mockResolvedValue({
       resources: [orphanedResource],
     });
+
     mockedCleanupSystemResources.mockResolvedValue({
       resources: [orphanedResource],
     });
+
     mockedConfirm.mockResolvedValue(true);
 
     const result = await new GlobalCommand().execute({
@@ -152,19 +160,24 @@ describe("GlobalCommand", () => {
     expect(mockedAuditSystemResources.mock.invocationCallOrder[0]).toBeLessThan(
       mockedCleanupSystemResources.mock.invocationCallOrder[0],
     );
+
     expect(
       mockedCleanupSystemResources.mock.invocationCallOrder[0],
     ).toBeLessThan(mockedPruneSystemRegistry.mock.invocationCallOrder[0]);
+
     expect(
       mockedGetStaleSystemRegistryProjects.mock.invocationCallOrder[0],
     ).toBeLessThan(mockedAuditSystemResources.mock.invocationCallOrder[0]);
+
     expect(mockedConfirm).toHaveBeenCalledWith("Delete these resources?", {
       defaultYes: false,
       force: true,
     });
+
     expect(mockedCleanupSystemResources).toHaveBeenCalledWith({
       includeVolumes: true,
     });
+
     expect(result).toEqual({
       kind: "global.prune",
       status: "completed",
@@ -184,10 +197,12 @@ describe("GlobalCommand", () => {
       location: "old / instance abc123",
       reason: "No registered project matches this generated volume",
     };
+
     mockedPruneSystemRegistry.mockReturnValue([]);
     mockedAuditSystemResources.mockResolvedValue({
       resources: [orphanedResource],
     });
+
     mockedConfirm.mockResolvedValue(false);
 
     const result = await new GlobalCommand().execute({

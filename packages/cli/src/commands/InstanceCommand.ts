@@ -21,6 +21,7 @@ export class InstanceCommand extends CommandHandler {
     }
 
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Project context did not load");
     }
@@ -31,6 +32,7 @@ export class InstanceCommand extends CommandHandler {
         label:
           zapperContext.state.instances?.[zapperContext.instanceKey]?.label,
       };
+
       return {
         kind: "instance.label",
         instanceKey: zapperContext.instanceKey,
@@ -49,6 +51,7 @@ export class InstanceCommand extends CommandHandler {
       zapperContext.instanceKey,
       label,
     );
+
     zapperContext.state = loadState(zapperContext.projectRoot);
     zapperContext.instance = {
       ...(zapperContext.instance || {

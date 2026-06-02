@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { CommandHandler, CommandContext } from "./CommandHandler";
 import { CommandResult } from "./CommandResult";
 
@@ -7,6 +6,7 @@ export class ConfigCommand extends CommandHandler {
     const { zapper, options } = context;
 
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Context not loaded");
     }
@@ -32,6 +32,7 @@ export class ConfigCommand extends CommandHandler {
       }
 
       const result: any = {};
+
       for (const [key, value] of Object.entries(obj)) {
         // Skip env-related keys unless showEnvs is true
         if (!showEnvs && (key === "env" || key === "resolvedEnv")) {
@@ -42,6 +43,7 @@ export class ConfigCommand extends CommandHandler {
           result[key] = value;
         }
       }
+
       return result;
     };
 

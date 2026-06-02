@@ -16,6 +16,7 @@ export class UpCommand extends CommandHandler {
         ? service
         : [service]
       : undefined;
+
     const reporter = options.jsonl
       ? serviceActionJsonlReporter
       : serviceActionEventReporter;
@@ -28,6 +29,7 @@ export class UpCommand extends CommandHandler {
 
     if (options.open) {
       const zapperContext = zapper.getContext();
+
       if (zapperContext?.homepage) {
         openUrl(zapperContext.homepage);
         report.opened = {

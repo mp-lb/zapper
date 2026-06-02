@@ -29,6 +29,7 @@ export function parseYamlFile(filePath: string): ZapperConfig {
     ) {
       throw error;
     }
+
     throw new ConfigParseError(filePath, error);
   }
 }

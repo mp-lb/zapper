@@ -10,6 +10,7 @@ export class ProfilesCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult | void> {
     const { zapper, service, options } = context;
     const zapperContext = zapper.getContext();
+
     if (!zapperContext) {
       throw new Error("Context not loaded");
     }
@@ -40,19 +41,23 @@ export class ProfilesCommand extends CommandHandler {
 
     if (action === "use") {
       const profileName = args[1];
+
       if (!profileName) {
         throw new Error("Usage: zap profile use <name>");
       }
+
       if (!zapperContext.profiles.includes(profileName)) {
         throw new Error(
           this.notFoundMessage(profileName, zapperContext.profiles),
         );
       }
+
       const stateManager = new StateManager(
         zapper,
         zapperContext.projectRoot,
         options.config,
       );
+
       await stateManager.setSelectedProfile(profileName);
       return {
         kind: "profiles.selected",
@@ -66,6 +71,7 @@ export class ProfilesCommand extends CommandHandler {
         zapperContext.projectRoot,
         options.config,
       );
+
       await stateManager.clearSelectedProfile();
       return {
         kind: "profiles.reset",

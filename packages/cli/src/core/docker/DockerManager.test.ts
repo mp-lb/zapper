@@ -49,8 +49,10 @@ describe("DockerManager.startContainerAsync", () => {
             "docker: Error response from daemon: pull access denied for missing-image.\n",
           ),
         );
+
         child.emit("close", 125);
       });
+
       return child as never;
     });
 
@@ -76,6 +78,7 @@ describe("DockerManager.startContainerAsync", () => {
       "logs",
       "test-project.database.startup.log",
     );
+
     expect(fs.existsSync(failureLog)).toBe(true);
     const contents = fs.readFileSync(failureLog, "utf8");
     expect(contents).toContain("[stderr]");
@@ -88,6 +91,7 @@ describe("DockerManager.startContainerAsync", () => {
       process.nextTick(() => {
         child.emit("error", new Error("spawn docker ENOENT"));
       });
+
       return child as never;
     });
 
@@ -105,6 +109,7 @@ describe("DockerManager.startContainerAsync", () => {
       "logs",
       "test-project.database.startup.log",
     );
+
     fs.mkdirSync(path.dirname(failureLog), { recursive: true });
     fs.writeFileSync(failureLog, "old failure");
 
@@ -115,6 +120,7 @@ describe("DockerManager.startContainerAsync", () => {
         child.stdout.emit("data", Buffer.from("container-id\n"));
         child.emit("close", 0);
       });
+
       return child as never;
     });
 
@@ -131,6 +137,7 @@ describe("DockerManager.startContainerAsync", () => {
         },
       ),
     ).resolves.toBe(9876);
+
     expect(fs.existsSync(failureLog)).toBe(false);
   });
 
@@ -140,6 +147,7 @@ describe("DockerManager.startContainerAsync", () => {
       process.nextTick(() => {
         child.emit("close", 0);
       });
+
       return child as never;
     });
 
@@ -170,6 +178,7 @@ describe("DockerManager.startContainerAsync", () => {
       process.nextTick(() => {
         child.emit("close", 0);
       });
+
       return child as never;
     });
 

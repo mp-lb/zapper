@@ -40,9 +40,11 @@ export function savePortsForInstance(
 ): void {
   const state = loadState(projectRoot);
   const instance = state.instances?.[instanceKey];
+
   const ensured = instance?.id
     ? { id: instance.id, created: false }
     : ensureInstance(projectRoot, instanceKey);
+
   const refreshed = ensured.created ? loadState(projectRoot) : state;
   const refreshedInstance = refreshed.instances?.[instanceKey];
   const refreshedId = refreshedInstance?.id || ensured.id;
@@ -90,10 +92,12 @@ export function assignRandomPorts(portNames: string[]): Record<string, string> {
 
   for (const name of portNames) {
     let port = generateRandomPort();
+
     // Ensure no duplicates in this batch
     while (usedPorts.has(port)) {
       port = generateRandomPort();
     }
+
     usedPorts.add(port);
     ports[name] = port.toString();
   }
@@ -114,8 +118,10 @@ export function initializePorts(
     typeof instanceOrOptions === "string"
       ? instanceOrOptions
       : DEFAULT_INSTANCE_KEY;
+
   const options =
     typeof instanceOrOptions === "string" ? maybeOptions : instanceOrOptions;
+
   const normalizedPortNames = Array.from(new Set(portNames));
   const existingPorts = loadPortsForInstance(projectRoot, instanceKey);
 
@@ -130,8 +136,10 @@ export function initializePorts(
 
   for (const name of normalizedPortNames) {
     const existing = existingPorts[name];
+
     if (existing) {
       const existingPort = parseInt(existing, 10);
+
       if (!Number.isNaN(existingPort)) {
         nextPorts[name] = existing;
         usedPorts.add(existingPort);
@@ -140,9 +148,11 @@ export function initializePorts(
     }
 
     let port = generateRandomPort();
+
     while (usedPorts.has(port)) {
       port = generateRandomPort();
     }
+
     usedPorts.add(port);
     nextPorts[name] = port.toString();
   }

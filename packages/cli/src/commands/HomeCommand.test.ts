@@ -5,6 +5,7 @@ import type { Zapper } from "../core/Zapper";
 describe("HomeCommand", () => {
   it("prints homepage value", async () => {
     const command = new HomeCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -33,6 +34,7 @@ describe("HomeCommand", () => {
 
   it("throws when homepage is not configured", async () => {
     const command = new HomeCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",

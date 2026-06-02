@@ -64,6 +64,7 @@ describe("SystemRegistry", () => {
 
   it("writes and updates a registered project", () => {
     const context = makeContext(projectRoot);
+
     const result = touchSystemProject({
       context,
       configPath: context.configPath!,
@@ -94,10 +95,12 @@ describe("SystemRegistry", () => {
       ...context,
       projectName: "renamed-app",
     };
+
     const firstRename = touchSystemProject({
       context: renamedContext,
       configPath: renamedContext.configPath!,
     });
+
     const secondRename = touchSystemProject({
       context: renamedContext,
       configPath: renamedContext.configPath!,
@@ -108,6 +111,7 @@ describe("SystemRegistry", () => {
       from: "myapp",
       to: "renamed-app",
     });
+
     expect(secondRename.projectNameChanged).toBeNull();
     expect(loadSystemRegistry().projects[registryId].project).toBe(
       "renamed-app",

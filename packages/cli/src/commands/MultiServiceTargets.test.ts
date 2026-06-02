@@ -14,6 +14,7 @@ import type { Context } from "../types/Context";
 vi.mock("../core/getStatus", () => ({
   getStatus: vi.fn(),
 }));
+
 vi.mock("../core/getServiceList", () => ({
   getServiceList: vi.fn(),
 }));
@@ -44,6 +45,7 @@ describe("Multi-service command targets", () => {
       ["api", "worker", "database"],
       expect.objectContaining({ onEvent: expect.any(Function) }),
     );
+
     expect(result).toEqual({
       kind: "services.action",
       action: "restart",
@@ -111,6 +113,7 @@ describe("Multi-service command targets", () => {
     ).rejects.toThrow(
       "Cannot follow logs for multiple services. Use --no-follow or request a single service.",
     );
+
     expect(showLogs).not.toHaveBeenCalled();
   });
 
@@ -133,6 +136,7 @@ describe("Multi-service command targets", () => {
 
   it("passes multiple services to status filtering", async () => {
     const statusResult: StatusResult = { native: [], docker: [] };
+
     const zapperContext: Context = {
       projectName: "test",
       projectRoot: "/tmp/test",
@@ -145,10 +149,12 @@ describe("Multi-service command targets", () => {
       profiles: [],
       state: {},
     };
+
     const getContext = vi.fn().mockReturnValue(zapperContext);
     mockedGetStatus.mockResolvedValue(statusResult);
 
     const command = new StatusCommand();
+
     const result = await command.execute({
       zapper: { getContext } as unknown as Zapper,
       service: ["api", "database"],
@@ -160,6 +166,7 @@ describe("Multi-service command targets", () => {
       ["api", "database"],
       true,
     );
+
     expect(result).toEqual({
       kind: "status",
       statusResult,
@@ -169,6 +176,7 @@ describe("Multi-service command targets", () => {
 
   it("passes multiple services to ls filtering", async () => {
     const listResult: ServiceListResult = { services: [], ports: [] };
+
     const zapperContext: Context = {
       projectName: "test",
       projectRoot: "/tmp/test",
@@ -181,10 +189,12 @@ describe("Multi-service command targets", () => {
       profiles: [],
       state: {},
     };
+
     const getContext = vi.fn().mockReturnValue(zapperContext);
     mockedGetServiceList.mockResolvedValue(listResult);
 
     const command = new ListCommand();
+
     const result = await command.execute({
       zapper: { getContext } as unknown as Zapper,
       service: ["api", "database"],
@@ -196,6 +206,7 @@ describe("Multi-service command targets", () => {
       ["api", "database"],
       { extended: false },
     );
+
     expect(result).toEqual({
       kind: "list",
       listResult,

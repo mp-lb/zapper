@@ -21,6 +21,7 @@ export class InitCommand extends CommandHandler {
       typeof options.instance === "string" && options.instance.trim().length > 0
         ? options.instance.trim()
         : ctx.instanceKey || DEFAULT_INSTANCE_KEY;
+
     const randomize = Boolean(options.random);
 
     const instanceId = createInstance(ctx.projectRoot, selectedInstanceKey);
@@ -35,6 +36,7 @@ export class InitCommand extends CommandHandler {
         randomizeAll: randomize,
       },
     );
+
     initializeManagedVolumes(
       ctx.projectRoot,
       ctx.projectName,
@@ -42,6 +44,7 @@ export class InitCommand extends CommandHandler {
       instanceId,
       collectManagedVolumeSpecs(ctx.containers),
     );
+
     ctx.instance = {
       key: selectedInstanceKey,
       id: instanceId,

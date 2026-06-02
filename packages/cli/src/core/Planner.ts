@@ -6,7 +6,11 @@ import { DependencyGraph } from "./DependencyGraph";
 import { buildServiceName } from "../utils/nameBuilder";
 
 export class Planner {
-  constructor(private readonly config: ZapperConfig) {}
+  private readonly config: ZapperConfig;
+
+  constructor(config: ZapperConfig) {
+    this.config = config;
+  }
 
   private getProcesses(): Process[] {
     const { native, processes } = this.config;
@@ -29,12 +33,15 @@ export class Planner {
 
   private buildGraph(): DependencyGraph {
     const graph = new DependencyGraph();
+
     for (const process of this.getProcesses()) {
       graph.addProcess(process.name as string, process);
     }
+
     for (const [name, container] of this.getContainers()) {
       graph.addContainer(name, container);
     }
+
     return graph;
   }
 
@@ -44,6 +51,7 @@ export class Planner {
     const allProcessNames = new Set(
       this.getProcesses().map((p) => p.name as string),
     );
+
     const allContainerNames = new Set(
       this.getContainers().map(([name]) => name),
     );
@@ -72,9 +80,11 @@ export class Planner {
 
     // Create a map for quick dependency lookup
     const dependencyMap = new Map<string, string[]>();
+
     for (const process of allProcesses) {
       dependencyMap.set(process.name as string, process.depends_on ?? []);
     }
+
     for (const [name, container] of allContainers) {
       dependencyMap.set(name, container.depends_on ?? []);
     }
@@ -88,6 +98,7 @@ export class Planner {
 
       // Add dependencies to resolve list
       const deps = dependencyMap.get(current) ?? [];
+
       for (const dep of deps) {
         if (!resolved.has(dep)) {
           toResolve.push(dep);
@@ -118,6 +129,7 @@ export class Planner {
             ];
 
       const stopPlan = await this.plan("stop", selectedTargets, projectName);
+
       const startPlan = await this.plan(
         "start",
         selectedTargets,
@@ -143,12 +155,14 @@ export class Planner {
           allProcesses,
           allContainers,
         );
+
         selectedProcesses = resolved.processes;
         selectedContainers = resolved.containers;
       } else {
         selectedProcesses = allProcesses.filter((p) =>
           targets.includes(p.name as string),
         );
+
         selectedContainers = allContainers.filter(([name]) =>
           targets.includes(name),
         );
@@ -160,29 +174,38 @@ export class Planner {
 
     const pm2List =
       selectedProcesses.length > 0 ? await Pm2Manager.listProcesses() : [];
+
     const onlinePm2 = new Set(
       pm2List
         .filter((p) => p.status.toLowerCase() === "online")
         .map((p) => p.name as string),
     );
+
     const existingPm2 = new Set(pm2List.map((p) => p.name as string));
+
     const instanceId = (this.config as ZapperConfig & { instanceId?: string })
       .instanceId;
+
     const isPm2Online = (name: string) =>
       onlinePm2.has(buildServiceName(projectName, name, instanceId));
+
     const hasPm2Process = (name: string) =>
       existingPm2.has(buildServiceName(projectName, name, instanceId));
 
     const shouldListContainers =
       selectedContainers.length > 0 && !(op === "start" && forceStart);
+
     const containerList = shouldListContainers
       ? await DockerManager.listContainers()
       : [];
+
     const containersByName = new Map(containerList.map((c) => [c.name, c]));
+
     const isDockerRunning = (name: string): boolean => {
       const info = containersByName.get(
         buildServiceName(projectName, name, instanceId),
       );
+
       return (
         !!info &&
         (info.status.toLowerCase() === "running" ||
@@ -192,11 +215,13 @@ export class Planner {
 
     if (op === "start") {
       const servicesToStart = new Set<string>();
+
       for (const p of selectedProcesses) {
         if (forceStart || !isPm2Online(p.name as string)) {
           servicesToStart.add(p.name as string);
         }
       }
+
       for (const [name] of selectedContainers) {
         if (forceStart || !isDockerRunning(name)) {
           servicesToStart.add(name);
@@ -213,9 +238,11 @@ export class Planner {
     }
 
     const servicesToStop = new Set<string>();
+
     for (const p of selectedProcesses) {
       if (hasPm2Process(p.name as string)) servicesToStop.add(p.name as string);
     }
+
     for (const [name] of selectedContainers) {
       if (isDockerRunning(name)) servicesToStop.add(name);
     }

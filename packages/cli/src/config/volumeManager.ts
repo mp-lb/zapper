@@ -31,6 +31,7 @@ function slugify(value: string): string {
     .replace(/[^a-zA-Z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 48);
+
   return slug || "volume";
 }
 
@@ -46,14 +47,17 @@ export function generateManagedVolumeName(
 
 function getNextVolumeIndex(existingNames: Iterable<string>): number {
   let maxIndex = 0;
+
   for (const name of existingNames) {
     const match = name.match(/\.vol(\d+)$/);
     if (!match) continue;
     const parsed = parseInt(match[1], 10);
+
     if (!Number.isNaN(parsed)) {
       maxIndex = Math.max(maxIndex, parsed);
     }
   }
+
   return maxIndex + 1;
 }
 
@@ -71,9 +75,11 @@ export function saveVolumesForInstance(
 ): void {
   const state = loadState(projectRoot);
   const instance = state.instances?.[instanceKey];
+
   const ensured = instance?.id
     ? { id: instance.id, created: false }
     : ensureInstance(projectRoot, instanceKey);
+
   const refreshed = ensured.created ? loadState(projectRoot) : state;
   const refreshedInstance = refreshed.instances?.[instanceKey];
   const refreshedId = refreshedInstance?.id || ensured.id;
@@ -102,14 +108,17 @@ export function initializeManagedVolumes(
   options: { prune?: boolean } = {},
 ): Record<string, string> {
   const uniqueSpecs = new Map<string, ManagedVolumeSpec>();
+
   for (const spec of specs) {
     uniqueSpecs.set(getVolumeKey(spec), spec);
   }
 
   const existing = loadVolumesForInstance(projectRoot, instanceKey);
   const next: Record<string, string> = {};
+
   const nextState: Record<string, StoredVolume> =
     options.prune === false ? { ...existing } : {};
+
   const existingBySpec = new Map<string, string>();
 
   for (const [volumeName, volume] of Object.entries(existing)) {
@@ -128,12 +137,14 @@ export function initializeManagedVolumes(
   for (const key of uniqueSpecs.keys()) {
     const spec = uniqueSpecs.get(key)!;
     const existingVolumeName = existingBySpec.get(key);
+
     if (existingVolumeName) {
       next[key] = existingVolumeName;
       nextState[existingVolumeName] = {
         service: spec.serviceName,
         internal_dir: spec.internalDir,
       };
+
       continue;
     }
 
@@ -143,10 +154,12 @@ export function initializeManagedVolumes(
       nextIndex,
     );
     nextIndex += 1;
+
     while (usedNames.has(generated)) {
       generated = generateManagedVolumeName(projectName, instanceId, nextIndex);
       nextIndex += 1;
     }
+
     usedNames.add(generated);
     next[key] = generated;
     nextState[generated] = {
@@ -183,6 +196,7 @@ export function findStaleManagedVolumes(
       serviceName: volume.service,
       internalDir: volume.internal_dir,
     });
+
     if (!currentKeys.has(key)) {
       stale[volumeName] = volume;
     }
@@ -201,6 +215,7 @@ export function pruneStaleManagedVolumesForInstance(
 
   const staleNames = new Set(Object.keys(stale));
   const remaining: Record<string, StoredVolume> = {};
+
   for (const [volumeName, volume] of Object.entries(
     loadVolumesForInstance(projectRoot, instanceKey),
   )) {
@@ -219,6 +234,7 @@ function isPathOnlyVolume(volume: ContainerVolume): boolean {
       !volume.source && (volume.type === undefined || volume.type === "volume")
     );
   }
+
   if (typeof volume !== "string") return !volume.name;
   const parsed = parseVolumeString(volume);
   return !parsed.source && parsed.internalDir.startsWith("/");
@@ -231,9 +247,11 @@ function parseVolumeString(volume: string): {
 } {
   const [source, internalDir, suffix] = volume.split(":");
   if (!internalDir) return { internalDir: source };
+
   if (source.startsWith("/") && !internalDir.startsWith("/")) {
     return { internalDir: source, suffix: internalDir };
   }
+
   return { source, internalDir, suffix };
 }
 
@@ -265,6 +283,7 @@ function renderMountVolume(volume: MountVolume): string {
   if (!volume.source) {
     return appendMode(volume.target, mountMode(volume));
   }
+
   return appendMode(`${volume.source}:${volume.target}`, mountMode(volume));
 }
 
@@ -272,6 +291,7 @@ function mountSourceNeedsVolumeCreate(volume: MountVolume): string | null {
   if (!volume.source || volume.type === "bind") {
     return null;
   }
+
   if (isBindMountSource(volume.source)) return null;
   return volume.source;
 }
@@ -305,6 +325,7 @@ export function collectManagedVolumeSpecs(
           : isMountVolume(volume)
             ? volume.target
             : volume.internal_dir;
+
       specs.push({ serviceName: container.name, internalDir });
     }
   }
@@ -336,6 +357,7 @@ export function resolveContainerVolumes({
   for (const volume of volumes || []) {
     if (typeof volume === "string") {
       const parsed = parseVolumeString(volume);
+
       if (!parsed.source) {
         managedSpecs.push({ serviceName, internalDir: parsed.internalDir });
         continue;
@@ -346,15 +368,18 @@ export function resolveContainerVolumes({
           parsed.source,
           topLevelVolumes,
         );
+
         bindings.push(
           appendMode(`${resolvedName}:${parsed.internalDir}`, parsed.suffix),
         );
+
         if (shouldCreateNamedVolume(parsed.source, topLevelVolumes)) {
           namedVolumesToCreate.push(resolvedName);
         }
       } else {
         bindings.push(volume);
       }
+
       continue;
     }
 
@@ -363,39 +388,48 @@ export function resolveContainerVolumes({
         managedSpecs.push({ serviceName, internalDir: volume.target });
         continue;
       }
+
       const sourceVolume = mountSourceNeedsVolumeCreate(volume);
+
       if (sourceVolume) {
         const resolvedName = resolveTopLevelVolumeName(
           sourceVolume,
           topLevelVolumes,
         );
+
         bindings.push(
           appendMode(`${resolvedName}:${volume.target}`, mountMode(volume)),
         );
+
         if (shouldCreateNamedVolume(sourceVolume, topLevelVolumes)) {
           namedVolumesToCreate.push(resolvedName);
         }
       } else {
         bindings.push(renderMountVolume(volume));
       }
+
       continue;
     }
 
     const namedVolume = volume as Volume;
+
     if (namedVolume.name) {
       const resolvedName = resolveTopLevelVolumeName(
         namedVolume.name,
         topLevelVolumes,
       );
+
       if (shouldCreateNamedVolume(namedVolume.name, topLevelVolumes)) {
         namedVolumesToCreate.push(resolvedName);
       }
+
       bindings.push(
         appendMode(
           `${resolvedName}:${namedVolume.internal_dir}`,
           namedVolume.mode,
         ),
       );
+
       continue;
     }
 
@@ -418,22 +452,27 @@ export function resolveContainerVolumes({
     for (const spec of managedSpecs) {
       const volumeName = managedVolumes[getVolumeKey(spec)];
       namedVolumesToCreate.push(volumeName);
+
       const sourceVolume = (volumes || []).find((volume) => {
         if (typeof volume === "string") {
           const parsed = parseVolumeString(volume);
           return !parsed.source && parsed.internalDir === spec.internalDir;
         }
+
         if (isMountVolume(volume)) {
           return !volume.source && volume.target === spec.internalDir;
         }
+
         return !volume.name && volume.internal_dir === spec.internalDir;
       });
+
       const mode =
         typeof sourceVolume === "string"
           ? parseVolumeString(sourceVolume).suffix
           : sourceVolume && isMountVolume(sourceVolume)
             ? mountMode(sourceVolume)
             : sourceVolume?.mode;
+
       bindings.push(appendMode(`${volumeName}:${spec.internalDir}`, mode));
     }
   }
@@ -454,6 +493,7 @@ export function getContainerVolumeBindings(
   for (const volume of volumes || []) {
     if (typeof volume === "string") {
       const parsed = parseVolumeString(volume);
+
       if (parsed.source) {
         bindings.push(volume);
         continue;
@@ -464,11 +504,13 @@ export function getContainerVolumeBindings(
           stored.service === serviceName &&
           stored.internal_dir === parsed.internalDir,
       )?.[0];
+
       bindings.push(
         volumeName
           ? appendMode(`${volumeName}:${parsed.internalDir}`, parsed.suffix)
           : appendMode(parsed.internalDir, parsed.suffix),
       );
+
       continue;
     }
 
@@ -483,11 +525,13 @@ export function getContainerVolumeBindings(
           stored.service === serviceName &&
           stored.internal_dir === volume.target,
       )?.[0];
+
       bindings.push(
         volumeName
           ? appendMode(`${volumeName}:${volume.target}`, mountMode(volume))
           : appendMode(volume.target, mountMode(volume)),
       );
+
       continue;
     }
 
@@ -495,6 +539,7 @@ export function getContainerVolumeBindings(
       bindings.push(
         appendMode(`${volume.name}:${volume.internal_dir}`, volume.mode),
       );
+
       continue;
     }
 
@@ -503,6 +548,7 @@ export function getContainerVolumeBindings(
         stored.service === serviceName &&
         stored.internal_dir === volume.internal_dir,
     )?.[0];
+
     bindings.push(
       volumeName
         ? appendMode(`${volumeName}:${volume.internal_dir}`, volume.mode)
@@ -523,12 +569,14 @@ export function getServiceDockerVolumes(
   for (const volume of volumes || []) {
     if (typeof volume === "string") {
       const parsed = parseVolumeString(volume);
+
       if (!parsed.source) {
         const volumeName = Object.entries(managedVolumes).find(
           ([, stored]) =>
             stored.service === serviceName &&
             stored.internal_dir === parsed.internalDir,
         )?.[0];
+
         if (volumeName) {
           dockerVolumes.push({
             name: volumeName,
@@ -537,6 +585,7 @@ export function getServiceDockerVolumes(
             managed: true,
           });
         }
+
         continue;
       }
 
@@ -548,6 +597,7 @@ export function getServiceDockerVolumes(
           managed: false,
         });
       }
+
       continue;
     }
 
@@ -558,6 +608,7 @@ export function getServiceDockerVolumes(
             stored.service === serviceName &&
             stored.internal_dir === volume.target,
         )?.[0];
+
         if (volumeName) {
           dockerVolumes.push({
             name: volumeName,
@@ -566,6 +617,7 @@ export function getServiceDockerVolumes(
             managed: true,
           });
         }
+
         continue;
       }
 
@@ -577,6 +629,7 @@ export function getServiceDockerVolumes(
           managed: false,
         });
       }
+
       continue;
     }
 
@@ -587,6 +640,7 @@ export function getServiceDockerVolumes(
         mode: volume.mode,
         managed: false,
       });
+
       continue;
     }
 
@@ -595,6 +649,7 @@ export function getServiceDockerVolumes(
         stored.service === serviceName &&
         stored.internal_dir === volume.internal_dir,
     )?.[0];
+
     if (volumeName) {
       dockerVolumes.push({
         name: volumeName,

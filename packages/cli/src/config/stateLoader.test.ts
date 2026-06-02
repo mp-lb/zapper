@@ -31,6 +31,7 @@ describe("stateLoader", () => {
       tmpdir(),
       `zapper-state-test-${Date.now()}-${testCounter}`,
     );
+
     mkdirSync(testDir, { recursive: true });
   });
 
@@ -38,6 +39,7 @@ describe("stateLoader", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     vi.restoreAllMocks();
   });
 
@@ -77,6 +79,7 @@ describe("stateLoader", () => {
         },
       },
     });
+
     const state = loadState(testDir);
 
     expect(state.selectedProfile).toBe("dev");

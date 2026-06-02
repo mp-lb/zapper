@@ -4,6 +4,7 @@ import { renderer } from "../ui/renderer";
 export class LogsCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<void> {
     const { zapper, service, options } = context;
+
     const services = service
       ? Array.isArray(service)
         ? service
@@ -15,6 +16,7 @@ export class LogsCommand extends CommandHandler {
     }
 
     const follow = options.follow ?? true;
+
     if (services.length > 1 && follow) {
       throw new Error(
         "Cannot follow logs for multiple services. Use --no-follow or request a single service.",
@@ -25,6 +27,7 @@ export class LogsCommand extends CommandHandler {
       renderer.log.info(
         `Showing logs for ${serviceName}${follow ? " (following)" : ""}`,
       );
+
       await zapper.showLogs(serviceName, follow);
     }
   }

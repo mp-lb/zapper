@@ -37,6 +37,7 @@ export function createContext(
       if (!proc.name) {
         throw new Error("Process in processes array missing name field");
       }
+
       processes.push({
         ...proc,
         name: proc.name,
@@ -49,6 +50,7 @@ export function createContext(
 
   // Add docker containers (key-value pairs)
   const dockerServices = config.docker || config.containers;
+
   if (dockerServices) {
     for (const [name, container] of Object.entries(dockerServices)) {
       containers.push({
@@ -60,6 +62,7 @@ export function createContext(
 
   // Transform tasks from config format to context format
   const tasks: Task[] = [];
+
   if (config.tasks) {
     for (const [name, task] of Object.entries(config.tasks)) {
       tasks.push({
@@ -84,9 +87,11 @@ export function createContext(
       processes,
       containers,
     );
+
     for (let i = processes.length - 1; i >= 0; i -= 1) {
       if (!selectedServices.has(processes[i].name)) processes.splice(i, 1);
     }
+
     for (let i = containers.length - 1; i >= 0; i -= 1) {
       if (!selectedServices.has(containers[i].name)) containers.splice(i, 1);
     }
@@ -95,6 +100,7 @@ export function createContext(
   // Resolve root env/env_files to absolute paths relative to projectRoot
   let envFiles: string[] | undefined;
   const rootEnv = config.env ?? config.env_files;
+
   if (selectedProfile) {
     envFiles = selectedProfile.envFiles;
   } else if (rootEnv && rootEnv.length > 0) {
@@ -142,6 +148,7 @@ function expandServiceDependencies(
   for (const process of processes) {
     dependenciesByService.set(process.name, process.depends_on ?? []);
   }
+
   for (const container of containers) {
     dependenciesByService.set(container.name, container.depends_on ?? []);
   }
@@ -154,6 +161,7 @@ function expandServiceDependencies(
     if (selectedServices.has(service)) continue;
 
     selectedServices.add(service);
+
     for (const dependency of dependenciesByService.get(service) ?? []) {
       if (!selectedServices.has(dependency)) toVisit.push(dependency);
     }

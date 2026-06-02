@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Zapper } from "../core/Zapper";
 import { logger, LogLevel } from "../utils/logger";
 import type { CommandResult } from "./CommandResult";

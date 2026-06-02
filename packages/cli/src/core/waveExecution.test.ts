@@ -11,6 +11,7 @@ vi.mock("../config/stateLoader", () => ({
   updateServiceState: vi.fn(),
   clearServiceState: vi.fn(),
 }));
+
 vi.mock("../utils/logger", () => ({
   logger: {
     info: vi.fn(),
@@ -67,9 +68,9 @@ describe("Wave Execution", () => {
       }),
     };
 
-    vi.mocked(Pm2Executor).mockImplementation(
-      () => mockPm2Executor as unknown as Pm2Executor,
-    );
+    vi.mocked(Pm2Executor).mockImplementation(function () {
+      return mockPm2Executor as unknown as Pm2Executor;
+    });
 
     // Mock findProcess to return a process
     const { findProcess } = await import("./findProcess");
@@ -144,6 +145,7 @@ describe("Wave Execution", () => {
             action: `start:${process.name}`,
             time: Date.now(),
           });
+
           await new Promise((r) => setTimeout(r, 20));
         },
       );
@@ -190,6 +192,7 @@ describe("Wave Execution", () => {
       const wave1Start = Math.min(
         ...waveTimings.filter((w) => w.wave === 1).map((w) => w.time),
       );
+
       const wave2Start = Math.min(
         ...waveTimings.filter((w) => w.wave === 2).map((w) => w.time),
       );

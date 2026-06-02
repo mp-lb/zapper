@@ -29,6 +29,7 @@ describe("UpCommand", () => {
       stopped: [],
       failed: [],
     });
+
     const command = new UpCommand();
 
     const result = await command.execute({
@@ -54,11 +55,13 @@ describe("UpCommand", () => {
       undefined,
       expect.objectContaining({ onEvent: expect.any(Function) }),
     );
+
     const [commandName, args] = getOpenCommand("http://localhost:3000");
     expect(mockSpawn).toHaveBeenCalledWith(commandName, args, {
       detached: true,
       stdio: "ignore",
     });
+
     expect(result).toEqual({
       kind: "services.action",
       action: "up",
@@ -85,6 +88,7 @@ describe("UpCommand", () => {
       stopped: [],
       failed: [],
     });
+
     const command = new UpCommand();
 
     const result = await command.execute({

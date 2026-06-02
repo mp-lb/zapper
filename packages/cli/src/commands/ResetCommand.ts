@@ -11,6 +11,7 @@ export class ResetCommand extends CommandHandler {
       defaultYes: false,
       force: options.force,
     });
+
     if (!proceed) {
       return {
         kind: "reset",
@@ -21,6 +22,7 @@ export class ResetCommand extends CommandHandler {
         },
       };
     }
+
     await zapper.reset(true);
     return {
       kind: "reset",

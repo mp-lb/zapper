@@ -25,8 +25,10 @@ export function resolveProfile(
   if (!config.profiles) return undefined;
 
   const availableProfiles = Object.keys(config.profiles).sort();
+
   const profileName =
     options.profileName ?? options.selectedProfileName ?? DEFAULT_PROFILE_NAME;
+
   const profile = config.profiles[profileName];
 
   if (!profile) {
@@ -92,6 +94,7 @@ function validateProfileServices(
   if (profile.services === "*") return;
 
   const configured = new Set(configuredServices);
+
   const missing = profile.services.filter(
     (service) => !configured.has(service),
   );

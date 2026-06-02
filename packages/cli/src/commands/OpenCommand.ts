@@ -32,18 +32,23 @@ function openedResult(link: string): CommandResult {
 }
 
 export class OpenCommand extends CommandHandler {
+  private readonly selectLink: SelectLink;
+
   constructor(
-    private readonly selectLink: SelectLink = (links) =>
+    selectLink: SelectLink = (links) =>
       select("Open a project link", toSelectOptions(links)),
   ) {
     super();
+    this.selectLink = selectLink;
   }
 
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service: name, options } = context;
+
     if (Array.isArray(name)) {
       throw new Error("Open command accepts a single link name");
     }
+
     if (options.home && name) {
       throw new Error("Open command accepts either --home or a link name");
     }
@@ -56,13 +61,16 @@ export class OpenCommand extends CommandHandler {
       !options.jsonl;
 
     let link: string;
+
     if (shouldSelect) {
       const links = getProjectLinks(zapper);
+
       if (links.length === 0) {
         throw new Error(
           "No links configured. Set `homepage` or `links` in zap.yaml.",
         );
       }
+
       link =
         links.length === 1 ? links[0].url : (await this.selectLink(links)).url;
     } else if (options.home) {

@@ -9,11 +9,13 @@ import {
 export class DownCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service, options } = context;
+
     const services = service
       ? Array.isArray(service)
         ? service
         : [service]
       : undefined;
+
     const reporter = options.jsonl
       ? serviceActionJsonlReporter
       : serviceActionEventReporter;

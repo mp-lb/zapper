@@ -6,11 +6,14 @@ import { renderer } from "../ui/renderer";
 export class KillCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, options, service } = context;
+
     if (Array.isArray(service)) {
       throw new Error("Kill command accepts a single project name");
     }
+
     const projectName =
       service && service.trim().length > 0 ? service : undefined;
+
     const targets = await zapper.getProjectKillTargets(projectName);
 
     renderer.log.report(
@@ -25,6 +28,7 @@ export class KillCommand extends CommandHandler {
         false,
       ),
     );
+
     renderer.log.info(
       renderer.confirm.killProjectPromptText({
         projectName: targets.projectName,

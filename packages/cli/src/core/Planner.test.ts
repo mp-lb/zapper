@@ -3,8 +3,7 @@ import { Planner } from "./Planner";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
-import { ProcessInfo } from "../types/index";
-import { Action, ActionPlan } from "../types";
+import { ProcessInfo, Action, ActionPlan } from "../types";
 
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");
@@ -96,21 +95,25 @@ describe("Planner - start/stop/restart planning", () => {
         serviceType: "native",
         name: "api",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
         name: "frontend",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
         name: "cache",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
         name: "database",
       });
+
       expect(actions.some((a) => a.name === "worker")).toBe(false);
       expect(actions.some((a) => a.name === "monitor")).toBe(false);
       expect(actions.some((a) => a.name === "analytics")).toBe(false);
@@ -132,16 +135,19 @@ describe("Planner - start/stop/restart planning", () => {
         serviceType: "native",
         name: "api",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
         name: "frontend",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
         name: "cache",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
@@ -165,31 +171,37 @@ describe("Planner - start/stop/restart planning", () => {
         serviceType: "native",
         name: "api",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
         name: "frontend",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
         name: "worker",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
         name: "monitor",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
         name: "cache",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
         name: "database",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "docker",
@@ -204,6 +216,7 @@ describe("Planner - start/stop/restart planning", () => {
         createMockProcessInfo("zap.test-project.worker", "online"),
         createMockProcessInfo("zap.test-project.monitor", "online"),
       ]);
+
       mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.cache", "running"),
         createMockDockerContainer("zap.test-project.database", "Up 2 minutes"),
@@ -275,11 +288,13 @@ describe("Planner - start/stop/restart planning", () => {
           database: { image: "postgres:15" },
         },
       };
+
       const dependencyPlanner = new Planner(dependencyConfig);
 
       mockPm2Manager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
+
       mockDockerManager.listContainers.mockResolvedValue([
         createMockDockerContainer("zap.test-project.database", "running"),
       ]);
@@ -289,6 +304,7 @@ describe("Planner - start/stop/restart planning", () => {
         ["api"],
         "test-project",
       );
+
       const actions = flattenActions(plan);
 
       expect(actions).toContainEqual({
@@ -296,6 +312,7 @@ describe("Planner - start/stop/restart planning", () => {
         serviceType: "native",
         name: "api",
       });
+
       expect(actions).toContainEqual({
         type: "start",
         serviceType: "native",
@@ -305,6 +322,7 @@ describe("Planner - start/stop/restart planning", () => {
       expect(
         actions.some((a) => a.name === "database" && a.type === "stop"),
       ).toBe(false);
+
       expect(
         actions.some((a) => a.name === "database" && a.type === "start"),
       ).toBe(false);
@@ -436,6 +454,7 @@ describe("Planner - Dependency-aware waves", () => {
       createMockProcessInfo("zap.test-project.api", "online"),
       createMockProcessInfo("zap.test-project.frontend", "online"),
     ]);
+
     mockDockerManager.listContainers.mockResolvedValue([
       createMockDockerContainer("zap.test-project.database", "running"),
     ]);

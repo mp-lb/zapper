@@ -25,6 +25,7 @@ export class VolumeCommand extends CommandHandler {
 
     const args = Array.isArray(service) ? service : service ? [service] : [];
     const subcommand = args[0] || "prune";
+
     if (
       subcommand !== "prune" &&
       subcommand !== "reset" &&
@@ -35,9 +36,11 @@ export class VolumeCommand extends CommandHandler {
 
     if (subcommand === "list") {
       const serviceName = args[1];
+
       if (!serviceName) {
         throw new Error("Volume list requires one Docker service name");
       }
+
       if (args.length > 2) {
         throw new Error("Volume list accepts one Docker service name");
       }
@@ -49,6 +52,7 @@ export class VolumeCommand extends CommandHandler {
       const container = ctx.containers.find(
         (item) => item.name === resolvedService,
       );
+
       if (!container) {
         throw new ServiceNotFoundError(
           serviceName,
@@ -74,6 +78,7 @@ export class VolumeCommand extends CommandHandler {
         container.volumes,
         loadVolumesForInstance(ctx.projectRoot, ctx.instanceKey),
       );
+
       const volumes = options.managed
         ? allVolumes.filter((volume) => volume.managed)
         : allVolumes;
@@ -97,6 +102,7 @@ export class VolumeCommand extends CommandHandler {
         ctx.projectRoot,
         ctx.instanceKey,
       );
+
       return {
         kind: "volume.reset",
         instanceKey: ctx.instanceKey,
@@ -105,12 +111,15 @@ export class VolumeCommand extends CommandHandler {
     }
 
     const currentSpecs = collectManagedVolumeSpecs(ctx.containers);
+
     const stale = findStaleManagedVolumes(
       ctx.projectRoot,
       ctx.instanceKey,
       currentSpecs,
     );
+
     const volumeNames = Object.keys(stale);
+
     if (volumeNames.length === 0) {
       return {
         kind: "volume.prune",
@@ -123,6 +132,7 @@ export class VolumeCommand extends CommandHandler {
     renderer.log.info(
       `This will remove ${volumeNames.length} stale managed Docker volume(s) for instance "${ctx.instanceKey}".`,
     );
+
     const proceed = await confirm(
       renderer.confirm.deleteResourcesPromptText(),
       {
@@ -143,6 +153,7 @@ export class VolumeCommand extends CommandHandler {
     for (const volumeName of volumeNames) {
       await DockerManager.removeVolume(volumeName);
     }
+
     pruneStaleManagedVolumesForInstance(
       ctx.projectRoot,
       ctx.instanceKey,

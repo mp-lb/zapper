@@ -49,6 +49,7 @@ function acquireStateLock(lockPath: string): void {
           2,
         ),
       );
+
       return;
     } catch (error) {
       const code = (error as NodeJS.ErrnoException).code;
@@ -56,6 +57,7 @@ function acquireStateLock(lockPath: string): void {
 
       try {
         const stat = fs.statSync(lockPath);
+
         if (Date.now() - stat.mtimeMs > LOCK_STALE_MS) {
           fs.rmSync(lockPath, { recursive: true, force: true });
           continue;
@@ -81,16 +83,19 @@ function writeStateAtomic(statePath: string, state: ZapperState): void {
   const tempPath = `${statePath}.${process.pid}.${Date.now()}.${Math.random()
     .toString(36)
     .slice(2)}.tmp`;
+
   const content = JSON.stringify(state, null, 2);
 
   try {
     const fd = fs.openSync(tempPath, "w");
+
     try {
       fs.writeFileSync(fd, content, "utf8");
       fs.fsyncSync(fd);
     } finally {
       fs.closeSync(fd);
     }
+
     fs.renameSync(tempPath, statePath);
   } catch (error) {
     try {
@@ -100,6 +105,7 @@ function writeStateAtomic(statePath: string, state: ZapperState): void {
     } catch {
       // Best-effort cleanup only.
     }
+
     throw error;
   }
 }
@@ -126,14 +132,17 @@ export function loadState(
     renderer.log.debug(`Loaded state from ${statePath}`, {
       data: validatedState,
     });
+
     return validatedState;
   } catch (error) {
     renderer.log.warn(
       `Failed to load or validate state from ${statePath}: ${error}`,
     );
+
     if (!allowDefaultOnError) {
       throw error;
     }
+
     // Return default state on read/parse errors for read-only callers.
     return defaultState();
   }
@@ -151,11 +160,14 @@ export function updateState(
   }
 
   acquireStateLock(lockPath);
+
   try {
     const existingState = loadState(projectRoot, {
       allowDefaultOnError: false,
     });
+
     const state = updater(existingState);
+
     const newState: ZapperState = {
       ...existingState,
       ...state,
@@ -170,6 +182,7 @@ export function updateState(
       renderer.log.debug(`State saved to ${statePath}`, {
         data: validatedState,
       });
+
       return validatedState;
     } catch (error) {
       renderer.log.warn(`Failed to save state to ${statePath}: ${error}`);

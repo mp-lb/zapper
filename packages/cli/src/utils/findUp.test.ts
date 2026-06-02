@@ -18,6 +18,7 @@ describe("findUp", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     vi.restoreAllMocks();
   });
 
@@ -58,6 +59,7 @@ describe("findUp", () => {
         yamlPath,
         "project: test\nnative:\n  test:\n    cmd: echo yaml",
       );
+
       writeFileSync(
         ymlPath,
         "project: test\nnative:\n  test:\n    cmd: echo yml",
@@ -243,6 +245,7 @@ describe("findUp", () => {
           defaultConfig,
           "project: default\nnative:\n  test:\n    cmd: echo default",
         );
+
         writeFileSync(
           customConfig,
           "project: custom\nnative:\n  test:\n    cmd: echo custom",
@@ -317,6 +320,7 @@ describe("findUp", () => {
           rootConfig,
           "project: root\nnative:\n  test:\n    cmd: echo root",
         );
+
         writeFileSync(
           customConfig,
           "project: custom\nnative:\n  test:\n    cmd: echo custom",

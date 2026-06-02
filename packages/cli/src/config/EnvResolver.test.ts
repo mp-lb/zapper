@@ -20,15 +20,16 @@ describe("EnvResolver", () => {
     tempFiles.forEach((file) => {
       try {
         unlinkSync(file);
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     });
+
     // Clean up temporary directories
     tempDirs.forEach((dir) => {
       try {
         rmSync(dir, { recursive: true, force: true });
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     });
@@ -50,6 +51,7 @@ describe("EnvResolver", () => {
       tmpdir(),
       `zapper-env-test-${Date.now()}-${Math.random()}`,
     );
+
     mkdirSync(dir, { recursive: true });
     tempDirs.push(dir);
 
@@ -270,6 +272,7 @@ DATABASE_URL=postgresql://localhost:5432/myapp
       `;
 
       const envFile = createTempFile(envContent, ".env");
+
       const config: ZapperConfig = {
         project: "test",
         env_files: [envFile],
@@ -311,6 +314,7 @@ NODE_ENV=development
       `;
 
       const envFile = createTempFile(envContent, ".env");
+
       const config: ZapperConfig = {
         project: "test",
         env_files: [envFile],
@@ -336,6 +340,7 @@ NODE_ENV=development
       `;
 
       const envFile = createTempFile(envContent, ".env");
+
       const config: ZapperConfig = {
         project: "test",
         env_files: [envFile],
@@ -358,6 +363,7 @@ NODE_ENV=development
       const envContent = `
 CUSTOM_VAR=custom_value
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const config: ZapperConfig = {
@@ -385,11 +391,13 @@ DATABASE_URL=postgresql://localhost:5432/myapp
 JWT_SECRET=dev-secret
 PUBLIC_URL=http://localhost:3000
       `;
+
       const whitelistContent = `
 vars:
   - DATABASE_URL
   - JWT_SECRET
       `;
+
       const envFile = createTempFile(envContent, ".env");
       const whitelistFile = createTempFile(whitelistContent, ".yaml");
 
@@ -442,6 +450,7 @@ vars:
       const envContent = `
 LEGACY_VAR=legacy_value
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const config: ZapperConfig = {
@@ -486,6 +495,7 @@ LEGACY_VAR=legacy_value
       const envContent = `
 TEST_VAR=test_value
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const config: ZapperConfig = {
@@ -551,6 +561,7 @@ TEST_VAR=test_value
       const envContent = `
 API_PORT=3000
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -577,6 +588,7 @@ API_PORT=3000
 API_TAG=dev
 CACHE_DIR=.cache
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -609,6 +621,7 @@ CACHE_DIR=.cache
         typeof result.containers[0].build === "object" &&
           result.containers[0].build.target,
       ).toBe("local");
+
       expect(result.containers[0].volumes).toEqual([".cache:/cache:ro"]);
     });
 
@@ -617,6 +630,7 @@ CACHE_DIR=.cache
 API_PORT=3000
 DOCS_PORT=8080
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -646,6 +660,7 @@ DOCS_PORT=8080
 HOST=myapp.local
 PORT=3000
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -670,6 +685,7 @@ PORT=3000
       const envContent = `
 PORT=3000
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -695,6 +711,7 @@ PORT=3000
 API_PORT=3000
 ENV_NAME=staging
       `;
+
       const envFile = createTempFile(envContent, ".env");
 
       const context = {
@@ -798,6 +815,7 @@ NODE_ENV=staging
 DATABASE_URL=postgresql://localhost:5432/myapp
 REDIS_URL=redis://localhost:6379
       `;
+
       const alternateEnvContent = `
 TEST_VALUE=alternate_value
 NODE_ENV=staging
@@ -805,6 +823,7 @@ DATABASE_URL=postgresql://localhost:5433/myapp_staging
       `;
 
       const baseEnvFile = createTempFile(baseEnvContent, ".env.base");
+
       const alternateEnvFile = createTempFile(
         alternateEnvContent,
         ".env.alternate",
@@ -846,6 +865,7 @@ DATABASE_URL=postgresql://localhost:5433/myapp_staging
 GLOBAL_VAR=global_value
 TEST_VALUE=global_test_value
       `;
+
       const processEnvContent = `
 TEST_VALUE=process_specific_value
 PROCESS_VAR=process_value
@@ -1042,6 +1062,7 @@ FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
       `;
 
       const envFile = createTempFile(envContent, ".env");
+
       const ports = {
         FRONTEND_PORT: "3333",
         BACKEND_PORT: "4444",
@@ -1065,6 +1086,7 @@ FRONTEND_URL=http://localhost:\${FRONTEND_PORT}
       `;
 
       const envFile = createTempFile(envContent, ".env");
+
       const ports = {
         API_PORT: "5000",
         FRONTEND_PORT: "5001",

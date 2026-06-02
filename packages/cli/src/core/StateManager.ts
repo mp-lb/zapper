@@ -8,11 +8,15 @@ import { renderer } from "../ui/renderer";
  * and config reloading to ensure in-memory state stays synchronized.
  */
 export class StateManager {
-  constructor(
-    private zapper: Zapper,
-    private projectRoot: string,
-    private configPath?: string,
-  ) {}
+  private zapper: Zapper;
+  private projectRoot: string;
+  private configPath?: string;
+
+  constructor(zapper: Zapper, projectRoot: string, configPath?: string) {
+    this.zapper = zapper;
+    this.projectRoot = projectRoot;
+    this.configPath = configPath;
+  }
 
   /**
    * Updates state and reloads the entire config to ensure synchronization.
@@ -57,9 +61,11 @@ export class StateManager {
    */
   getCurrentState(): ZapperState {
     const context = this.zapper.getContext();
+
     if (!context) {
       throw new Error("Context not loaded");
     }
+
     return context.state;
   }
 

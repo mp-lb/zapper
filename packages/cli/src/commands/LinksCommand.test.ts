@@ -5,6 +5,7 @@ import type { Zapper } from "../core/Zapper";
 describe("LinksCommand", () => {
   it("lists homepage first, followed by configured links", async () => {
     const command = new LinksCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",
@@ -52,6 +53,7 @@ describe("LinksCommand", () => {
 
   it("returns an empty list when no homepage or links are configured", async () => {
     const command = new LinksCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "test",

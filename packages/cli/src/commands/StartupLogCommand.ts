@@ -4,6 +4,7 @@ import { renderer } from "../ui/renderer";
 export class StartupLogCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<void> {
     const { zapper, service } = context;
+
     const services = service
       ? Array.isArray(service)
         ? service

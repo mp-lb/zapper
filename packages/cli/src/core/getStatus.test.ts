@@ -141,6 +141,7 @@ describe("getStatus", () => {
         type: "native",
         enabled: true,
       });
+
       expect(result.native[1]).toEqual({
         rawName: "another-service",
         service: "another-service",
@@ -157,6 +158,7 @@ describe("getStatus", () => {
         type: "docker",
         enabled: true,
       });
+
       expect(result.docker[1]).toEqual({
         rawName: "postgres-db",
         service: "postgres-db",
@@ -340,6 +342,7 @@ describe("getStatus", () => {
       mockFetch.mockResolvedValueOnce({ ok: true });
 
       const result = await getStatus(context);
+
       const frontendService = result.native.find(
         (s) => s.service === "frontend",
       );
@@ -364,6 +367,7 @@ describe("getStatus", () => {
       mockFetch.mockRejectedValueOnce(new Error("Connection failed"));
 
       const result = await getStatus(context);
+
       const frontendService = result.native.find(
         (s) => s.service === "frontend",
       );
@@ -403,6 +407,7 @@ describe("getStatus", () => {
       const frontendService = result.native.find(
         (s) => s.service === "frontend",
       );
+
       expect(frontendService?.enabled).toBe(true);
       expect(result.native.map((service) => service.service)).toEqual([
         "frontend",
@@ -430,6 +435,7 @@ describe("getStatus", () => {
         createMockProcessInfo("zap.test.api", "online"),
         createMockProcessInfo("zap.test.worker", "online"),
       ]);
+
       mockDockerManager.getContainerInfo.mockResolvedValue(
         createMockDockerContainer("zap.test.database", "running"),
       );
@@ -561,6 +567,7 @@ describe("getStatus", () => {
       mockFetch.mockResolvedValueOnce({ ok: true });
 
       const result = await getStatus(context);
+
       const analyticsService = result.docker.find(
         (s) => s.service === "analytics",
       );
@@ -591,6 +598,7 @@ describe("getStatus", () => {
 
       const dbService = result.docker.find((s) => s.service === "database");
       const cacheService = result.docker.find((s) => s.service === "cache");
+
       const analyticsService = result.docker.find(
         (s) => s.service === "analytics",
       );
@@ -625,6 +633,7 @@ describe("getStatus", () => {
       mockFetch.mockRejectedValueOnce(new Error("Timeout"));
 
       const result = await getStatus(context);
+
       const frontendService = result.native.find(
         (s) => s.service === "frontend",
       );

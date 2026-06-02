@@ -62,6 +62,7 @@ const NO_TOUCH_RESULT: TouchSystemProjectResult = {
 
 function canonicalPath(value: string): string {
   const resolved = path.resolve(value);
+
   try {
     return fs.realpathSync.native(resolved);
   } catch {
@@ -138,6 +139,7 @@ function withLock<T>(fn: () => T): T {
         Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
         continue;
       }
+
       throw error;
     }
   }
@@ -150,6 +152,7 @@ function withLock<T>(fn: () => T): T {
     return fn();
   } finally {
     fs.closeSync(fd);
+
     try {
       fs.rmSync(lockPath, { force: true });
     } catch {
@@ -179,13 +182,16 @@ export function saveSystemRegistry(registry: SystemRegistryData): void {
     ...registry,
     updatedAt: new Date().toISOString(),
   });
+
   ensureRegistryDir();
   const registryPath = getSystemRegistryPath();
   const tempPath = `${registryPath}.${process.pid}.${Date.now()}.tmp`;
   fs.writeFileSync(tempPath, JSON.stringify(validated, null, 2), {
     mode: 0o600,
   });
+
   fs.renameSync(tempPath, registryPath);
+
   try {
     fs.chmodSync(registryPath, 0o600);
   } catch {
@@ -199,6 +205,7 @@ export function touchSystemProject(
   if (process.env.ZAPPER_DISABLE_SYSTEM_REGISTRY === "1") {
     return NO_TOUCH_RESULT;
   }
+
   if (
     process.env.NODE_ENV === "test" &&
     !process.env.ZAPPER_SYSTEM_STATE_HOME
@@ -213,6 +220,7 @@ export function touchSystemProject(
     const registryId = getSystemRegistryId(projectRoot, configPath);
     const now = new Date().toISOString();
     const existing = registry.projects[registryId];
+
     const projectNameChanged =
       existing && existing.project !== input.context.projectName
         ? {
@@ -220,7 +228,9 @@ export function touchSystemProject(
             to: input.context.projectName,
           }
         : null;
+
     const stateInstances = input.context.state.instances || {};
+
     const instances: Record<string, SystemRegistryInstance> = {
       ...(existing?.instances || {}),
     };

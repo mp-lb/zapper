@@ -40,6 +40,7 @@ export class SystemCommand extends CommandHandler {
             "Registry forget requires a registry id, project root, or config path",
           );
         }
+
         return {
           kind: "system.registry.forget",
           removed: await forgetSystemRegistryEntry(target),
@@ -70,10 +71,12 @@ export class SystemCommand extends CommandHandler {
 
       if (action === "cleanup") {
         const audit = await auditSystemResources();
+
         const resources = audit.resources.filter(
           (resource) =>
             context.options.includeVolumes || resource.type !== "volume",
         );
+
         if (resources.length === 0) {
           return {
             kind: "system.resources.cleanup",
@@ -86,6 +89,7 @@ export class SystemCommand extends CommandHandler {
           `Delete ${resources.length} orphaned system resource(s)?`,
           { defaultYes: false, force: context.options.force },
         );
+
         if (!proceed) {
           return {
             kind: "system.resources.cleanup",

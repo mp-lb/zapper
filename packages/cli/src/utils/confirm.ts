@@ -13,19 +13,20 @@ export async function confirm(
   };
 
   const rl = readline.createInterface({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     input: (g.process?.stdin as any) || undefined,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     output: (g.process?.stdout as any) || undefined,
   });
 
   const answer: string = await new Promise<string>((resolve, reject) => {
     let settled = false;
+
     const finish = (value: string) => {
       if (settled) return;
       settled = true;
       resolve(value);
     };
+
     const cancel = () => {
       if (settled) return;
       settled = true;

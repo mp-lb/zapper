@@ -48,6 +48,7 @@ describe("SystemCommand", () => {
       path.join(projectRoot, "zap.yaml"),
       "project: missing-worktree\n",
     );
+
     vi.stubEnv("ZAPPER_SYSTEM_STATE_HOME", path.join(tempDir, "system"));
   });
 

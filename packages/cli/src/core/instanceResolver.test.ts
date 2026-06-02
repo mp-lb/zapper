@@ -18,6 +18,7 @@ describe("instanceResolver", () => {
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
     }
+
     mkdirSync(testDir, { recursive: true });
   });
 
@@ -37,12 +38,14 @@ describe("instanceResolver", () => {
     const result = await resolveInstance(testDir, undefined, {
       autoCreate: true,
     });
+
     expect(result.instanceKey).toBe(DEFAULT_INSTANCE_KEY);
     expect(result.instanceId).toMatch(/^[a-z0-9]{6}$/);
   });
 
   it("creates and resolves the default instance", async () => {
     const instanceId = isolateProject(testDir);
+
     const result = await resolveInstance(testDir, undefined, {
       autoCreate: true,
     });
@@ -78,6 +81,7 @@ describe("instanceResolver", () => {
     clearIsolation(testDir);
 
     const state = loadState(testDir);
+
     const result = await resolveInstance(testDir, undefined, {
       autoCreate: true,
     });
@@ -123,6 +127,7 @@ describe("instanceResolver", () => {
       instanceId: state.instances?.default.id,
       label: "local checkout",
     });
+
     expect(resolved.label).toBe("local checkout");
     expect(getInstanceDisplayLabel(state.instances!.default)).toBe(
       "local checkout",

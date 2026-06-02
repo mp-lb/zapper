@@ -23,6 +23,7 @@ describe("VolumeCommand", () => {
   it("lists generated and explicit Docker volumes for a service", async () => {
     const projectRoot = makeTempDir();
     const command = new VolumeCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "myproject",
@@ -93,6 +94,7 @@ describe("VolumeCommand", () => {
   it("filters to managed volumes and marks id-only output", async () => {
     const projectRoot = makeTempDir();
     const command = new VolumeCommand();
+
     const zapper = {
       getContext: () => ({
         projectName: "myproject",

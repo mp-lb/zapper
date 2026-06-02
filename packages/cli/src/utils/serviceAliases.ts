@@ -16,6 +16,7 @@ export function resolveServiceTargets(
   if (service === undefined) return undefined;
 
   const names = Array.isArray(service) ? service : [service];
+
   const resolved = resolveAliasesToCanonical(
     names,
     buildServiceAliasMap(context),

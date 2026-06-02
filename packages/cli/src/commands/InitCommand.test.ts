@@ -115,6 +115,7 @@ describe("InitCommand", () => {
       path.join(tempDir, ".git"),
       "gitdir: /tmp/main/.git/worktrees/wt",
     );
+
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = await command.execute(createMockContext());

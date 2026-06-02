@@ -30,6 +30,7 @@ export function getProjectLinks(zapper: Zapper): ProjectLinkResult[] {
 export class LinksCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
     const { zapper, service } = context;
+
     if (service) {
       throw new Error("Links command does not accept arguments");
     }

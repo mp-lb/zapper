@@ -55,7 +55,7 @@ export function checkExclusiveLock(projectName: string): LockInfo | null {
     }
 
     return lockInfo;
-  } catch (error) {
+  } catch {
     // Corrupt lock file, treat as no lock
     return null;
   }
@@ -119,7 +119,7 @@ export function releaseExclusiveLock(projectName: string): void {
     if (lockInfo.pid === process.pid) {
       unlinkSync(lockPath);
     }
-  } catch (error) {
+  } catch {
     // Error reading lock file, ignore
   }
 }

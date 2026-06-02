@@ -8,6 +8,7 @@ import { DockerManager } from "./docker";
 vi.mock("./getStatus", () => ({
   getStatus: vi.fn(),
 }));
+
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");
 
@@ -165,10 +166,12 @@ describe("getServiceList", () => {
         cmd: "redis-server --appendonly yes",
       },
     ]);
+
     expect(result.ports).toEqual([
       { name: "API_PORT", value: "" },
       { name: "WEB_PORT", value: "" },
     ]);
+
     expect(result.resources).toBeUndefined();
   });
 
@@ -194,6 +197,7 @@ describe("getServiceList", () => {
         restarts: 0,
       },
     ]);
+
     mockedDockerManager.listContainers.mockResolvedValue([
       {
         id: "1",
@@ -204,6 +208,7 @@ describe("getServiceList", () => {
         created: "",
       },
     ]);
+
     mockedDockerManager.listVolumes.mockResolvedValue([
       { name: "zap.demo.abc123.vol99" },
       { name: "zap.demo.zz9999.vol1" },
@@ -235,6 +240,7 @@ describe("getServiceList", () => {
         reason: "Docker volume is not tracked in current repo state",
       },
     ]);
+
     expect(result.resources?.alien).toEqual([
       {
         type: "pm2",
@@ -258,11 +264,13 @@ describe("getServiceList", () => {
       "api",
       "db",
     ]);
+
     expect(mockedGetStatus).toHaveBeenCalledWith(
       createContext(),
       ["api", "db"],
       false,
     );
+
     expect(result.resources).toBeUndefined();
   });
 
@@ -278,6 +286,7 @@ describe("getServiceList", () => {
       "api",
       "db",
     ]);
+
     expect(mockedGetStatus).toHaveBeenCalledWith(
       createContext(),
       ["api", "db"],

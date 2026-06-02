@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod";
 
 export const duplicateValidation = <T extends z.ZodTypeAny>(schema: T) =>
@@ -11,12 +10,14 @@ export const duplicateValidation = <T extends z.ZodTypeAny>(schema: T) =>
         duplicates.add(id);
         return;
       }
+
       seen.set(id, where);
     };
 
     if (config.native) {
       for (const [name, proc] of Object.entries(config.native)) {
         add(name, `native['${name}']`);
+
         if ((proc as any).aliases) {
           for (const alias of (proc as any).aliases) {
             add(alias, `native['${name}'].aliases`);
@@ -26,9 +27,11 @@ export const duplicateValidation = <T extends z.ZodTypeAny>(schema: T) =>
     }
 
     const containers = config.docker || config.containers;
+
     if (containers) {
       for (const [name, container] of Object.entries(containers)) {
         add(name, `docker['${name}']`);
+
         if ((container as any).aliases) {
           for (const alias of (container as any).aliases) {
             add(alias, `docker['${name}'].aliases`);
