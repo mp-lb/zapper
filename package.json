@@ -11,7 +11,7 @@
     "dev:landing": "pnpm --filter @mp-lb/zapper-landing-page dev",
     "dev:renderer": "pnpm --filter @mp-lb/zapper dev:renderer",
     "docs:build": "pnpm --filter @mp-lb/zapper-docs build",
-    "docs:preview": "pnpm --filter @mp-lb/zapper-docs preview",
+    "docs:start": "pnpm --filter @mp-lb/zapper-docs start",
     "docs:gen": "pnpm --filter @mp-lb/zapper docs:gen",
     "docs:check": "pnpm --filter @mp-lb/zapper docs:check",
     "typecheck": "turbo typecheck",

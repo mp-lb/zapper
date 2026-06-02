@@ -1,6 +1,0 @@
-# Zapper documentation
-
-Raw documentation for agents and automation:
-
-- Full raw bundle: /llms-full.txt
-- index.md: /

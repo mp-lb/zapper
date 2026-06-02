@@ -1,0 +1,112 @@
+---
+title: "Health Checks"
+description: "Health checks are optional readiness gates for service dependencies. By default, Zapper does not wait after starting a service."
+---
+Health checks are optional readiness gates for service dependencies. By default,
+Zapper does not wait after starting a service.
+
+## Default Behavior
+
+`depends_on` means "include this service when starting the target service." It
+does not mean "wait for this service to be ready" unless the dependency has an
+explicit `healthcheck`.
+
+```yaml
+docker:
+  postgres:
+    image: postgres:15
+
+native:
+  api:
+    cmd: pnpm dev
+    depends_on: [postgres]
+
+  frontend:
+    cmd: pnpm dev
+    depends_on: [api]
+```
+
+With this config, `zap up frontend` includes `postgres`, `api`, and `frontend`,
+and starts them in the same wave when they are not already running.
+
+## Waiting For Readiness
+
+Add `healthcheck` to a dependency when dependents should wait for it before
+starting:
+
+```yaml
+docker:
+  postgres:
+    image: postgres:15
+    healthcheck: 10
+
+native:
+  api:
+    cmd: pnpm dev
+    depends_on: [postgres]
+```
+
+Here, `api` waits until `postgres` passes its health check. Numeric
+`healthcheck` values are delay checks measured in seconds. The explicit delay
+form is equivalent:
+
+```yaml
+healthcheck:
+  type: delay
+  seconds: 10
+```
+
+URL health checks poll until the endpoint returns a successful HTTP status:
+
+```yaml
+native:
+  api:
+    cmd: pnpm dev
+    healthcheck: http://localhost:3000/health
+
+  frontend:
+    cmd: pnpm dev
+    depends_on: [api]
+```
+
+`frontend` starts after the `api` health URL responds successfully.
+
+Use the explicit HTTP form when you need polling controls:
+
+```yaml
+healthcheck:
+  type: http
+  url: http://localhost:${API_PORT}/health
+  timeout: 60
+  interval: 1
+```
+
+- `timeout` is the maximum number of seconds `zap up` waits before moving on.
+- `interval` is the number of seconds between poll attempts.
+- If `timeout` is omitted, Zapper waits up to 120 seconds.
+- If `interval` is omitted, Zapper polls once per second.
+
+## Status
+
+`zap status` reports a running service without a `healthcheck` as `up`.
+
+For delay checks, status is `pending` until the configured delay has elapsed.
+For HTTP checks, status is `pending` until the URL returns a successful response.
+
+## Current Shape
+
+Supported forms:
+
+```yaml
+healthcheck: 10
+healthcheck: http://localhost:3000/health
+healthcheck:
+  type: delay
+  seconds: 10
+healthcheck:
+  type: http
+  url: http://localhost:3000/health
+  timeout: 60
+  interval: 1
+```
+

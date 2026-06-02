@@ -1,0 +1,20 @@
+{
+  "title": "Zapper",
+  "pages": [
+    "index",
+    "commands",
+    "configuration",
+    "services",
+    "tasks",
+    "profiles",
+    "instances",
+    "project-metadata",
+    "project-roots",
+    "env-var-mgmt",
+    "local-runtime",
+    "healthchecks",
+    "output",
+    "resource-management",
+    "global-registry"
+  ]
+}

@@ -7,7 +7,7 @@
     },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "dist/**", "build/**", ".vitepress/dist/**", "!.next/cache/**"]
+      "outputs": [".next/**", "dist/**", "build/**", "!.next/cache/**"]
     },
     "typecheck": {
       "dependsOn": ["^typecheck"]

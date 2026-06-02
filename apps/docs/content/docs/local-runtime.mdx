@@ -1,0 +1,303 @@
+---
+title: "Local Runtime Compatibility"
+description: "This document tracks how Zapper should be distributed, why we are making the current packaging choices, and what options remain on the table to make Zapper work"
+---
+This document tracks how Zapper should be distributed, why we are making the
+current packaging choices, and what options remain on the table to make Zapper
+work predictably on local machines.
+
+## Goals
+
+Zapper should feel like local infrastructure, not like a tool that only works
+from one carefully configured terminal session.
+
+- The macOS app should launch from Finder, Spotlight, login items, and the menu
+  bar without requiring shell-specific setup.
+- The CLI should remain easy to install and use from a terminal.
+- Desktop reads and actions should not depend on a user-managed Node version
+  manager just to start Zapper itself.
+- Project commands should still run in the user's project environment, because
+  `zap.yaml` commands often rely on project-specific tools such as `node`,
+  `pnpm`, `npm`, `docker`, language toolchains, and local shims.
+- Failures should be repairable and diagnosable without asking users to reverse
+  engineer macOS launch environments.
+
+## Current State
+
+The CLI is published as the npm package `@mp-lb/zapper`. Its executable is a
+JavaScript entrypoint with a `#!/usr/bin/env node` shebang.
+
+The macOS app is a native Swift/AppKit menu bar app. Release builds now include
+a bundled Node runtime, the built Zapper CLI, production CLI dependencies, and
+PM2. The app prefers that bundled runtime for system reads and actions:
+
+- `zap system projects --json`
+- `zap home --json`
+- `zap up --json`
+- `zap down --json`
+
+The app still supports `ZAPPER_CLI_PATH`, common install-location discovery, and
+an external CLI picker in Settings for development and diagnostics. Runtime
+metadata and repair-oriented controls live behind the gear menu rather than in
+the primary dashboard. The primary dashboard is stack-oriented: each row is one
+project instance, and expanded stack rows show compact service controls.
+
+The important improvement is that a Finder-launched app no longer needs the
+user's `node` from `nvm`, `fnm`, `mise`, `asdf`, Volta, Homebrew, or another
+shell-only setup just to run Zapper itself.
+
+Because release builds use Apple's hardened runtime, nested runtime binaries are
+signed with `apps/macos/Signing/Zapper.entitlements`. Those entitlements allow
+the bundled Node/V8 runtime to allocate executable memory inside the notarized
+app bundle.
+
+## Decision: Bundle Zapper's Runtime in the macOS App
+
+The desktop app should be self-contained for running Zapper itself.
+
+The macOS release should include:
+
+- a known-good Node runtime;
+- the built Zapper CLI JavaScript;
+- production dependencies needed by the CLI;
+- PM2 or a PM2 invocation path that does not depend on a global `pm2`
+  executable.
+
+The Swift app invokes a bundled `zap` wrapper, which runs:
+
+```text
+Zapper.app/Contents/Resources/ZapperRuntime/node/bin/node \
+  Zapper.app/Contents/Resources/ZapperRuntime/cli/dist/index.js \
+  system projects --json
+```
+
+This removes the desktop app's dependency on the user's Node installation,
+package manager shims, and shell startup files for Zapper's own code path.
+
+The user-selected CLI path remains as a diagnostic and development override, but
+it is not required for the released app.
+
+## Important Boundary: Project Commands Are Not Hermetic
+
+Bundling Node for Zapper does not mean every project command becomes hermetic.
+
+If a service has this configuration:
+
+```yaml
+native:
+  web:
+    cmd: pnpm dev
+```
+
+then `pnpm dev` should still run in the user's project environment. Zapper
+should preserve or reconstruct a useful shell environment for those commands.
+That is separate from the runtime used to execute Zapper itself.
+
+In practice, the CLI should capture the launch environment used for `zap up`
+and write PM2 wrapper scripts with the relevant `PATH` and process environment.
+The desktop app can provide a bundled Zapper runtime while still asking the CLI
+to run project commands through a login-shell-derived environment when needed.
+
+## PM2 Reliability
+
+PM2 was another global executable dependency. It is now a CLI production
+dependency for bundled desktop builds, and the macOS app passes `ZAPPER_NODE`
+and `ZAPPER_PM2_JS` so the CLI can invoke PM2 through the bundled Node runtime
+instead of `spawn("pm2")`.
+
+Runtime executable lookup is centralized behind platform adapters in the CLI.
+PM2, Docker, shell wrappers, log tailing, and URL opening are resolved through
+the same boundary instead of scattering `process.platform` checks across command
+implementations. The adapters keep the default behavior simple:
+
+- macOS uses the bundled PM2 runtime when `ZAPPER_NODE` and `ZAPPER_PM2_JS` are
+  present, otherwise falls back to `pm2`;
+- Linux uses the same PM2 environment override and otherwise falls back to
+  `pm2`;
+- WSL is treated as Linux. Linux paths are preferred. If a user-provided
+  `ZAPPER_NODE` or `ZAPPER_PM2_JS` value looks like a Windows absolute path, the
+  adapter converts it with `wslpath -u` when available and falls back to the
+  equivalent `/mnt/<drive>/...` path;
+- native Windows falls back to `pm2.cmd` when no bundled PM2 runtime is
+  configured.
+
+Remaining options if PM2 continues to be a source of local-machine
+compatibility issues:
+
+- include `pm2` in the CLI's production dependencies and run its JavaScript
+  entrypoint with the same Node runtime that runs Zapper;
+- install or vendor a PM2 binary/script into the macOS app bundle;
+- replace PM2 long term with a native process supervisor if PM2 becomes the
+  main remaining reliability risk.
+
+The current implementation follows the first option because it preserves PM2
+behavior while removing the global `pm2` lookup for desktop-launched Zapper
+commands.
+
+## System Registry Role
+
+The system registry under Application Support is useful for discovery,
+diagnostics, and repair, but it should not be required for first launch.
+
+Good uses for the registry:
+
+- last known working CLI runtime path;
+- last known working Node path;
+- last shell-derived `PATH`;
+- last PM2 invocation strategy;
+- diagnostic status from the CLI;
+- project and instance metadata for desktop display.
+
+Avoid making the desktop app depend on registry state before it can function.
+If the CLI has never been run, the desktop app should still be able to use its
+bundled runtime and show a clear empty or setup state.
+
+## Homebrew Packaging
+
+Homebrew is a good distribution channel, but it should not be the only thing
+that makes the desktop app reliable.
+
+Useful Homebrew targets:
+
+- `brew install zapper` for the CLI;
+- `brew install --cask zapper` for the macOS app;
+- possibly a tap that installs both the CLI and app through one documented
+  command.
+
+Homebrew can improve install ergonomics and upgrades. The app should still be
+self-contained when downloaded directly from the website or GitHub Releases.
+
+## Options on the Table
+
+### Bundle Node and the Existing TypeScript CLI
+
+This is the current recommendation.
+
+Pros:
+
+- fastest path to a reliable desktop app;
+- preserves the existing CLI implementation;
+- avoids a rewrite while the product surface is still moving;
+- fixes the primary Finder-launched app failure mode.
+
+Cons:
+
+- larger app bundle;
+- still depends on Node internally;
+- still needs a deliberate PM2 strategy;
+- project commands can still fail if the user's project environment is broken.
+
+### Build the CLI as a JavaScript Binary
+
+Tools such as `pkg`, `nexe`, or Node single executable application support could
+produce a single CLI artifact.
+
+Pros:
+
+- simpler desktop invocation;
+- potentially simpler Homebrew packaging;
+- no external Node requirement for Zapper itself.
+
+Cons:
+
+- native modules and dynamic imports can complicate packaging;
+- TypeScript/Node ecosystem packaging can be brittle;
+- PM2 still needs attention;
+- debugging can be harder than with bundled JavaScript plus Node.
+
+This remains a reasonable follow-up if bundling Node and dependencies is not
+clean enough.
+
+### Rewrite the CLI in Go or Rust
+
+This is a long-term option, not the near-term reliability fix.
+
+Pros:
+
+- single native binary;
+- strong fit for Homebrew and desktop bundling;
+- no Node runtime dependency for Zapper itself.
+
+Cons:
+
+- large rewrite cost;
+- risks slowing product iteration;
+- does not remove the need to run project commands in user environments;
+- PM2 replacement or interop still needs a design.
+
+Consider this only if the Node-based CLI runtime remains a recurring source of
+distribution problems after the bundled-runtime phase.
+
+### Use the System Registry as Bootstrap
+
+The CLI could write paths and environment data into the global registry for the
+desktop app to consume.
+
+Pros:
+
+- useful repair and diagnostics path;
+- lets the desktop app reuse a known-good terminal environment;
+- can improve UX after a successful CLI run.
+
+Cons:
+
+- does not solve first launch;
+- creates stale-path problems after toolchain upgrades;
+- can make desktop behavior depend on hidden historical state.
+
+Use this as supplemental metadata, not as the primary runtime strategy.
+
+## Phased Plan
+
+### Phase 1: Current Patch
+
+- Find `zap` in more common locations.
+- Merge shell and package-manager paths when running `zap`.
+- Add an in-app CLI picker and persisted override.
+- Add an app icon and continue signing/notarizing releases.
+
+This improves the current release but does not fully solve runtime reliability.
+
+### Phase 2: Bundled Desktop Runtime
+
+- Package Node into `Zapper.app`.
+- Package the built CLI and production dependencies into `Zapper.app`.
+- Have Swift invoke bundled Node plus bundled CLI directly.
+- Keep external CLI override for development and diagnostics.
+- Verify the released app works on a machine without a globally available
+  `node`.
+
+Status: implemented for macOS release builds.
+
+### Phase 3: PM2 Runtime Strategy
+
+- Make PM2 a runtime dependency rather than a required global executable.
+- Invoke PM2 through the same bundled Node runtime where possible.
+- Keep PM2 state compatible with CLI usage from the terminal.
+- Add diagnostics that distinguish "Zapper runtime failed" from "project
+  command failed".
+
+Status: partially implemented. PM2 is bundled and invoked through `ZAPPER_NODE`
+and `ZAPPER_PM2_JS` for desktop-launched CLI commands, with runtime adapter
+functions keeping platform-specific path and command resolution out of command
+implementations. Better diagnostics are still pending.
+
+### Phase 4: Install and Repair UX
+
+- Add a desktop diagnostics panel or command output view.
+- Add a CLI repair/doctor command if registry state becomes useful:
+  `zap doctor`, `zap desktop repair`, or similar.
+- Store last known good runtime/environment metadata in the system registry.
+- Document Homebrew installation once the formula/cask exists.
+
+### Phase 5: Re-evaluate Binary Distribution
+
+If the bundled Node approach remains fragile or too heavy, revisit:
+
+- JavaScript binary packaging;
+- a Go or Rust rewrite;
+- replacing PM2 with a native supervisor.
+
+The decision should be based on concrete failures from the bundled-runtime
+phase, not on the existence of Node alone.
+
