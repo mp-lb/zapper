@@ -1,11 +1,22 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { InitCommand } from "./InitCommand";
 import { CommandContext } from "./CommandHandler";
+import type { CommandResult } from "./CommandResult";
 import { Zapper } from "../core/Zapper";
 import { Context } from "../types/Context";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+
+type InitResult = Extract<CommandResult, { kind: "init" }>;
+
+function asInit(result: CommandResult): InitResult {
+  if (result.kind !== "init") {
+    throw new Error(`expected init result, got ${result.kind}`);
+  }
+
+  return result;
+}
 
 describe("InitCommand", () => {
   let command: InitCommand;
@@ -53,7 +64,7 @@ describe("InitCommand", () => {
 
   it("initializes ports and default instance by default", async () => {
     const ctx = createMockContext();
-    const result = await command.execute(ctx);
+    const result = asInit(await command.execute(ctx));
 
     expect(result.kind).toBe("init");
     expect(result.isolated).toBe(true);
@@ -64,7 +75,7 @@ describe("InitCommand", () => {
 
   it("initializes the selected instance with a generated id", async () => {
     const ctx = createMockContext({}, { instance: true });
-    const result = await command.execute(ctx);
+    const result = asInit(await command.execute(ctx));
 
     expect(result.kind).toBe("init");
     expect(result.isolated).toBe(true);
@@ -72,25 +83,27 @@ describe("InitCommand", () => {
   });
 
   it("preserves existing ports unless --random is used", async () => {
-    const first = await command.execute(createMockContext());
-    const second = await command.execute(createMockContext());
+    const first = asInit(await command.execute(createMockContext()));
+    const second = asInit(await command.execute(createMockContext()));
 
     expect(second.ports).toEqual(first.ports);
 
-    const randomized = await command.execute(
-      createMockContext({}, { random: true }),
+    const randomized = asInit(
+      await command.execute(createMockContext({}, { random: true })),
     );
 
     expect(randomized.ports).not.toEqual(first.ports);
   });
 
   it("updates only newly added port names", async () => {
-    const first = await command.execute(createMockContext());
+    const first = asInit(await command.execute(createMockContext()));
 
-    const second = await command.execute(
-      createMockContext({
-        ports: ["FRONTEND_PORT", "BACKEND_PORT", "API_PORT"],
-      }),
+    const second = asInit(
+      await command.execute(
+        createMockContext({
+          ports: ["FRONTEND_PORT", "BACKEND_PORT", "API_PORT"],
+        }),
+      ),
     );
 
     expect(second.ports.FRONTEND_PORT).toBe(first.ports.FRONTEND_PORT);
@@ -103,8 +116,8 @@ describe("InitCommand", () => {
       createMockContext({ ports: ["PORT_A", "PORT_B", "PORT_C"] }),
     );
 
-    const second = await command.execute(
-      createMockContext({ ports: ["PORT_A"] }),
+    const second = asInit(
+      await command.execute(createMockContext({ ports: ["PORT_A"] })),
     );
 
     expect(second.ports).toEqual({ PORT_A: second.ports.PORT_A });
@@ -118,7 +131,7 @@ describe("InitCommand", () => {
 
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    const result = await command.execute(createMockContext());
+    const result = asInit(await command.execute(createMockContext()));
 
     expect(result.warningShown).toBe(false);
     expect(warnSpy).not.toHaveBeenCalled();

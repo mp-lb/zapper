@@ -1,7 +1,7 @@
 import { ProfilesCommand } from "./ProfilesCommand";
 import { Zapper } from "../core/Zapper";
 import { vi, describe, it, expect } from "vitest";
-import { Context } from "../types";
+import { Context } from "../types/index";
 import { saveState } from "../config/stateLoader";
 
 vi.mock("../config/stateLoader", async () => {

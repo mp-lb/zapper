@@ -575,6 +575,7 @@ API_PORT=3000
         links: [],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       };
 
@@ -611,6 +612,7 @@ CACHE_DIR=.cache
         links: [],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       } as Context;
 
@@ -646,6 +648,7 @@ DOCS_PORT=8080
         ],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       };
 
@@ -673,6 +676,7 @@ PORT=3000
         links: [{ name: "API", url: "http://${HOST}:${PORT}/api" }],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       };
 
@@ -698,6 +702,7 @@ PORT=3000
         links: [{ name: "API", url: "http://localhost:${UNDEFINED_VAR}" }],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       };
 
@@ -725,6 +730,7 @@ ENV_NAME=staging
         links: [],
         environments: ["default"],
         profiles: [],
+        instanceKey: "default",
         state: {},
       };
 
@@ -757,9 +763,8 @@ NODE_ENV=development`;
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -797,9 +802,8 @@ NODE_ENV=staging
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -845,9 +849,8 @@ DATABASE_URL=postgresql://localhost:5433/myapp_staging
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -890,9 +893,8 @@ PROCESS_VAR=process_value
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -932,9 +934,8 @@ DATABASE_NAME=\${DATABASE_PREFIX}_production
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -965,9 +966,8 @@ DATABASE_NAME=\${DATABASE_PREFIX}_production
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1001,9 +1001,8 @@ POSTGRES_PASSWORD=staging_pass
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1038,9 +1037,8 @@ DEBUG_VAR=debug_value
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       // This test verifies the resolution works and produces logs
@@ -1158,9 +1156,8 @@ BACKEND_URL=http://localhost:\${BACKEND_PORT}/api
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1199,9 +1196,8 @@ PORT=3000
         homepage: "http://localhost:${PORT}",
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1231,9 +1227,8 @@ PORT=3000
         notes: "Use http://localhost:${PORT}",
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1268,9 +1263,8 @@ MONGO_PORT=27018
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);
@@ -1303,9 +1297,8 @@ PORT=3000
         tasks: [],
         links: [],
         profiles: [],
-        state: {
-          services: {},
-        },
+        instanceKey: "default",
+        state: {},
       };
 
       const result = EnvResolver.resolveContext(context);

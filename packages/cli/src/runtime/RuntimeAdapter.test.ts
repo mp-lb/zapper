@@ -65,7 +65,8 @@ describe("runtime adapters", () => {
         ZAPPER_PM2_JS:
           "C:\\Users\\me\\AppData\\Roaming\\npm\\node_modules\\pm2\\bin\\pm2",
       },
-      execFileSync,
+      execFileSync:
+        execFileSync as unknown as typeof import("child_process").execFileSync,
     });
 
     expect(runtime.command).toBe("/mnt/c/Program Files/nodejs/node.exe");

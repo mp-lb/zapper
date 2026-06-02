@@ -2,7 +2,7 @@ import { TaskCommand } from "./TaskCommand";
 import { Zapper } from "../core/Zapper";
 import { TaskNotFoundError } from "../errors";
 import { vi, describe, it, expect } from "vitest";
-import { Context } from "../types";
+import { Context } from "../types/index";
 
 describe("TaskCommand", () => {
   it("throws TaskNotFoundError when listing params for an unknown task", async () => {

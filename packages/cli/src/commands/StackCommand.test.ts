@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { Zapper } from "../core/Zapper";
-import { Context } from "../types";
+import { Context } from "../types/index";
 import { StackCommand } from "./StackCommand";
 
 describe("StackCommand", () => {

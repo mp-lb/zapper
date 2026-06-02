@@ -3,7 +3,7 @@ import { getStatus } from "./getStatus";
 import { Pm2Manager } from "./process";
 import { DockerManager } from "./docker";
 import { Context } from "../types/Context";
-import { ProcessInfo } from "../types";
+import { ProcessInfo } from "../types/index";
 import type { DockerContainer } from "./docker";
 
 // Mock external dependencies
@@ -490,7 +490,7 @@ describe("getStatus", () => {
     });
 
     it("should return down when Docker container is absent", async () => {
-      const context = createMockContext("test", "dev"); // Set active profile so database is enabled
+      const context = createMockContext("test");
 
       // Mock getContainerInfo for each container in order: database, cache, analytics
       mockDockerManager.getContainerInfo
@@ -507,7 +507,7 @@ describe("getStatus", () => {
     });
 
     it("should compute status from container info only", async () => {
-      const context = createMockContext("test", "dev"); // Set active profile so database is enabled
+      const context = createMockContext("test");
 
       // Mock getContainerInfo for each container in order: database, cache, analytics
       mockDockerManager.getContainerInfo
@@ -583,7 +583,7 @@ describe("getStatus", () => {
     });
 
     it("should handle Docker containers with profile filtering", async () => {
-      const context = createMockContext("test", "prod");
+      const context = createMockContext("test");
 
       mockDockerManager.getContainerInfo
         .mockResolvedValueOnce(
@@ -689,7 +689,6 @@ describe("getStatus", () => {
 
     it("should handle empty service state gracefully", async () => {
       const context = createMockContext("test");
-      context.state.services = undefined;
 
       mockDockerManager.getContainerInfo.mockResolvedValue(null);
 

@@ -3,7 +3,18 @@ import { mkdtempSync, rmSync, writeFileSync } from "fs";
 import path from "path";
 import { tmpdir } from "os";
 import { ValidateCommand } from "./ValidateCommand";
+import type { CommandResult } from "./CommandResult";
 import type { Zapper } from "../core/Zapper";
+
+function asValidate(
+  result: CommandResult,
+): Extract<CommandResult, { kind: "validate" }> {
+  if (result.kind !== "validate") {
+    throw new Error(`expected validate result, got ${result.kind}`);
+  }
+
+  return result;
+}
 
 describe("ValidateCommand", () => {
   let testDir: string;
@@ -27,10 +38,12 @@ native:
 `,
     );
 
-    const result = await new ValidateCommand().execute({
-      zapper: {} as Zapper,
-      options: { config: configPath },
-    });
+    const result = asValidate(
+      await new ValidateCommand().execute({
+        zapper: {} as Zapper,
+        options: { config: configPath },
+      }),
+    );
 
     expect(result).toEqual({
       kind: "validate",
@@ -51,10 +64,12 @@ unexpected_key: true
 `,
     );
 
-    const result = await new ValidateCommand().execute({
-      zapper: {} as Zapper,
-      options: { config: configPath },
-    });
+    const result = asValidate(
+      await new ValidateCommand().execute({
+        zapper: {} as Zapper,
+        options: { config: configPath },
+      }),
+    );
 
     expect(result.kind).toBe("validate");
     expect(result.valid).toBe(false);

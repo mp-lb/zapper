@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { ProjectKillTargets, Zapper } from "./Zapper";
 import { Planner } from "./Planner";
+import { ActionPlan } from "../types";
 import { executeActions } from "./executeActions";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
@@ -39,10 +40,6 @@ vi.mock("../config/yamlParser");
 
 const mockPlanner = vi.mocked(Planner);
 const mockExecuteActions = vi.mocked(executeActions);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _mockPm2Manager = vi.mocked(Pm2Manager);
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _mockDockerManager = vi.mocked(DockerManager);
 const mockResolveInstance = vi.mocked(resolveInstance);
 const mockCreateInstance = vi.mocked(createInstance);
 const mockValidateInstanceKey = vi.mocked(validateInstanceKey);
@@ -89,7 +86,7 @@ describe("Zapper", () => {
     }
   });
 
-  function createTempConfig(config: object, filename = "zap.yaml"): string {
+  function createTempConfig(_config: object, filename = "zap.yaml"): string {
     const configPath = path.join(tempDir, filename);
 
     const yamlContent = `project: test-project
@@ -338,9 +335,12 @@ native:
     contextRequiredMethods.forEach(({ name, args }) => {
       it(`should throw ContextNotLoadedError when ${name} called before loadConfig`, async () => {
         await expect(
-          (zapper as Record<string, (...args: unknown[]) => Promise<unknown>>)[
-            name
-          ](...args),
+          (
+            zapper as unknown as Record<
+              string,
+              (...args: unknown[]) => Promise<unknown>
+            >
+          )[name](...args),
         ).rejects.toThrow(ContextNotLoadedError);
       });
     });
@@ -388,8 +388,8 @@ native:
   });
 
   describe("orchestration methods", () => {
-    let mockPlannerInstance: { getPlan: () => unknown };
-    let mockPlan: unknown;
+    let mockPlannerInstance: { plan: ReturnType<typeof vi.fn> };
+    let mockPlan: ActionPlan;
 
     beforeEach(async () => {
       const configPath = createTempConfig({});
@@ -418,7 +418,11 @@ native:
         return mockPlannerInstance;
       });
 
-      mockExecuteActions.mockResolvedValue(undefined);
+      mockExecuteActions.mockResolvedValue({
+        started: [],
+        stopped: [],
+        failed: [],
+      });
     });
 
     describe("startProcesses", () => {
@@ -897,7 +901,11 @@ native:
         return mockPlannerInstance;
       });
 
-      mockExecuteActions.mockResolvedValue(undefined);
+      mockExecuteActions.mockResolvedValue({
+        started: [],
+        stopped: [],
+        failed: [],
+      });
 
       // Start processes
       await zapper.startProcesses(["api"]);

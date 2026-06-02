@@ -229,6 +229,7 @@ describe("renderer", () => {
           type: "native",
           service: "api",
           status: "up",
+          enabled: true,
           ports: ["API_PORT=3001"],
           volumes: [],
           cwd: "./apps/api",

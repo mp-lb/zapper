@@ -18,7 +18,9 @@ describe("createContext", () => {
 
     // Mock stateLoader.loadState
     mockLoadState = vi.fn();
-    vi.spyOn(stateLoader, "loadState").mockImplementation(mockLoadState);
+    vi.spyOn(stateLoader, "loadState").mockImplementation(
+      mockLoadState as unknown as typeof stateLoader.loadState,
+    );
   });
 
   afterEach(() => {
@@ -474,8 +476,8 @@ describe("createContext", () => {
       const config: ZapperConfig = {
         project: "test-project",
         tasks: {
-          build: { cmd: "npm run build" },
-          test: { cmd: "npm test", desc: "Run tests" },
+          build: { cmds: ["npm run build"] },
+          test: { cmds: ["npm test"], desc: "Run tests" },
         },
       };
 
@@ -488,12 +490,12 @@ describe("createContext", () => {
       expect(result.tasks).toHaveLength(2);
       expect(result.tasks).toContainEqual({
         name: "build",
-        cmd: "npm run build",
+        cmds: ["npm run build"],
       });
 
       expect(result.tasks).toContainEqual({
         name: "test",
-        cmd: "npm test",
+        cmds: ["npm test"],
         desc: "Run tests",
       });
     });
@@ -660,9 +662,6 @@ describe("createContext", () => {
     it("should load state from stateLoader", () => {
       const mockState: ZapperState = {
         lastUpdated: "2024-01-01T00:00:00.000Z",
-        services: {
-          api: { status: "running", pid: 1234 },
-        },
       };
 
       const config: ZapperConfig = {
@@ -841,7 +840,7 @@ describe("createContext", () => {
           postgres: { image: "postgres:13" },
         },
         tasks: {
-          build: { cmd: "npm run build" },
+          build: { cmds: ["npm run build"] },
         },
         homepage: "http://localhost:3000",
         notes: "Run migrations after startup",

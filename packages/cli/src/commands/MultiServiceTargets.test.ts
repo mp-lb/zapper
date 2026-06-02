@@ -140,6 +140,7 @@ describe("Multi-service command targets", () => {
     const zapperContext: Context = {
       projectName: "test",
       projectRoot: "/tmp/test",
+      instanceKey: "default",
       envFiles: [],
       environments: [],
       processes: [],
@@ -180,6 +181,7 @@ describe("Multi-service command targets", () => {
     const zapperContext: Context = {
       projectName: "test",
       projectRoot: "/tmp/test",
+      instanceKey: "default",
       envFiles: [],
       environments: [],
       processes: [],

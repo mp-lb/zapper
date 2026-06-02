@@ -3,7 +3,8 @@ import { Planner } from "./Planner";
 import { Pm2Manager } from "./process/Pm2Manager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
-import { ProcessInfo, Action, ActionPlan } from "../types";
+import { Action, ActionPlan } from "../types";
+import { ProcessInfo } from "../types/index";
 
 vi.mock("./process/Pm2Manager");
 vi.mock("./docker");

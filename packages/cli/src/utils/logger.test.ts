@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Logger, LogLevel } from "./logger";
+import { Logger, LogLevel, type LoggerSink } from "./logger";
 
 describe("Logger", () => {
   let logger: Logger;
@@ -19,7 +19,7 @@ describe("Logger", () => {
       error: vi.fn(),
     };
 
-    logger.setSink(consoleSpy);
+    logger.setSink(consoleSpy as LoggerSink);
   });
 
   it("should log info messages by default", () => {
