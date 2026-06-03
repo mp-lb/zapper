@@ -28,7 +28,7 @@ ports: [FRONTEND_PORT, BACKEND_PORT, MY_PORT]
 ```
 native:
   my-service:
-    cmd: pnpm --filter=@maplab-oss/my-service dev
+    cmd: pnpm --filter=@mp-lb/my-service dev
 ```
 
 **Docker service:**

@@ -20,9 +20,9 @@ This purity means packages work correctly whether imported by the frontend (for 
 
 Two packages form the base layer that all modules build on:
 
-**`@maplab-oss/helloworld-core`** — Browser-safe, environment-agnostic code. Types, constants, schemas, pure functions. Safe to import anywhere including frontend.
+**`@mp-lb/helloworld-core`** — Browser-safe, environment-agnostic code. Types, constants, schemas, pure functions. Safe to import anywhere including frontend.
 
-**`@maplab-oss/helloworld-server`** — Node.js-only infrastructure. The tRPC `t` instance, logger (pino), database clients. Only imported by backend code.
+**`@mp-lb/helloworld-server`** — Node.js-only infrastructure. The tRPC `t` instance, logger (pino), database clients. Only imported by backend code.
 
 These foundational packages provide the shared infrastructure that modules plug into. A module imports types from `core` and the `TRPCInstance` type from `server`, then exports a router factory function that the backend calls.
 
@@ -48,7 +48,7 @@ The module exports a factory function that creates its router:
 
 ```typescript
 // packages/customers/src/server.ts
-import type { TRPCInstance } from "@maplab-oss/helloworld-server";
+import type { TRPCInstance } from "@mp-lb/helloworld-server";
 import { getCustomer } from "./procedures/getCustomer";
 import { createCustomer } from "./procedures/createCustomer";
 
@@ -59,7 +59,7 @@ export const createCustomersRouter = (t: TRPCInstance) =>
   });
 ```
 
-This template repo is too small to have multiple modules—there's just `@maplab-oss/helloworld-trpc` with a single `helloWorld` procedure. But as the application grows, you'd split it into domain-specific modules like `customers`, `orders`, `billing`, etc.
+This template repo is too small to have multiple modules—there's just `@mp-lb/helloworld-trpc` with a single `helloWorld` procedure. But as the application grows, you'd split it into domain-specific modules like `customers`, `orders`, `billing`, etc.
 
 ## tRPC Dependency Injection
 
@@ -75,7 +75,7 @@ export const getCustomer = (t: TRPCInstance) =>
     });
 ```
 
-**Why?** If a package imports `t` directly from `@maplab-oss/helloworld-server`, it pulls in all of `server`'s dependencies (pino, database drivers, etc.). When the frontend imports types from that package, the bundler tries to include server-only code and fails. By accepting `t` as a parameter, the package stays pure—it only depends on the `TRPCInstance` type, not the actual implementation.
+**Why?** If a package imports `t` directly from `@mp-lb/helloworld-server`, it pulls in all of `server`'s dependencies (pino, database drivers, etc.). When the frontend imports types from that package, the bundler tries to include server-only code and fails. By accepting `t` as a parameter, the package stays pure—it only depends on the `TRPCInstance` type, not the actual implementation.
 
 ## Backend Composition
 
@@ -83,10 +83,10 @@ The backend is where everything comes together. It imports `t` from `server`, cr
 
 ```typescript
 // apps/backend/src/router.ts
-import { t } from "@maplab-oss/helloworld-server";
-import { createCustomersRouter } from "@maplab-oss/customers";
-import { createOrdersRouter } from "@maplab-oss/orders";
-import { createBillingRouter } from "@maplab-oss/billing";
+import { t } from "@mp-lb/helloworld-server";
+import { createCustomersRouter } from "@mp-lb/customers";
+import { createOrdersRouter } from "@mp-lb/orders";
+import { createBillingRouter } from "@mp-lb/billing";
 
 export const appRouter = t.router({
   customers: createCustomersRouter(t),
@@ -113,7 +113,7 @@ The module code doesn't change—it's the same `createBillingRouter` function, j
 The frontend imports only types—no runtime server code:
 
 ```typescript
-import type { AppRouter } from "@maplab-oss/helloworld-trpc";
+import type { AppRouter } from "@mp-lb/helloworld-trpc";
 
 export const trpc = createTRPCProxyClient<AppRouter>({
   links: [httpBatchLink({ url: `${baseUrl}/trpc` })],

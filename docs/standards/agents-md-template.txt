@@ -94,8 +94,8 @@ You are expected to check logs, check which services are running, update env var
 
 The critical validation boundary is at the tRPC procedure level, tRPC procedure level integration tests are absolutely crucial. Continuously make sure that there are enough procedure tests, that they are well organised, and that desired behaviour is clear and logical. When in doubt, flag concerns with the developer.
 
-- For every change, run `zap t check -- foo.ts bar.ts` to run linting and typechecking on all touched files
-- For meaningful behaviour changes run `zap t test` to run tests
-- For system level changes run `zap t build` to check that all the builds still succeed
+- For every change, run `zap task check -- foo.ts bar.ts` to run linting and typechecking on all touched files
+- For meaningful behaviour changes run `zap task test` to run tests
+- For system level changes run `zap task build` to check that all the builds still succeed
 
 @AGENTS.local.md

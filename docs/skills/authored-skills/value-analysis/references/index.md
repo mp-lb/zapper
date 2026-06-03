@@ -28,15 +28,19 @@ Required YAML frontmatter for every generated document:
 
 `README.md` must have this frontmatter too.
 
+Put the opening `---` on its own first line.
+Put each YAML key on its own line.
+Put the closing `---` on its own line after `inputs`.
+Do not put Markdown headings or document body content inside the frontmatter.
+
 ```yaml
 ---
 question: ""
 inputs: []
-outputs: []
 ---
 ```
 
-Use relative document filenames in `inputs` and `outputs`.
+Use relative document filenames in `inputs`.
 
 Keep documents small:
 

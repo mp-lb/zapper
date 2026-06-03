@@ -1,1157 +1,5 @@
 {
   "files": {
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_core.js": {
-      "storageClass": "text",
-      "hash": "sha256:3038c3c37258c370e26b52e6ddb5ef7f03ccc4cb72242768c873d0490eacebe0",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "eb18b085-54ba-489d-97f6-b124e72c5b24",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_core.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:21.951Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_core.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "a7f325e5-460d-4235-90ad-a27b678b35bf",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_core.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:20.860Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_integrations_useFocusTrap.js": {
-      "storageClass": "text",
-      "hash": "sha256:2cba100f71d2b07c220bd33bdec0721528f991cd1782ec44222806e413ac478d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "c1cf4684-4b08-4d20-a016-fb265e3f96b4",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_integrations_useFocusTrap.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:21.034Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_integrations_useFocusTrap.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:13f2e3cefe8cda09bc5ab6ee511a80bd5b20136f9f5ca7ec13437cfb0792cc22",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "9c55c8eb-5587-4d51-8efe-4b3f90cbb5d0",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___@vueuse_integrations_useFocusTrap.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:25:35.451Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___mark__js_src_vanilla__js.js": {
-      "storageClass": "text",
-      "hash": "sha256:9279fc54d55b6f36e39bbefae53ffce311c25c634faf5aa312b02789f686ede4",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "7eba5cb1-8c2d-4b10-b12f-b895ac29423c",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___mark__js_src_vanilla__js.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:22.776Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___mark__js_src_vanilla__js.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:c64f76775eb6e19ee8e6cd08921303150db185338fd4ffd8f3a9583c33e51f23",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "37bce320-2969-4e3f-9f6b-8e428d1e4063",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___mark__js_src_vanilla__js.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:23.190Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___minisearch.js": {
-      "storageClass": "text",
-      "hash": "sha256:abe43722bb86876695b228717ce9e073c0f7dd5a52a41b2937155ba0ec21ddea",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "937cb017-8df3-46ff-9d2b-e98cb1d31c56",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___minisearch.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:22.918Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vitepress___minisearch.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:54f1dce6b0e554199cf866656d304329bbd2b68c63c018770c18178893ba4fd6",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "bdbc22e5-e697-4d95-b287-1174ae2a7e1d",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vitepress___minisearch.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:21.760Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vue.js": {
-      "storageClass": "text",
-      "hash": "sha256:8124e48d40995595617b86824e9b5cf950d7bad4113bdd0f00715a29eaa3c56f",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "6e19cac1-080c-47e2-ae9a-acc688d58785",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vue.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:23.085Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_2608ebb1/vue.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "3844444a-c91e-4b8c-b37e-f0f78d8fda20",
-      "remotePath": "/.vitepress/cache/deps_temp_2608ebb1/vue.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:23.653Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_core.js": {
-      "storageClass": "text",
-      "hash": "sha256:3038c3c37258c370e26b52e6ddb5ef7f03ccc4cb72242768c873d0490eacebe0",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "8171dd22-5c19-41ab-b507-46d8bd74138e",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_core.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:24.285Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_core.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "bd4b4d19-74c1-4a8f-8a5f-1faf1c40010c",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_core.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:25.834Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_integrations_useFocusTrap.js": {
-      "storageClass": "text",
-      "hash": "sha256:2cba100f71d2b07c220bd33bdec0721528f991cd1782ec44222806e413ac478d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "56a85e01-ebc8-43c0-93b0-d7ac85dbce7c",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_integrations_useFocusTrap.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:24.945Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_integrations_useFocusTrap.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:13f2e3cefe8cda09bc5ab6ee511a80bd5b20136f9f5ca7ec13437cfb0792cc22",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "65ca89ca-ff65-41ac-80f3-289f015d03a5",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___@vueuse_integrations_useFocusTrap.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:26.851Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___mark__js_src_vanilla__js.js": {
-      "storageClass": "text",
-      "hash": "sha256:9279fc54d55b6f36e39bbefae53ffce311c25c634faf5aa312b02789f686ede4",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "390fc875-4f3d-4bc2-ac16-fdf0fd503352",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___mark__js_src_vanilla__js.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:24.788Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___mark__js_src_vanilla__js.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:c64f76775eb6e19ee8e6cd08921303150db185338fd4ffd8f3a9583c33e51f23",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "832c9a70-e718-4eb4-ad11-25c4edd80c4c",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___mark__js_src_vanilla__js.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:26:26.741Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___minisearch.js": {
-      "storageClass": "text",
-      "hash": "sha256:abe43722bb86876695b228717ce9e073c0f7dd5a52a41b2937155ba0ec21ddea",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "045fbc55-8412-4065-8283-2fe1a610ce0f",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___minisearch.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:37.666Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vitepress___minisearch.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:54f1dce6b0e554199cf866656d304329bbd2b68c63c018770c18178893ba4fd6",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "b0dea768-0432-4548-a1e3-c299225c0e51",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vitepress___minisearch.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:25:38.688Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vue.js": {
-      "storageClass": "text",
-      "hash": "sha256:8124e48d40995595617b86824e9b5cf950d7bad4113bdd0f00715a29eaa3c56f",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "69187952-c54d-4820-be8e-0ee31550c380",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vue.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:39.483Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/cache/deps_temp_6e81e7a5/vue.js.map": {
-      "storageClass": "text",
-      "hash": "sha256:ed562b0bba7ee7214e56ac7f728054b3496bec4597c94a4eb7b4179e6f5cb1c9",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "fe533e49-b051-4506-b90c-dfc532a7ed3e",
-      "remotePath": "/.vitepress/cache/deps_temp_6e81e7a5/vue.js.map",
-      "remoteUpdatedAt": "2026-05-29T18:25:39.387Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/config.ts": {
-      "storageClass": "text",
-      "hash": "sha256:123c682733bf456bef47e6be785fd2672206d10abf95260bcd98ea2288c743dc",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "ae4f1e26-c21b-43a7-b77d-26289945a956",
-      "remotePath": "/.vitepress/config.ts",
-      "remoteUpdatedAt": "2026-05-31T12:53:43.384Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/404.html": {
-      "storageClass": "text",
-      "hash": "sha256:1361d8af5a83670ffe5058ff764cec738380eeb53b5714f36b5d50dfd149c890",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "126e1a90-ff2c-4149-a231-ec6562e05251",
-      "remotePath": "/.vitepress/dist/404.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:43.583Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/assets/app.CVeonNRL.js": {
-      "storageClass": "text",
-      "hash": "sha256:ab182f66f6c0bc4dacbe552dd961735183e3412ad15575dc4c543af764951a11",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "d1bfccec-2d7e-429c-8f4e-8f5af294cf63",
-      "remotePath": "/.vitepress/dist/assets/app.CVeonNRL.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:26.462Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/app.DRKSjt6t.js": {
-      "storageClass": "text",
-      "hash": "sha256:e5fa8ad88953b78e7ee720172f9d7d0732b76ca70164eb1855447993ae281535",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "3f0e9843-292c-4dde-b088-990131a3dab7",
-      "remotePath": "/.vitepress/dist/assets/app.DRKSjt6t.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:44.950Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/@localSearchIndexroot.CgAytcM2.js": {
-      "storageClass": "text",
-      "hash": "sha256:b7672a64d0c7a86e440a55b0965bb1e2f79742352b84d87e042da65550c5cd62",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "a233b5a0-1cfd-4516-9738-6a942f621064",
-      "remotePath": "/.vitepress/dist/assets/chunks/@localSearchIndexroot.CgAytcM2.js",
-      "remoteUpdatedAt": "2026-05-29T18:27:10.832Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/@localSearchIndexroot.Coh4joQT.js": {
-      "storageClass": "text",
-      "hash": "sha256:96849e2f51fd3c384ae1ca1564b57fec3c10bb0c420c2188ca2ffb9a9920fadb",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "a0ca3026-f5c4-42d6-b34d-2845f8821d8b",
-      "remotePath": "/.vitepress/dist/assets/chunks/@localSearchIndexroot.Coh4joQT.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:45.415Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/VPLocalSearchBox.Cluil3o0.js": {
-      "storageClass": "text",
-      "hash": "sha256:9f57e8c2bfc56dcb3091e685fb3aeaf1072731842cee5f5f786077364676efa5",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "18c68d14-bbf4-4b20-836e-f9aa941a373d",
-      "remotePath": "/.vitepress/dist/assets/chunks/VPLocalSearchBox.Cluil3o0.js",
-      "remoteUpdatedAt": "2026-05-29T18:27:11.040Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/VPLocalSearchBox.T1HhOXDW.js": {
-      "storageClass": "text",
-      "hash": "sha256:223e0427ca38b30466f965f282bc14008e9a696ba4b3bb8c4625905467d40364",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "be9c0ebf-272e-4bd1-b835-79de3790aa57",
-      "remotePath": "/.vitepress/dist/assets/chunks/VPLocalSearchBox.T1HhOXDW.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:45.679Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/framework.C2CU8UUG.js": {
-      "storageClass": "text",
-      "hash": "sha256:21291e87f6c925a2f768d1f13d13857a9647bb96b1387557a4ce69ffbd4ada6b",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "d309c2b5-d92b-44bf-afee-1542218a6612",
-      "remotePath": "/.vitepress/dist/assets/chunks/framework.C2CU8UUG.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:27.102Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/theme.DI_4WxnL.js": {
-      "storageClass": "text",
-      "hash": "sha256:2f6deb3058ac201dcccf3555395af7704987d7f4fd7ccdf894fccc3c5337530c",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "d761d66d-eab6-4b85-b21c-fd50d141a340",
-      "remotePath": "/.vitepress/dist/assets/chunks/theme.DI_4WxnL.js",
-      "remoteUpdatedAt": "2026-05-29T18:27:10.593Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/chunks/theme.X94enaQF.js": {
-      "storageClass": "text",
-      "hash": "sha256:febfe43261ccfb6aef76f1657b85cfb75ba04015601d8fe01aa1b5e6fa0ec496",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "42895a90-8eda-4b1c-8c2f-345188a44ddb",
-      "remotePath": "/.vitepress/dist/assets/chunks/theme.X94enaQF.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:45.823Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/cli-development.md.D57PpPLW.js": {
-      "storageClass": "text",
-      "hash": "sha256:bf1300dd5fe6d49bbcb25384b1f2b66f1e2bedb5a4a03599881573fa1a305ee7",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "f71154d1-1360-4861-8870-59d0741e3817",
-      "remotePath": "/.vitepress/dist/assets/cli-development.md.D57PpPLW.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:27.229Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/cli-development.md.D57PpPLW.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:42efa0d48cf0ed4de06549cff541e83c893ec10092676f94336f10c09b1e93f3",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "101d6076-4a2b-4e08-9628-84665fb8061f",
-      "remotePath": "/.vitepress/dist/assets/cli-development.md.D57PpPLW.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:27.516Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/cli-development.md.DJJXALJm.js": {
-      "storageClass": "text",
-      "hash": "sha256:2fb2cd6af6f064e2795a9a9cda679a889eb6366e08a78116bd8ea3d54e79d369",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "83135bb9-1699-48fd-b4d4-683d744b73c6",
-      "remotePath": "/.vitepress/dist/assets/cli-development.md.DJJXALJm.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:44.673Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/cli-development.md.DJJXALJm.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:3b0307cd45267d3966294d2c9a2ba29c511f34edebf75d4db9270ff6694298a2",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "3d2ed7ed-7239-437d-9a6a-ca787799296b",
-      "remotePath": "/.vitepress/dist/assets/cli-development.md.DJJXALJm.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:46.392Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/commands.md.B_GaRriB.js": {
-      "storageClass": "text",
-      "hash": "sha256:5cceb13313822e4ee9db306b18c4909f08922d3eb6489dc8dc8d97bb2eb869da",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "32cddf2b-20fe-4e9b-ba89-61e754cbced8",
-      "remotePath": "/.vitepress/dist/assets/commands.md.B_GaRriB.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:27.806Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/commands.md.B_GaRriB.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:3a28e29e8ec4f6d7d24e965285207a353730cc939aff01fbf25e0c8eaf479229",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "b5e527c4-2ee6-4013-9497-b35b2ed95fc2",
-      "remotePath": "/.vitepress/dist/assets/commands.md.B_GaRriB.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:40.632Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/commands.md.DCrTmKFo.js": {
-      "storageClass": "text",
-      "hash": "sha256:acb5e29427320b0316991db46a32b4475c06ca9840cfc7736160b9fa97236bdf",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "90fb2072-401a-42cd-8aee-385b6b8f9928",
-      "remotePath": "/.vitepress/dist/assets/commands.md.DCrTmKFo.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:47.690Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/commands.md.DCrTmKFo.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:570a75eba6c13c62ee8e571c86bb26287afa776634f4adff853de3cfe9094ba2",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "f26b074e-bf3e-49bd-b854-da36669cb707",
-      "remotePath": "/.vitepress/dist/assets/commands.md.DCrTmKFo.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:47.891Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/compose-study.md.CldCL1BC.js": {
-      "storageClass": "text",
-      "hash": "sha256:522dbcb6351a22ccc9ee7c31c4fff9abb46e2619efcbc35f0379a2cb10a4186c",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "a4bef57f-db1e-4649-bb76-1e8a890ae315",
-      "remotePath": "/.vitepress/dist/assets/compose-study.md.CldCL1BC.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:27.927Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/compose-study.md.CldCL1BC.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:00656509c9fee3171cf66647fef849d2444ca558d314eb5e3e8755180644a85c",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "1d3abf2b-3ead-4eae-8684-121d0d425113",
-      "remotePath": "/.vitepress/dist/assets/compose-study.md.CldCL1BC.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:41.886Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/configuration.md.B7dI3S9q.js": {
-      "storageClass": "text",
-      "hash": "sha256:19141d16891a30d58523723d7199dd4da799077f876aa22910d7cc4815565f20",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "5173d4f8-15f9-4012-aa10-394dc3240e8d",
-      "remotePath": "/.vitepress/dist/assets/configuration.md.B7dI3S9q.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:43.730Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/configuration.md.B7dI3S9q.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:4a0766bd71b7d2749eebd94cc18ac736848c539427cdff18bee38dd97143aafa",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "4b9418a4-6585-4874-a000-539010f78fea",
-      "remotePath": "/.vitepress/dist/assets/configuration.md.B7dI3S9q.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:42.905Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/env-var-mgmt.md.BSVYQsSh.js": {
-      "storageClass": "text",
-      "hash": "sha256:1e035e36e2db55a685954e7f0126a52dbf48ae99bfebbdd18bf94ab98fb3f0ba",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "08bdd0ba-e812-44d7-b8e1-f4426944b8b0",
-      "remotePath": "/.vitepress/dist/assets/env-var-mgmt.md.BSVYQsSh.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:42.674Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/env-var-mgmt.md.BSVYQsSh.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:5cf160d7b93f6c2078b9f6bc9f8e0a66f65930a61e75835b4ad9928940ca16dd",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "c45acd27-8c20-4ad4-b4a8-7cea759bb393",
-      "remotePath": "/.vitepress/dist/assets/env-var-mgmt.md.BSVYQsSh.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:42.789Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/global-registry.md.DXdCkRJm.js": {
-      "storageClass": "text",
-      "hash": "sha256:3f50f870d43634be3ef3ce7ea588515836ebec0f0fd4c77ead42e480ded1034a",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "d312615f-0221-4108-b7e4-bdb869a5b5ad",
-      "remotePath": "/.vitepress/dist/assets/global-registry.md.DXdCkRJm.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:43.629Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/global-registry.md.DXdCkRJm.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:f1d7397fc98ab2ba7e97b22b6e447261bf6ef3cc7d8e35931229664114386362",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "278ac013-fb29-4288-b4f8-0863f73d9b89",
-      "remotePath": "/.vitepress/dist/assets/global-registry.md.DXdCkRJm.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:41.734Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/global-registry.md.luIuDAMi.js": {
-      "storageClass": "text",
-      "hash": "sha256:947aee807ce62d9a8c25b397f958dd4844f9b71632a46b1f9fddb247705047ef",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "9a5158d0-0556-4ffb-b796-c92da550dc79",
-      "remotePath": "/.vitepress/dist/assets/global-registry.md.luIuDAMi.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:49.497Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/global-registry.md.luIuDAMi.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:f867d7d891f3e71eadce1359af50079d7fab4eff4e79acc6953023bdaffebe04",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "1e5b562f-e871-4e0a-a81e-a08d400055ee",
-      "remotePath": "/.vitepress/dist/assets/global-registry.md.luIuDAMi.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:50.060Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/healthchecks.md.B6EDzBJV.js": {
-      "storageClass": "text",
-      "hash": "sha256:552ee94bb210bb429471241e3436b38a0935c5e5e0fe940f343955e872c19955",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "f95a8438-8342-448f-be5e-da24b0877f85",
-      "remotePath": "/.vitepress/dist/assets/healthchecks.md.B6EDzBJV.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:43.877Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/healthchecks.md.B6EDzBJV.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:2cc7db34983adc2cbf183950c47b2081182d5dfd50f01dccf1f1830f939e7052",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "2bab9167-b8cf-4b79-876b-ea655d6f5e15",
-      "remotePath": "/.vitepress/dist/assets/healthchecks.md.B6EDzBJV.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:45.093Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/index.md.Bdw6vGEA.js": {
-      "storageClass": "text",
-      "hash": "sha256:1559a3d0c957444edb7b81bbe34695dcbd2a03a4e9519ff69c3a5185eb0251a4",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "874294e9-cb18-49c6-811f-7a3b7cae85f3",
-      "remotePath": "/.vitepress/dist/assets/index.md.Bdw6vGEA.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:44.772Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/index.md.Bdw6vGEA.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:10efe9bd0bd4fdcee26074d0d86a22b26d5f3dc3b4f824fd5480ac5e3472f6e1",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "faa142e4-11b1-467d-8782-30498a51258d",
-      "remotePath": "/.vitepress/dist/assets/index.md.Bdw6vGEA.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:44.613Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/instances.md.JbLMshr7.js": {
-      "storageClass": "text",
-      "hash": "sha256:d14ae132a985246c4ecef47770d29e48467f2c05dff9d2456911840c99956ff6",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "c59ca835-33bc-4a31-9db7-b101a3cc5764",
-      "remotePath": "/.vitepress/dist/assets/instances.md.JbLMshr7.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:44.883Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/instances.md.JbLMshr7.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:38972ea0604718f37401e932275826ae0c5fed80e579b43507d6970071b74cac",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "4b1f1a4d-5700-4ffd-9dae-f02c7cfa92c8",
-      "remotePath": "/.vitepress/dist/assets/instances.md.JbLMshr7.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:25:44.982Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-cyrillic-ext.r48I6akx.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:3f2ea09e148441f83171eae388d00da780b24b9bd155c141d0b5fbb0d803871d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "075c1f38-d77a-4fc1-b1bd-83a30182e66f",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-cyrillic-ext.r48I6akx.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:25:46.969Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-cyrillic.By2_1cv3.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:2a1c3126375078cd85d262aad635ac9d9ff9ac2c18b8143b2d21d540f9cd3dfb",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "acfc65c4-ac02-4f44-8470-03dd7d9f2256",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-cyrillic.By2_1cv3.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:25:46.841Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-greek-ext.1u6EdAuj.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:bae39b1cc79168c9ac47f120c3eaa82cb634dc17e457cdd484725d8c7a60ab3e",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "d082389a-ead9-463c-8e93-9b8028742299",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-greek-ext.1u6EdAuj.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:25:46.742Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-greek.DJ8dCoTZ.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:138cf731e5a284e262c576f765a6cb8f58045cb798d16693091e2251a0f63559",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "8cce5117-6684-4f7d-8cb8-3c007c4f4098",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-greek.DJ8dCoTZ.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:26:29.103Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-latin-ext.CN1xVJS-.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:3e166de9aeff2d6a3d13c9228e03f7ff76369f5fa95fe0ab1d1d44235d5516aa",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "ea8f31ba-99a3-4b2a-aa74-7b3afac89a22",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-latin-ext.CN1xVJS-.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:26:29.759Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-latin.C2AdPX0b.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:3570e65005ccd9ecd87c6ccc7c713fc474a80ff7c3abbb1063f0e8ab4f8dc891",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "a67d7c75-5ac6-4d1a-865c-0aed34da2361",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-latin.C2AdPX0b.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:26:29.900Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-italic-vietnamese.BSbpV94h.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:a0aae13c473b99b63f3c0b8b692b3b2a4023145171aa86964f268235573e4ce5",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "729b179a-67df-4379-8aef-2ef89db0a575",
-      "remotePath": "/.vitepress/dist/assets/inter-italic-vietnamese.BSbpV94h.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:26:33.137Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-cyrillic-ext.BBPuwvHQ.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:a49e47fb34f94acf8ceb57603cb2fc4c01861527a9a304de3a0236b7b67da2c6",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "87399d31-1dae-4116-abcb-fac7fa5900bd",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-cyrillic-ext.BBPuwvHQ.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:26:33.864Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-cyrillic.C5lxZ8CY.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:d888610b6342164a592e59a4ce91a3755126a6ca2ee4e0d75c8e915eebaeed68",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
-      "remoteFileId": "0389a31f-2752-490f-9f95-3e0820979aa1",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-cyrillic.C5lxZ8CY.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:13.166Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-greek-ext.CqjqNYQ-.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:7b7519f21aff6b3a011099999cec8a9d4c99173a8c9adeecffb0bd032fc49f69",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
-      "remoteFileId": "062f07cb-adc3-49c5-bca0-188894840ee3",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-greek-ext.CqjqNYQ-.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:13.823Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-greek.BBVDIX6e.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:1a1997dfdcd7a9e0d2b26944b4b7fd1f1b2fde91bb405cb7a5870f93b45d2e05",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
-      "remoteFileId": "596cffdb-9e36-485d-b0dc-3ea2c3d1ba3e",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-greek.BBVDIX6e.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:13.282Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-latin-ext.4ZJIpNVo.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:539d139f99942e93bead7bbcd18bc00f5a73932eb3a8997367f2b79f4f75bc60",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
-      "remoteFileId": "38aa7a1e-552e-4298-90f5-cd07e214dbfe",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-latin-ext.4ZJIpNVo.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:13.405Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-latin.Di8DUHzh.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:f7ab715caa2c78facb4334b211c81ee66f037cf9c99ca3f24acd543e84a93278",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
-      "remoteFileId": "4f1940f9-f474-4089-894c-e90afacd710f",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-latin.Di8DUHzh.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:13.528Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/inter-roman-vietnamese.BjW4sHH5.woff2": {
-      "storageClass": "binary",
-      "hash": "sha256:b315417b28ce251a54000a824d73c5af36798a88b3c05594f28dada0cbffab5a",
-      "lastSyncedAt": "2026-05-29T18:27:29.350Z",
-      "remoteFileId": "c647914d-014f-41dd-a02c-e2ffed8602e1",
-      "remotePath": "/.vitepress/dist/assets/inter-roman-vietnamese.BjW4sHH5.woff2",
-      "remoteUpdatedAt": "2026-05-29T18:27:33.652Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/landing-page-v2-copy.md.BczFrWd3.js": {
-      "storageClass": "text",
-      "hash": "sha256:000450b60454875ab3d581916054aedb354eda3304cee03a09247eb7e0b29811",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "acf02493-bfe4-470a-b8df-98ba2f179d5d",
-      "remotePath": "/.vitepress/dist/assets/landing-page-v2-copy.md.BczFrWd3.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:30.000Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/landing-page-v2-copy.md.BczFrWd3.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:29be55adc50cb0dcbe3843f7c4554a6f56283f704de8d2a5fc3c268e62fcee03",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "fb7b7de9-ad02-4a25-9ecb-6d841ddbb8db",
-      "remotePath": "/.vitepress/dist/assets/landing-page-v2-copy.md.BczFrWd3.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:34.167Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/local-runtime.md.B33zkyGL.js": {
-      "storageClass": "text",
-      "hash": "sha256:5dc65c8f1127210e149de8e026c139df17fba1877b93aed17664b7ef5709bdfe",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "4b437aaa-15d9-4f5b-9ea6-597ced18e09a",
-      "remotePath": "/.vitepress/dist/assets/local-runtime.md.B33zkyGL.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:30.107Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/local-runtime.md.B33zkyGL.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:e7266632b06343aa932a31b6892f569b73519a09260cac523a8424c1f34c13eb",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "c18d9ba0-3eca-499c-b16a-44f8b0655edd",
-      "remotePath": "/.vitepress/dist/assets/local-runtime.md.B33zkyGL.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:30.802Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/macos-development.md.CYFtBpEN.js": {
-      "storageClass": "text",
-      "hash": "sha256:4d33097467669110ce42e1d41edc2616eabde0cd39af7f47debdc6e32af7d715",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "b0eff058-322e-4272-bed9-0d9dad564f4f",
-      "remotePath": "/.vitepress/dist/assets/macos-development.md.CYFtBpEN.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:31.072Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/macos-development.md.CYFtBpEN.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:ecb66b1bcb5b475027e04212f55b88d99ad9e757f14c410e350d7b00b138f591",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "dd7eba74-5d02-4b08-9379-fb5abecf3a61",
-      "remotePath": "/.vitepress/dist/assets/macos-development.md.CYFtBpEN.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:30.952Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/macos-development.md.QO6kZCxz.js": {
-      "storageClass": "text",
-      "hash": "sha256:396e1c54e2fd8c61ab1589ff8c60f67570b563ab5e6558c3f3d80b965d4b017d",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "651ecf3c-afd0-4d22-a548-1321323aa178",
-      "remotePath": "/.vitepress/dist/assets/macos-development.md.QO6kZCxz.js",
-      "remoteUpdatedAt": "2026-05-31T12:54:07.893Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/macos-development.md.QO6kZCxz.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:548f97b2dbc6ce473447e9b00910b50832ece93bbd0e03ad5ca0d1c0d8ecb6ea",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "8cfa6466-a568-43af-81dc-fc0288f752b7",
-      "remotePath": "/.vitepress/dist/assets/macos-development.md.QO6kZCxz.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:50.643Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/output.md.DwdOEgd6.js": {
-      "storageClass": "text",
-      "hash": "sha256:ad9c4b8d3fa87afaf2dab3298279d5edff311cdebf0a213194f72afdf2361ab1",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "7bebe6b2-d996-422e-8bbc-91783ece936b",
-      "remotePath": "/.vitepress/dist/assets/output.md.DwdOEgd6.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:31.875Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/output.md.DwdOEgd6.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:59ab3212f3a4ce30012240110fb9932735929696aa28458428738f400cb08191",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "a4c4d942-6ae4-4295-8153-ad2e898778c3",
-      "remotePath": "/.vitepress/dist/assets/output.md.DwdOEgd6.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:32.094Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/profiles.md.eg_z1siE.js": {
-      "storageClass": "text",
-      "hash": "sha256:d998816fb3ec792e2a3d4df1ef025a87ca88d50249891c1aade9887d91c3cc20",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "8969b203-18c8-4ecf-a69d-5eae9fb260d4",
-      "remotePath": "/.vitepress/dist/assets/profiles.md.eg_z1siE.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:32.777Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/profiles.md.eg_z1siE.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:0560b94f8de16d912099288b7d7fe2bba0bc93f984e6051a4b5cc2c704fdfb49",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "d01cada0-325f-4624-b74a-86a30fe4b02f",
-      "remotePath": "/.vitepress/dist/assets/profiles.md.eg_z1siE.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:35.938Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/project-metadata.md.CPhP-oPq.js": {
-      "storageClass": "text",
-      "hash": "sha256:e03768493df42ddc71a1a3e50da36027e36af1eeb5e9f195b5cd52067fbcfe4c",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "7f4b1f51-f1e0-4190-94e1-cb0823bf7bae",
-      "remotePath": "/.vitepress/dist/assets/project-metadata.md.CPhP-oPq.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:33.988Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/project-metadata.md.CPhP-oPq.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:6f2d4abcf5c5d8d3de12aa4bfa12ecc63f03fcdefb18e13823f6592653868713",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "338741e5-9104-4c3f-bb50-7bc88ec0f2ca",
-      "remotePath": "/.vitepress/dist/assets/project-metadata.md.CPhP-oPq.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:34.851Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/project-roots.md.8LXSaz_O.js": {
-      "storageClass": "text",
-      "hash": "sha256:b17f137db7de81e13cb9895c40eb4a59af624e37961a5940f225f01c2f897bdd",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "c0dc16fd-4b04-40d9-9621-bc815b9fdd71",
-      "remotePath": "/.vitepress/dist/assets/project-roots.md.8LXSaz_O.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:39.810Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/project-roots.md.8LXSaz_O.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:0db0a0fad35b30ed1836ee9f725814420479316b6131a1124a2f3133bbda759d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "0fef26d4-9aa9-473f-8338-c1808b39ce1a",
-      "remotePath": "/.vitepress/dist/assets/project-roots.md.8LXSaz_O.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:40.784Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/resource-management.md.DcpznYyJ.js": {
-      "storageClass": "text",
-      "hash": "sha256:1134f48bf328779cceae80dd48821e5afc49abe0612f2ae6665b40635b732ec3",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "97be7a12-0efe-4a92-9a8a-4546683f8728",
-      "remotePath": "/.vitepress/dist/assets/resource-management.md.DcpznYyJ.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:35.769Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/resource-management.md.DcpznYyJ.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:02812e35701ddb0f60c254da9c8f832a5ac18bc8d3f7d102c4e365386b2aa089",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "653b0f65-cfe3-47c7-905d-e4ac588cd6da",
-      "remotePath": "/.vitepress/dist/assets/resource-management.md.DcpznYyJ.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:35.061Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/resource-management.md.YAJdk_Sh.js": {
-      "storageClass": "text",
-      "hash": "sha256:72755e606383424af5c162551fd35e72cd35556045decbfdc74153a8567764e2",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "47e484c6-6ffa-4219-89af-dcae49c0cccf",
-      "remotePath": "/.vitepress/dist/assets/resource-management.md.YAJdk_Sh.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:50.890Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/resource-management.md.YAJdk_Sh.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:8c77d2feea56ef577c88a2e34dac9514fd19408a27cb3646b07972c96990fbde",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "39c3cef2-a3f0-4de0-85b1-5f20be8e805c",
-      "remotePath": "/.vitepress/dist/assets/resource-management.md.YAJdk_Sh.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:51.086Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/services.md.BAKjxLzB.js": {
-      "storageClass": "text",
-      "hash": "sha256:d075a2a3b1569de53587cff392d07f76ebdf8498282ef1f8fa5b3cc9c4b525b7",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "84deb8e5-992e-4552-816c-093c0964b255",
-      "remotePath": "/.vitepress/dist/assets/services.md.BAKjxLzB.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:51.389Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/services.md.BAKjxLzB.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:2688ddc1d1a7c7097a4d80ddbfe86d4dcfe23f9487b5bd62e09ddb231b7f8794",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "699a3888-25da-4c10-8e5c-92c943252d5d",
-      "remotePath": "/.vitepress/dist/assets/services.md.BAKjxLzB.lean.js",
-      "remoteUpdatedAt": "2026-05-31T12:53:51.255Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/services.md.Ni7iIYQK.js": {
-      "storageClass": "text",
-      "hash": "sha256:8981c8f32c97b030beeba3dd62cfb9b61f91c5dfe9fd72b33739db5f40d90dd9",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "339ab239-b789-4828-8d1d-7af8df054737",
-      "remotePath": "/.vitepress/dist/assets/services.md.Ni7iIYQK.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:36.082Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/services.md.Ni7iIYQK.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:f6cd12e5d1f77f691d70987fb93ad05d95386f0a16c01832b96befb8423fe5cd",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "f779de20-a28b-444d-ae0e-b44da3060d22",
-      "remotePath": "/.vitepress/dist/assets/services.md.Ni7iIYQK.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:40.978Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/standards_secrets-file.md.Ds5FKi0R.js": {
-      "storageClass": "text",
-      "hash": "sha256:cba5256dfb9bcd8c352e338214031a6c8afc2dc3785d7cf0b1658d63669ecc21",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "1cdb8d18-28a6-4580-9358-4954fa7576c9",
-      "remotePath": "/.vitepress/dist/assets/standards_secrets-file.md.Ds5FKi0R.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:38.245Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/standards_secrets-file.md.Ds5FKi0R.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:df88c8105ee1cebe662820f156643bbb8545bc9bd24ef8f458ed98f428b2a57f",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "14c549ac-8402-4f13-995e-16c437071914",
-      "remotePath": "/.vitepress/dist/assets/standards_secrets-file.md.Ds5FKi0R.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:36.928Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/style.D3A1HHXI.css": {
-      "storageClass": "text",
-      "hash": "sha256:4029c9df20e4ca6f7d2421cf1404595add0f02b27833ad2ae14e64f2f32c9cf4",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "8c2c33af-3413-452e-8bea-648f2d26921e",
-      "remotePath": "/.vitepress/dist/assets/style.D3A1HHXI.css",
-      "remoteUpdatedAt": "2026-05-29T18:26:37.068Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/taskfile-study.md.BjrYK2fZ.js": {
-      "storageClass": "text",
-      "hash": "sha256:76ca56373ead30683aee62685c630282946ce44bd4b4747285986c896806d8d5",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "db62510f-241c-4869-86e7-c315b504038d",
-      "remotePath": "/.vitepress/dist/assets/taskfile-study.md.BjrYK2fZ.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:38.762Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/taskfile-study.md.BjrYK2fZ.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:b4f8322061f999aeffaa7885b777ba5a8cc2230d38e94545019127391db7c8d1",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "af097247-b5d3-4fb2-ac6a-6ec4197f2d8f",
-      "remotePath": "/.vitepress/dist/assets/taskfile-study.md.BjrYK2fZ.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:38.390Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/tasks.md.CYl7Xcs-.js": {
-      "storageClass": "text",
-      "hash": "sha256:41a9185379fb5be11bf0c5d2a530d2d6d97380c099618fa0adc5e3ef1818b44e",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "6a76a23a-3def-4360-bb08-9932acbdaa84",
-      "remotePath": "/.vitepress/dist/assets/tasks.md.CYl7Xcs-.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:38.888Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/tasks.md.CYl7Xcs-.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:74ad93025ec99733a10bd60497fdbae187b74c8fcfe28e599fd6dfc9bc9e8af3",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "2d4cee4b-7675-4e68-9d9e-5cd6c7aa3565",
-      "remotePath": "/.vitepress/dist/assets/tasks.md.CYl7Xcs-.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:51.070Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/x-posts.md.C_p6HuEh.js": {
-      "storageClass": "text",
-      "hash": "sha256:d7bddb7585535deae4d2ba47fd082273b5f8314d2147160ca20e7b8e22a856c9",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "4f08d223-75c5-422f-b0c3-e100c8165130",
-      "remotePath": "/.vitepress/dist/assets/x-posts.md.C_p6HuEh.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:39.037Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/assets/x-posts.md.C_p6HuEh.lean.js": {
-      "storageClass": "text",
-      "hash": "sha256:c477f17ca6627fc8ac1761369ed8ccad93f835fc05389942c51b52d8b2ea9d7a",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "9e83bb83-2461-4ef0-bbdb-04daadea8918",
-      "remotePath": "/.vitepress/dist/assets/x-posts.md.C_p6HuEh.lean.js",
-      "remoteUpdatedAt": "2026-05-29T18:26:41.132Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/cli-development.html": {
-      "storageClass": "text",
-      "hash": "sha256:aa836f2531e06a0d02a53690ce383607b16aced22c7d8f6780ac12dbe3d8a41e",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "7e2ebb89-6702-498c-8e1a-26cc969bb7b8",
-      "remotePath": "/.vitepress/dist/cli-development.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:51.684Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/commands.html": {
-      "storageClass": "text",
-      "hash": "sha256:edb77eeaaef4116b9428ba5737d8f541bf8a90708507fa9e74ed04d3e050d1d7",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "20b70716-0a88-4cf5-955b-4b011d97ca70",
-      "remotePath": "/.vitepress/dist/commands.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:51.869Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/compose-study.html": {
-      "storageClass": "text",
-      "hash": "sha256:5a569a31efc1100064614fb4f58711c78df90cba3a1145448a68de08cb071812",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "277b95ea-5ce9-43a2-b921-1f356fb7a4a7",
-      "remotePath": "/.vitepress/dist/compose-study.html",
-      "remoteUpdatedAt": "2026-05-29T18:26:44.771Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/configuration.html": {
-      "storageClass": "text",
-      "hash": "sha256:bedb1e3776ed4ff33a69f4bd028af337046a7b4eae6cb7f4d55821f91bc42c7d",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "206d53fe-7794-4663-89bc-23583b78d1ed",
-      "remotePath": "/.vitepress/dist/configuration.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:52.118Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/env-var-mgmt.html": {
-      "storageClass": "text",
-      "hash": "sha256:f194887664553d1d01ad8f7d7f465a3c157a09737c69970c95301527e41b8f67",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "9eb1e4d5-7a67-4b9c-b703-5ba99f93b350",
-      "remotePath": "/.vitepress/dist/env-var-mgmt.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:52.320Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/global-registry.html": {
-      "storageClass": "text",
-      "hash": "sha256:7ecdce94f8ea9a3db620bccda806bfe5c8b563683f795baf3c41aa72e2af81f5",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "cda12dd1-1351-4f6a-8934-74cf013e75c0",
-      "remotePath": "/.vitepress/dist/global-registry.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:52.718Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/hashmap.json": {
-      "storageClass": "text",
-      "hash": "sha256:745ad4e1f63aa3c6d52b2d7d70ac17a1d633161d7d121cd9c97e93de211e174a",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "c23a89d7-78c9-4a63-99f0-4f634329e53c",
-      "remotePath": "/.vitepress/dist/hashmap.json",
-      "remoteUpdatedAt": "2026-05-31T12:53:53.296Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/healthchecks.html": {
-      "storageClass": "text",
-      "hash": "sha256:5624b1b4c295413e942a81b5bdf4a3d715f4e546dab3fef7c59e069432b2c5cb",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "f3887269-13ba-4fdb-bb70-ff69c3379e9d",
-      "remotePath": "/.vitepress/dist/healthchecks.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:53.405Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/index.html": {
-      "storageClass": "text",
-      "hash": "sha256:99c53095dde0111a85e07206567897a71ae25ce5905ca40bcc6ba724848098b3",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "3e559657-c1e4-4c94-82a3-8efcc064f371",
-      "remotePath": "/.vitepress/dist/index.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:55.626Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/instances.html": {
-      "storageClass": "text",
-      "hash": "sha256:e57abc58b0b5e2d83963c5574c2c4ea56945ebc9d7058e927e6fb3bc7cf54a06",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "5ce0829e-5df6-4f22-8afc-60f3af34118d",
-      "remotePath": "/.vitepress/dist/instances.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:56.118Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/landing-page-v2-copy.html": {
-      "storageClass": "text",
-      "hash": "sha256:5c6bd7cc6063818eab0702e2949a9d5939374c50d3c43e91e872a73a08a42a35",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "d04b9124-8aac-4b08-ad09-7f420393600d",
-      "remotePath": "/.vitepress/dist/landing-page-v2-copy.html",
-      "remoteUpdatedAt": "2026-05-29T18:26:44.034Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/llms-full.txt": {
-      "storageClass": "text",
-      "hash": "sha256:75911f3b53d2177d6829186ef23be6fba0c065c8fabb452bcff85b2a240571ce",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "908a1436-d2ba-42e1-9cc4-f27abda297f0",
-      "remotePath": "/.vitepress/dist/llms-full.txt",
-      "remoteUpdatedAt": "2026-05-31T12:53:56.330Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/llms.txt": {
-      "storageClass": "text",
-      "hash": "sha256:2e911794318ee5ccc482cef149d941751b100d5f92553366a09003c7386da249",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "2e99b582-2471-4409-95d9-82a866871cb2",
-      "remotePath": "/.vitepress/dist/llms.txt",
-      "remoteUpdatedAt": "2026-05-29T18:26:45.100Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/local-runtime.html": {
-      "storageClass": "text",
-      "hash": "sha256:d5eb982d7bd2f2e5ec29500372bb702998ac91b0e02d844c666f356259e47292",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "460f3203-46b8-4fc1-a99f-0d82bed2eca6",
-      "remotePath": "/.vitepress/dist/local-runtime.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:56.680Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/macos-development.html": {
-      "storageClass": "text",
-      "hash": "sha256:628837cb1e3b2c098cc5439681837860a668f5b0fc0bfcba5c52ae7b694a11a8",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "03cba0d4-272f-4c30-8ecc-736a81da3eed",
-      "remotePath": "/.vitepress/dist/macos-development.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:56.971Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/output.html": {
-      "storageClass": "text",
-      "hash": "sha256:cbb4640c136a35320280c06b83d390d8b88f60a16698206582ef5fdde0599c76",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "bed6478f-2e41-4601-ac0a-a5db2585f927",
-      "remotePath": "/.vitepress/dist/output.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.083Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/profiles.html": {
-      "storageClass": "text",
-      "hash": "sha256:5863ea63fa5ae289b59d7709278232a1cf15536c54108aef2eb354612bd159e5",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "33e064b8-adde-460b-b781-526983077233",
-      "remotePath": "/.vitepress/dist/profiles.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.202Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/project-metadata.html": {
-      "storageClass": "text",
-      "hash": "sha256:7375b1a23fb8c83800d300088bd101f1f201d7807a342cce32d4cec3a78030c6",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "68fb0620-6df6-4bdd-99de-48b077af21e8",
-      "remotePath": "/.vitepress/dist/project-metadata.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.344Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/project-roots.html": {
-      "storageClass": "text",
-      "hash": "sha256:79600daa7a6dbb20dc04ba357930a0e700bc35ac284b76770d6b7d9780c96e10",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "b4b09d61-0fd3-4db5-979b-7e63e1fe418d",
-      "remotePath": "/.vitepress/dist/project-roots.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.623Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/resource-management.html": {
-      "storageClass": "text",
-      "hash": "sha256:8a859939e7d6bff05b1bed340f8c049033c39e86cb404037779923bcd17cc02d",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "e0e9b6fd-a419-428b-a072-e977fdf3e074",
-      "remotePath": "/.vitepress/dist/resource-management.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.760Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/services.html": {
-      "storageClass": "text",
-      "hash": "sha256:a2f5c0633b902c406af1a9e65d86ccf751c3df5548ea4921509d100ef97967fb",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "245c58bd-7029-4bd0-a5c0-92965ed1f5ae",
-      "remotePath": "/.vitepress/dist/services.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:57.904Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/standards/secrets-file.html": {
-      "storageClass": "text",
-      "hash": "sha256:42c38e7ba8df431d088a0a635ae3ea6793367335b1907ef720ab6f7e6295345d",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "78c2221f-8d18-4d8e-a5d1-9846afc34a70",
-      "remotePath": "/.vitepress/dist/standards/secrets-file.html",
-      "remoteUpdatedAt": "2026-05-29T18:27:32.594Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/taskfile-study.html": {
-      "storageClass": "text",
-      "hash": "sha256:6d15217de94bcab5e4b87b3b3da5efc007a88d1af1275401fe9413ea4f4d9ce1",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "4ebc2385-950a-478d-a824-c92f7d5b2b22",
-      "remotePath": "/.vitepress/dist/taskfile-study.html",
-      "remoteUpdatedAt": "2026-05-29T18:26:48.000Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/tasks.html": {
-      "storageClass": "text",
-      "hash": "sha256:184285d79010513790e465180afb48b8cf3b8b1c5ccac8ef2869d88e90540aa1",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "40506e9d-5f61-4157-b314-bc94415d4bc7",
-      "remotePath": "/.vitepress/dist/tasks.html",
-      "remoteUpdatedAt": "2026-05-31T12:53:58.281Z",
-      "remoteRevisionNumber": 2
-    },
-    "docs/.vitepress/dist/vp-icons.css": {
-      "storageClass": "text",
-      "hash": "sha256:c3179481ddd882c06c7a5c5888509946f5be5b9ba7e504e3b0ceef1004831786",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "6a7e9027-eccc-4f21-a988-3e2333b9b6d7",
-      "remotePath": "/.vitepress/dist/vp-icons.css",
-      "remoteUpdatedAt": "2026-05-29T18:26:50.782Z",
-      "remoteRevisionNumber": 1
-    },
-    "docs/.vitepress/dist/x-posts.html": {
-      "storageClass": "text",
-      "hash": "sha256:39f914d769e7e69925a7d9c63b2396f1367f3beceb22eabbbf6699c49a3d72a0",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "5cfab401-501a-4b5b-a2cd-2b26f1a3a80a",
-      "remotePath": "/.vitepress/dist/x-posts.html",
-      "remoteUpdatedAt": "2026-05-29T18:26:50.445Z",
-      "remoteRevisionNumber": 1
-    },
     "docs/compose-study.md": {
       "storageClass": "text",
       "hash": "sha256:7226a9e95162293ea14cf989e1f85557a521f677217e5adf204580bc319022a1",
@@ -1224,13 +72,13 @@
     },
     "docs/extensions/playwright.md": {
       "storageClass": "text",
-      "hash": "sha256:5fc17535de501ebaca3fa076515c28762cbe32278b8dcf95cc2cc55dedd2a6de",
+      "hash": "sha256:85b9492f5f0937d1753b85022ea7600cefe41865be34fa9ffb5d08edfbdc3c69",
       "isExecutable": true,
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
+      "lastSyncedAt": "2026-06-02T10:01:40.027Z",
       "remoteFileId": "95dc58d9-3006-40db-8985-c2e464483e65",
       "remotePath": "/extensions/playwright.md",
-      "remoteUpdatedAt": "2026-05-29T18:24:26.703Z",
-      "remoteRevisionNumber": 8,
+      "remoteUpdatedAt": "2026-06-02T10:00:30.542Z",
+      "remoteRevisionNumber": 11,
       "source": "reference"
     },
     "docs/extensions/redis.md": {
@@ -1420,12 +268,12 @@
     },
     "docs/internals/tasks.md": {
       "storageClass": "text",
-      "hash": "sha256:347cd3cc7d832921b5d9828d2ad6ffef754ec305449278079d04d9407883c525",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
+      "hash": "sha256:12854c6fa7505951b9e7449f20d178cc38498b1a7996ad6e549136346e8927c8",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
       "remoteFileId": "86cd3e50-d7a3-42b1-9898-a0220ac50f45",
-      "remotePath": "/docs/internals/tasks.md",
-      "remoteUpdatedAt": "2026-05-29T18:26:56.359Z",
-      "remoteRevisionNumber": 1
+      "remotePath": "/internals/tasks.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:44.302Z",
+      "remoteRevisionNumber": 2
     },
     "docs/internals/tech-debt.md": {
       "storageClass": "text",
@@ -1439,17 +287,17 @@
     },
     "docs/landing-page-v2-copy.md": {
       "storageClass": "text",
-      "hash": "sha256:93e40d4f9ed5392f07cc9c5aa77e97cc067f09e90b17817f7ec3fa7acba2a516",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
+      "hash": "sha256:333724373493b9a0e8c7cf2ede0d7687f5bae25702f7cb23c277495e1aaf9556",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
       "remoteFileId": "bc4e76ce-9f6e-405d-b4c5-9a89d466bf1c",
       "remotePath": "/landing-page-v2-copy.md",
-      "remoteUpdatedAt": "2026-05-29T18:26:52.130Z",
-      "remoteRevisionNumber": 1
+      "remoteUpdatedAt": "2026-06-01T05:49:46.062Z",
+      "remoteRevisionNumber": 2
     },
     "docs/package.json": {
       "storageClass": "text",
       "hash": "sha256:5b4379a9443e5e396db9a110008592cc13202502906a850eab857bf5fcbc5a65",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
       "remoteFileId": "cf1537f8-a871-49d7-a3fd-79cd291c0c0a",
       "remotePath": "/package.json",
       "remoteUpdatedAt": "2026-05-29T18:26:52.802Z",
@@ -1457,26 +305,26 @@
     },
     "docs/public/llms-full.txt": {
       "storageClass": "text",
-      "hash": "sha256:75911f3b53d2177d6829186ef23be6fba0c065c8fabb452bcff85b2a240571ce",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
+      "hash": "sha256:5b58908139908d454a3d197a01a4fb57894cf2185833b663ac6f264341be1dc6",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
       "remoteFileId": "c6a97c3e-4056-4375-a87e-e4fc6c78f557",
       "remotePath": "/public/llms-full.txt",
-      "remoteUpdatedAt": "2026-05-31T12:53:58.524Z",
-      "remoteRevisionNumber": 2
+      "remoteUpdatedAt": "2026-06-02T05:24:46.672Z",
+      "remoteRevisionNumber": 3
     },
     "docs/public/llms.txt": {
       "storageClass": "text",
-      "hash": "sha256:2e911794318ee5ccc482cef149d941751b100d5f92553366a09003c7386da249",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
+      "hash": "sha256:7e6af0a67c6e1ae7fbf03c693fb251b09dd4cd2308a0d8b25538d858e38494c3",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
       "remoteFileId": "5fe45840-7d2c-4ac1-b952-ce5d36d79d22",
       "remotePath": "/public/llms.txt",
-      "remoteUpdatedAt": "2026-05-29T18:27:12.569Z",
-      "remoteRevisionNumber": 1
+      "remoteUpdatedAt": "2026-06-02T05:24:45.363Z",
+      "remoteRevisionNumber": 2
     },
     "docs/scripts/build-raw-docs.mjs": {
       "storageClass": "text",
       "hash": "sha256:8b58c4c128266a2854abcaba8b26e34fb39900d76dbb724792e55e93ab6253e0",
-      "lastSyncedAt": "2026-05-29T18:27:06.999Z",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
       "remoteFileId": "d2ec429a-c007-4db3-b793-3536e2c36038",
       "remotePath": "/scripts/build-raw-docs.mjs",
       "remoteUpdatedAt": "2026-05-29T18:27:12.451Z",
@@ -1491,53 +339,254 @@
       "remoteUpdatedAt": "2026-06-01T07:16:16.656Z",
       "remoteRevisionNumber": 1
     },
-    "docs/secrets.txt.enc": {
+    "docs/skills/AGENTS.md": {
       "storageClass": "text",
-      "hash": "sha256:ea5524b996b45e2082d87bbf5941f81a6da3f0a4254f9ae5557e35ee74669f96",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "b640d407-5ec7-4f80-a92e-bf6dc069c3c3",
-      "remotePath": "/secrets.txt.enc",
-      "remoteUpdatedAt": "2026-05-25T15:27:17.697Z",
-      "remoteRevisionNumber": 33
+      "hash": "sha256:4860f8269f39ba5905ed491b811b414ead101e996420adc25331f7185192579f",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "7788bdac-9eac-461d-9fcf-c8d2031db219",
+      "remotePath": "/skills/AGENTS.md",
+      "remoteUpdatedAt": "2026-05-22T19:27:32.273Z",
+      "remoteRevisionNumber": 3,
+      "source": "reference"
     },
-    "docs/skills/marketing-positioning.md": {
+    "docs/skills/README.md": {
       "storageClass": "text",
-      "hash": "sha256:b5c3dcf98b18cd74f5e91db4dc0aea5ad20b6d849535b2dc6d59b08e228aa70d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "ab4ffa66-df67-4a9b-95ce-2cb02d1e8796",
-      "remotePath": "/skills/marketing-positioning.md",
-      "remoteUpdatedAt": "2026-05-29T16:41:36.884Z",
+      "hash": "sha256:8071287525d9f6854952826dd3e1fe97f0fbe4395e1a4cc927a5588141c1eb7e",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "5a4ed3be-9db7-4cc9-a1e0-4c84fbecb4c4",
+      "remotePath": "/skills/README.md",
+      "remoteUpdatedAt": "2026-05-22T21:55:43.366Z",
+      "remoteRevisionNumber": 10,
+      "source": "reference"
+    },
+    "docs/skills/authored-skills/value-analysis/SKILL.md": {
+      "storageClass": "text",
+      "hash": "sha256:bc0a4222bbb2bdefcd0798d2114bca16b6e5c90dd951ef5f4f849d4c7d51db96",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "852b99a5-33ce-4c67-b16f-2b76848bb9d9",
+      "remotePath": "/skills/authored-skills/value-analysis/SKILL.md",
+      "remoteUpdatedAt": "2026-05-22T22:22:44.983Z",
+      "remoteRevisionNumber": 5,
+      "source": "reference"
+    },
+    "docs/skills/authored-skills/value-analysis/references/index.md": {
+      "storageClass": "text",
+      "hash": "sha256:16eb742d32440a8e61479df4e3515af2d6b82a34a1d6bfcd53a3fc990bab5ea4",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "b7f45df2-d0ac-4930-94bd-85f7288e3879",
+      "remotePath": "/skills/authored-skills/value-analysis/references/index.md",
+      "remoteUpdatedAt": "2026-05-22T22:28:04.170Z",
+      "remoteRevisionNumber": 6,
+      "source": "reference"
+    },
+    "docs/skills/authored-skills/value-analysis/references/inputs.md": {
+      "storageClass": "text",
+      "hash": "sha256:e80ff4da9425443a809b76e14e40527959282a0ca26e6db9fc1e1df3b7ef4c82",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "cef8710a-a7d6-4627-aca9-b7c12710e6d0",
+      "remotePath": "/skills/authored-skills/value-analysis/references/inputs.md",
+      "remoteUpdatedAt": "2026-05-22T19:34:26.022Z",
+      "remoteRevisionNumber": 2,
+      "source": "reference"
+    },
+    "docs/skills/authored-skills/value-analysis/references/marketing-positioning.md": {
+      "storageClass": "text",
+      "hash": "sha256:cb9b2d6aa559cb7a5a3c78f1949e95601121d4319fd55b6ebec99f3be32666a9",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "7f2c1b0b-1d03-4ff0-85ea-a1b5791f0d69",
+      "remotePath": "/skills/authored-skills/value-analysis/references/marketing-positioning.md",
+      "remoteUpdatedAt": "2026-05-22T21:52:36.617Z",
+      "remoteRevisionNumber": 3,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/README.md": {
+      "storageClass": "text",
+      "hash": "sha256:c5eac27d4e9f120356a247e239d229062e03becc828e03ffe0ab54e96c27f4bc",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "7fb718f2-5109-4baa-8257-25c9788e8a0b",
+      "remotePath": "/skills/testing-ground/test1/README.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:30.654Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/positioning.md": {
+      "storageClass": "text",
+      "hash": "sha256:af32b3f85157d73db174c7927e4321da47760c22813e37f00019fe8df7e12a1b",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "1fd8eb7d-0280-47fb-96ed-1277a3751760",
+      "remotePath": "/skills/testing-ground/test1/positioning.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:07.509Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/unique-value.md": {
+      "storageClass": "text",
+      "hash": "sha256:6ad52ee415e1af4e2a8c0c1c08efc8676fc6bcba277557daa4758a3b9dac2e04",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "f84e2ad3-0c4c-4e6f-a555-59adf41fd048",
+      "remotePath": "/skills/testing-ground/test1/unique-value.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:29.763Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/what-do-buyers-do-today.md": {
+      "storageClass": "text",
+      "hash": "sha256:6ea1e33e1462648b6f3f17ed992d7d9253618ee3db90e9a41e3d025492ccfb7d",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "8924905b-c399-44e1-927f-c2521d60e5ac",
+      "remotePath": "/skills/testing-ground/test1/what-do-buyers-do-today.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:32.845Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/what-does-it-do.md": {
+      "storageClass": "text",
+      "hash": "sha256:d0764526a2fc63988efcd7bddc189c7dd0e884b39d296d00b8c60dc9713cb48d",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "b76ee42b-d089-404b-851a-ccac758bcf34",
+      "remotePath": "/skills/testing-ground/test1/what-does-it-do.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:28.552Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test1/who-is-it-for.md": {
+      "storageClass": "text",
+      "hash": "sha256:854be8d12c424c2cccf41ba654f4442c789feb1bbb6e373d5c957c1a656afbf2",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "5a13f886-4b9a-4b8d-976a-d91655b80c85",
+      "remotePath": "/skills/testing-ground/test1/who-is-it-for.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:27.510Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/README.md": {
+      "storageClass": "text",
+      "hash": "sha256:a5669f12580a9fe497dd732e945c00900ffe5974ffa96c50db5956e738893b87",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "8c2856fb-9576-4018-a367-f8b973c67928",
+      "remotePath": "/skills/testing-ground/test2/README.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:25.503Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/ideal-customer.md": {
+      "storageClass": "text",
+      "hash": "sha256:cba835538621707c7cf348583f0abb330a53af2b729b41522593ea903ec5ee16",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "7e0ee764-7a04-440a-92de-04b69888e802",
+      "remotePath": "/skills/testing-ground/test2/ideal-customer.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:31.485Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/list-of-competitors.md": {
+      "storageClass": "text",
+      "hash": "sha256:2fdf7aede133a2291ceef163df49669aae45de3605de77720ff99b840436fa7d",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "261c1fbc-a330-4361-b74d-e91d3b6af140",
+      "remotePath": "/skills/testing-ground/test2/list-of-competitors.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:33.272Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/market-context.md": {
+      "storageClass": "text",
+      "hash": "sha256:a56aa6be0253afc4030fbb7b9adb8ceb0ce7e5be359c130ccf3671642c9e7d8e",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "2edebf46-d45c-4f32-88ec-7815ea51fc69",
+      "remotePath": "/skills/testing-ground/test2/market-context.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:34.318Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/open-questions.md": {
+      "storageClass": "text",
+      "hash": "sha256:ab8ae227727ac4385f54d18c3391aca86c469bcd820e870cf18fb5a7fde7c3aa",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "70e6cf60-b409-4773-952e-d7aa3fa66c9b",
+      "remotePath": "/skills/testing-ground/test2/open-questions.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:19.074Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/positioning-statement.md": {
+      "storageClass": "text",
+      "hash": "sha256:4ec74728c152d3ab7e4105a771b73605cdfef6a76133fb585f0bddb8d1c2a4b1",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "9ff629f8-b478-433a-83db-6e93894f812c",
+      "remotePath": "/skills/testing-ground/test2/positioning-statement.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:14.290Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/product-features.md": {
+      "storageClass": "text",
+      "hash": "sha256:354ce979107e6854652d8801543b64ed1e60a01c5bfbfe706bd5c978141887b3",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "79d35d7c-20fd-4355-8ee6-37773d202ea2",
+      "remotePath": "/skills/testing-ground/test2/product-features.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:42.441Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/source-material.md": {
+      "storageClass": "text",
+      "hash": "sha256:d4696c75952aea856f3f15f82e10826ab0c66c79b1b4907648b37c6fbf32a254",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "b719e90f-3d40-47ef-9079-1e130064b2bf",
+      "remotePath": "/skills/testing-ground/test2/source-material.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:38.307Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/unique-capabilities.md": {
+      "storageClass": "text",
+      "hash": "sha256:abf30e3bd616fb6baebf6e2bc6035fe73c65b966d015cbcd87df0d2c91599f50",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "86fea7d0-136f-420e-a8a0-3110e4fb7a49",
+      "remotePath": "/skills/testing-ground/test2/unique-capabilities.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:40.442Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
+    "docs/skills/testing-ground/test2/value-drivers.md": {
+      "storageClass": "text",
+      "hash": "sha256:dd20b392ea420b6c47baae31a8a3d44db41f6f342c29a5cec6837d3eafa0bbb8",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "92e28b85-84c8-4050-b801-2c2b6838593b",
+      "remotePath": "/skills/testing-ground/test2/value-drivers.md",
+      "remoteUpdatedAt": "2026-06-02T05:24:39.542Z",
       "remoteRevisionNumber": 1,
       "source": "reference"
     },
     "docs/skills/value-analysis/index.md": {
       "storageClass": "text",
-      "hash": "sha256:f27edc2b326f42541d1216c0d5f753f1d62762cb236b171e2befd02cb174e71b",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "3b2fe0c6-303e-4d0d-baaa-bb444c616f9c",
+      "hash": "sha256:e0aa83055efe21cbad37a6eb14336e78135062cd6739cba442715d3160e9b5d5",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "161f865d-80a6-427f-92a0-9a2f6a9be4d3",
       "remotePath": "/skills/value-analysis/index.md",
-      "remoteUpdatedAt": "2026-05-29T18:26:03.364Z",
-      "remoteRevisionNumber": 1,
+      "remoteUpdatedAt": "2026-05-22T22:13:41.457Z",
+      "remoteRevisionNumber": 38,
       "source": "reference"
     },
     "docs/skills/value-analysis/inputs.md": {
       "storageClass": "text",
-      "hash": "sha256:e24fcced8adefb84891be3538a0e351dffc41f75772775281ff9808245d6c483",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "a531ceb2-5a5f-452d-a021-00dcee1e7693",
+      "hash": "sha256:e80ff4da9425443a809b76e14e40527959282a0ca26e6db9fc1e1df3b7ef4c82",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "90915bcc-ea62-4c7a-983e-89c810bb3cb3",
       "remotePath": "/skills/value-analysis/inputs.md",
-      "remoteUpdatedAt": "2026-05-29T18:25:01.363Z",
-      "remoteRevisionNumber": 1,
+      "remoteUpdatedAt": "2026-05-22T19:34:26.262Z",
+      "remoteRevisionNumber": 60,
       "source": "reference"
     },
     "docs/skills/value-analysis/marketing-positioning.md": {
       "storageClass": "text",
-      "hash": "sha256:b5c3dcf98b18cd74f5e91db4dc0aea5ad20b6d849535b2dc6d59b08e228aa70d",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
-      "remoteFileId": "3f697a04-b2f4-4b55-b22c-b4bee50d8977",
+      "hash": "sha256:e26c34f0b64bd4156e0c3f3ef5b435bc9d725d6219017f94a53858abc202cf78",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "d74aaea9-ab3b-48e3-b143-d8ad49a4cc0b",
       "remotePath": "/skills/value-analysis/marketing-positioning.md",
-      "remoteUpdatedAt": "2026-05-29T18:26:03.463Z",
-      "remoteRevisionNumber": 1,
+      "remoteUpdatedAt": "2026-05-22T19:34:26.239Z",
+      "remoteRevisionNumber": 30,
       "source": "reference"
     },
     "docs/standards/admin-panel-pattern.md": {
@@ -1552,12 +601,12 @@
     },
     "docs/standards/agents-md-template.txt": {
       "storageClass": "text",
-      "hash": "sha256:73f6a74f53e66f586b5e563497feec3647f7f985334498d98da50a2ab71ca9f2",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
+      "hash": "sha256:e93cc96c7e0a8d3a0b2c9c7acf6532c604e0b2302e627e2e09a7991d1a94d8b3",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
       "remoteFileId": "d360c234-3e99-4e68-a59c-b98c1e7982e7",
       "remotePath": "/standards/agents-md-template.txt",
-      "remoteUpdatedAt": "2026-05-30T22:46:57.145Z",
-      "remoteRevisionNumber": 701,
+      "remoteUpdatedAt": "2026-06-01T10:35:22.620Z",
+      "remoteRevisionNumber": 702,
       "source": "reference"
     },
     "docs/standards/clerk-rbac.md": {
@@ -1568,16 +617,6 @@
       "remotePath": "/standards/clerk-rbac.md",
       "remoteUpdatedAt": "2026-05-18T11:02:18.000Z",
       "remoteRevisionNumber": 2,
-      "source": "reference"
-    },
-    "docs/standards/cli-release.md": {
-      "storageClass": "text",
-      "hash": "sha256:c4359fe828189d6049673d5be7624fcc596d37387a8b72bd78d54586602aa6b3",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
-      "remoteFileId": "c334c1e7-1e13-4612-a024-952fb79ff9d5",
-      "remotePath": "/standards/cli-release.md",
-      "remoteUpdatedAt": "2026-05-31T12:39:15.274Z",
-      "remoteRevisionNumber": 1,
       "source": "reference"
     },
     "docs/standards/clis.md": {
@@ -1608,6 +647,16 @@
       "remotePath": "/standards/crud.md",
       "remoteUpdatedAt": "2026-05-15T06:17:35.507Z",
       "remoteRevisionNumber": 3,
+      "source": "reference"
+    },
+    "docs/standards/domain-extraction.md": {
+      "storageClass": "text",
+      "hash": "sha256:f98b96952e8a13391bd4818a2d16529aa015acb535f829da52e7f8139f8b35b2",
+      "lastSyncedAt": "2026-06-03T15:54:41.613Z",
+      "remoteFileId": "b99e456c-89b2-4b8f-85ae-f3ad8512afc4",
+      "remotePath": "/standards/domain-extraction.md",
+      "remoteUpdatedAt": "2026-06-03T14:45:15.882Z",
+      "remoteRevisionNumber": 1,
       "source": "reference"
     },
     "docs/standards/env-vars.md": {
@@ -1772,12 +821,12 @@
     },
     "docs/standards/modular-monolith.md": {
       "storageClass": "text",
-      "hash": "sha256:b8788be48b7cc5ffdf363cc05ba93a81f725b88d93ec1f4e261cd1062c97e74c",
-      "lastSyncedAt": "2026-05-29T18:26:18.471Z",
+      "hash": "sha256:aed6b142924aec42ba384bacd8fe1568ae335c6401e107cae6264664aefaac39",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
       "remoteFileId": "f23d4b6f-6cb1-4c3c-9ef3-25b48fed2b78",
       "remotePath": "/standards/modular-monolith.md",
-      "remoteUpdatedAt": "2026-05-14T08:58:29.187Z",
-      "remoteRevisionNumber": 1,
+      "remoteUpdatedAt": "2026-06-01T10:51:39.859Z",
+      "remoteRevisionNumber": 2,
       "source": "reference"
     },
     "docs/standards/onboarding-guard-pattern.md": {
@@ -1820,6 +869,16 @@
       "remoteRevisionNumber": 2,
       "source": "reference"
     },
+    "docs/standards/prompt-writing.md": {
+      "storageClass": "text",
+      "hash": "sha256:93b7fa2282d3fec0f684d916b2f133fbeabc6295e0803efb1064e32a4613e80b",
+      "lastSyncedAt": "2026-06-02T10:01:40.027Z",
+      "remoteFileId": "449c403e-fded-48d0-8fc6-771c2da4c8c4",
+      "remotePath": "/standards/prompt-writing.md",
+      "remoteUpdatedAt": "2026-06-02T10:00:29.729Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
     "docs/standards/secrets-file.md": {
       "storageClass": "text",
       "hash": "sha256:186f485395fb142e7b500e51e9fda091aa018db29171a451f94d651b7b476eb4",
@@ -1831,12 +890,12 @@
     },
     "docs/standards/services.md": {
       "storageClass": "text",
-      "hash": "sha256:c232898300397bb97b4a07001ce775d5a81afec1353c216bf5c0ab241cb0d121",
-      "lastSyncedAt": "2026-05-31T12:53:26.828Z",
+      "hash": "sha256:2b1bcad517fb1c88ea3c33820cffca06d8ba43b71b6642423cd84c1e6edc1382",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
       "remoteFileId": "7918a84e-30fe-4a8c-8bbc-5ff60ab5cadd",
-      "remotePath": "/services.md",
-      "remoteUpdatedAt": "2026-05-31T12:53:59.526Z",
-      "remoteRevisionNumber": 2,
+      "remotePath": "/standards/services.md",
+      "remoteUpdatedAt": "2026-06-01T10:51:42.174Z",
+      "remoteRevisionNumber": 3,
       "source": "reference"
     },
     "docs/standards/states.md": {
@@ -1869,6 +928,17 @@
       "remoteRevisionNumber": 8,
       "source": "reference"
     },
+    "docs/standards/trpc.md": {
+      "storageClass": "text",
+      "hash": "sha256:7e8181160aa6ca146b0f7fd1ef70d4aed4ae908e3b6ef779346aa5c8969ed964",
+      "isExecutable": true,
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
+      "remoteFileId": "8af15d30-ef43-4584-84ec-09e162f7b882",
+      "remotePath": "/standards/trpc.md",
+      "remoteUpdatedAt": "2026-06-01T13:27:09.650Z",
+      "remoteRevisionNumber": 1,
+      "source": "reference"
+    },
     "docs/standards/update-agents-md.md": {
       "storageClass": "text",
       "hash": "sha256:9fe776cd6bb93c8cd30313ee4a9b7a28d7fd2f813603d8c379a1ac1cef205673",
@@ -1877,6 +947,16 @@
       "remotePath": "/standards/update-agents-md.md",
       "remoteUpdatedAt": "2026-05-16T22:13:41.351Z",
       "remoteRevisionNumber": 121,
+      "source": "reference"
+    },
+    "docs/standards/web-request.md": {
+      "storageClass": "text",
+      "hash": "sha256:9d3c09bb1d0cacc5766d12fd93531510c46a378d8ba39aabb895cbe89c6781d3",
+      "lastSyncedAt": "2026-06-02T05:24:00.581Z",
+      "remoteFileId": "eb71da4f-17ca-41fb-b0ad-58bbcea1894c",
+      "remotePath": "/standards/web-request.md",
+      "remoteUpdatedAt": "2026-06-01T13:27:09.826Z",
+      "remoteRevisionNumber": 1,
       "source": "reference"
     },
     "docs/standards/worktree-merge.md": {
@@ -2018,15 +1098,15 @@
   },
   "references": {
     "docs/extensions": {
-      "lastSeenAt": "2026-05-31T12:55:26.139Z",
+      "lastSeenAt": "2026-06-03T15:54:41.613Z",
       "type": "store-reference"
     },
     "docs/skills": {
-      "lastSeenAt": "2026-05-31T12:55:26.139Z",
+      "lastSeenAt": "2026-06-03T15:54:41.613Z",
       "type": "store-reference"
     },
     "docs/standards": {
-      "lastSeenAt": "2026-05-31T12:55:26.139Z",
+      "lastSeenAt": "2026-06-03T15:54:41.613Z",
       "type": "store-reference"
     }
   },
@@ -2050,5 +1130,6 @@
     "dist/",
     "node_modules/"
   ],
+  "ignoreOnboardedAt": null,
   "version": 1
 }

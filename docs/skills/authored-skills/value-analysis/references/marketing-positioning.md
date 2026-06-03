@@ -117,3 +117,4 @@ Before finalizing `positioning-statement.md`, check that it is:
 - grounded in evidence
 - attractive to the ideal customer
 - hard for competitors to copy without lying
+
