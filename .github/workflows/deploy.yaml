@@ -15,6 +15,10 @@ on:
       - "turbo.json"
   workflow_dispatch:
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   PROJECT_NAME: zapper
 
@@ -129,7 +133,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          terraform apply -auto-approve \
+          terraform apply -auto-approve -lock-timeout=10m \
             -var="project_name=${{ env.PROJECT_NAME }}" \
             -var="vercel_api_token=$VERCEL_API_TOKEN" \
             -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN" \
