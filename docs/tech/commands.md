@@ -205,6 +205,14 @@ Run a one-off task by name, or list all tasks if no task specified
 | `-f, --force` | Run task even when status checks pass |
 | `--interactive` | Prompt for missing required task parameters |
 
+## `zap runtime`
+
+Show native runtime provider/tool resolution
+
+| Option | Description |
+| --- | --- |
+| `-j, --json` | Output runtime info as minified JSON |
+
 ## `zap profile`
 
 **Aliases:** `p`

@@ -91,6 +91,13 @@ then `pnpm dev` should still run in the user's project environment. Zapper
 should preserve or reconstruct a useful shell environment for those commands.
 That is separate from the runtime used to execute Zapper itself.
 
+Zapper can make that project-command environment explicit by autodetecting
+`mise.toml`, `.mise.toml`, or `.tool-versions`. When exactly one runtime file is
+present, native PM2 wrapper scripts execute the service command through
+`mise exec`. If multiple runtime files are present, Zapper falls back to the
+previous captured-`PATH` behavior and reports the ambiguity in `zap runtime`.
+Projects can still set `runtime.provider` explicitly as an escape hatch.
+
 In practice, the CLI should capture the launch environment used for `zap up`
 and write PM2 wrapper scripts with the relevant `PATH` and process environment.
 The desktop app can provide a bundled Zapper runtime while still asking the CLI

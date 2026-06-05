@@ -64,6 +64,7 @@ links:
 - `ports` lists uppercase env var names that Zapper assigns per instance.
 - `init_task` names a task to run after `zap init`.
 - `git_method` controls repo clone URLs: `ssh`, `http`, or `cli`.
+- `runtime` optionally overrides native-process toolchain resolution.
 - `task_delimiters` changes task template delimiters.
 - `native` defines local PM2-managed processes.
 - `docker` and `containers` define Docker-managed services.
@@ -109,6 +110,84 @@ services that app depends on.
 
 See [Environment Variable Management](env-var-mgmt.md) for detailed resolution
 rules.
+
+## Runtime
+
+Native processes can run through a runtime provider. By default, Zapper
+autodetects common mise project files:
+
+- `mise.toml`
+- `.mise.toml`
+- `.tool-versions`
+
+When exactly one of those files exists, native PM2 wrappers run service commands
+through `mise exec`. Tool versions stay in the mise file; Zapper does not need
+to repeat them in `zap.yaml`.
+
+For example:
+
+```toml
+# mise.toml
+[tools]
+node = "lts"
+pnpm = "10.10.0"
+```
+
+```yaml
+native:
+  frontend:
+    cmd: pnpm dev
+```
+
+If multiple runtime files are present, Zapper falls back to `ambient` and
+`zap runtime` reports a warning. Set `runtime.provider` explicitly if that is
+intentional.
+
+Use explicit runtime config only as an override or escape hatch:
+
+```yaml
+runtime:
+  provider: mise
+
+native:
+  frontend:
+    cmd: pnpm dev
+
+  legacy-worker:
+    cmd: pnpm dev
+    runtime:
+      node: 20
+```
+
+The top-level runtime is merged into each native process. Service-level runtime
+fields override only the fields they set.
+
+If a runtime block names tools but omits `provider`, Zapper treats it as
+`provider: mise`:
+
+```yaml
+runtime:
+  node: lts
+  pnpm: latest
+```
+
+Supported provider values:
+
+- `ambient` uses the existing captured environment.
+- `mise` runs the command through `mise exec`.
+- `shell` is reserved for shell-oriented compatibility and currently behaves
+  like `ambient`.
+- `none` skips Zapper runtime wrapping and runs the command as written.
+
+Supported first-class tool fields are `node`, `pnpm`, `python`, `ruby`, `go`,
+and `terraform`. Other mise tools can be declared under `tools`:
+
+```yaml
+runtime:
+  provider: mise
+  tools:
+    bun: latest
+```
 
 ## Config Interpolation
 
