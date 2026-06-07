@@ -110,6 +110,32 @@ const EnvSchema = z.union([
   EnvFilePathSchema,
 ]);
 
+export const RuntimeProviderSchema = z.enum([
+  "ambient",
+  "shell",
+  "mise",
+  "none",
+]);
+
+const RuntimeToolVersionSchema = z
+  .union([z.string().min(1), z.number()])
+  .transform((value) => String(value));
+
+export const RuntimeSchema = z
+  .object({
+    provider: RuntimeProviderSchema.optional(),
+    source: z.string().min(1).optional(),
+    warning: z.string().min(1).optional(),
+    node: RuntimeToolVersionSchema.optional(),
+    pnpm: RuntimeToolVersionSchema.optional(),
+    python: RuntimeToolVersionSchema.optional(),
+    ruby: RuntimeToolVersionSchema.optional(),
+    go: RuntimeToolVersionSchema.optional(),
+    terraform: RuntimeToolVersionSchema.optional(),
+    tools: z.record(z.string().min(1), RuntimeToolVersionSchema).optional(),
+  })
+  .strict();
+
 // Port name schema: uppercase letters, numbers, and underscores only
 const PortNameSchema = z
   .string()
@@ -210,6 +236,7 @@ export const ProcessSchema = z
     cwd: z.string().optional(),
     envs: z.array(z.string()).optional(),
     env: EnvSchema.optional(),
+    runtime: RuntimeSchema.optional(),
     aliases: z.array(validNameSchema).optional(),
     resolvedEnv: z.record(z.string(), z.string()).optional(),
     source: z.string().optional(),
@@ -345,6 +372,7 @@ export const ZapperConfigSchema = processValidation(
         ports: z.array(PortNameSchema).optional(),
         init_task: validNameSchema.optional(),
         git_method: z.enum(["http", "ssh", "cli"]).optional(),
+        runtime: RuntimeSchema.optional(),
         task_delimiters: TaskDelimitersSchema,
         native: z.record(validNameSchema, ProcessSchema).optional(),
         docker: z.record(validNameSchema, ContainerSchema).optional(),
@@ -410,6 +438,7 @@ export const ZapperStateSchema = z.object({
 export type Process = z.infer<typeof ProcessSchema>;
 export type Container = z.infer<typeof ContainerSchema>;
 export type Volume = z.infer<typeof VolumeSchema>;
+export type RuntimeConfig = z.infer<typeof RuntimeSchema>;
 export type TopLevelVolume = z.infer<typeof TopLevelVolumeSchema>;
 export type Secret = z.infer<typeof SecretSchema>;
 export type Task = z.infer<typeof TaskSchema>;

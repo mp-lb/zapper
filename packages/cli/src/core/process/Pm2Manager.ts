@@ -5,6 +5,7 @@ import {
   unlinkSync,
   existsSync,
   readdirSync,
+  statSync,
 } from "fs";
 import path from "path";
 import { Process } from "../../config/schemas";
@@ -410,6 +411,33 @@ export class Pm2Manager {
     const processInfo = await this.getProcessInfo(prefixedName);
 
     if (!processInfo) {
+      const lastRunLogFile = projectName
+        ? this.getManagedLogFilePath(
+            prefixedName,
+            projectName,
+            configDir,
+            instanceId,
+          )
+        : null;
+
+      if (lastRunLogFile && existsSync(lastRunLogFile)) {
+        const { mtime } = statSync(lastRunLogFile);
+        renderer.log.warn(
+          `${name} is not currently running. Showing logs for the last run from ${this.formatLogTimestamp(mtime)}.`,
+        );
+
+        await this.showLogsFromFile(lastRunLogFile, false);
+        return;
+      }
+
+      if (projectName) {
+        renderer.log.warn(
+          `No log file found for ${name}. The service may never have started.`,
+        );
+
+        return;
+      }
+
       throw new Error(`PM2 process not running: ${name} (${prefixedName})`);
     }
 
@@ -488,14 +516,12 @@ export class Pm2Manager {
         projectName &&
         processName.startsWith(buildPrefix(projectName, instanceId) + ".")
       ) {
-        const logsDir = path.join(configDir || ".", ".zap", "logs");
-
-        const baseName = processName.replace(
-          buildPrefix(projectName, instanceId) + ".",
-          "",
+        return this.getManagedLogFilePath(
+          processName,
+          projectName,
+          configDir,
+          instanceId,
         );
-
-        return path.join(logsDir, `${projectName}.${baseName}.log`);
       }
 
       // For non-Zapper processes, fall back to PM2's default paths
@@ -518,6 +544,33 @@ export class Pm2Manager {
       renderer.log.warn(`Error getting log file path: ${error}`);
       return null;
     }
+  }
+
+  private static getManagedLogFilePath(
+    processName: string,
+    projectName: string,
+    configDir?: string,
+    instanceId?: string | null,
+  ): string {
+    const logsDir = path.join(configDir || ".", ".zap", "logs");
+
+    const baseName = processName.replace(
+      buildPrefix(projectName, instanceId) + ".",
+      "",
+    );
+
+    return path.join(logsDir, `${projectName}.${baseName}.log`);
+  }
+
+  private static formatLogTimestamp(date: Date): string {
+    const pad = (value: number) => String(value).padStart(2, "0");
+
+    return (
+      [date.getFullYear(), pad(date.getMonth() + 1), pad(date.getDate())].join(
+        "-",
+      ) +
+      ` ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+    );
   }
 
   private static async showLogsFromFile(
@@ -682,6 +735,48 @@ export class Pm2Manager {
     return resolvePm2Runtime(args);
   }
 
+  private static shellQuote(value: string): string {
+    return `'${value.replace(/'/g, `'\\''`)}'`;
+  }
+
+  private static buildMiseToolArgs(processConfig: Process): string[] {
+    const runtime = processConfig.runtime;
+    if (!runtime) return [];
+
+    const tools: Record<string, string> = {
+      ...(runtime.node ? { node: runtime.node } : {}),
+      ...(runtime.pnpm ? { pnpm: runtime.pnpm } : {}),
+      ...(runtime.python ? { python: runtime.python } : {}),
+      ...(runtime.ruby ? { ruby: runtime.ruby } : {}),
+      ...(runtime.go ? { go: runtime.go } : {}),
+      ...(runtime.terraform ? { terraform: runtime.terraform } : {}),
+      ...(runtime.tools || {}),
+    };
+
+    return Object.entries(tools).map(([name, version]) => `${name}@${version}`);
+  }
+
+  private static renderProcessCommand(processConfig: Process): string {
+    const provider = processConfig.runtime?.provider || "ambient";
+
+    if (provider === "none" || provider === "ambient" || provider === "shell") {
+      return `${processConfig.cmd}\n`;
+    }
+
+    if (provider === "mise") {
+      const toolArgs = this.buildMiseToolArgs(processConfig)
+        .map((arg) => this.shellQuote(arg))
+        .join(" ");
+
+      const tools = toolArgs.length > 0 ? `${toolArgs} ` : "";
+      const command = this.shellQuote(processConfig.cmd);
+
+      return `exec mise exec ${tools}-- bash -lc ${command}\n`;
+    }
+
+    return `${processConfig.cmd}\n`;
+  }
+
   private static createWrapperScript(
     projectName: string,
     processConfig: Process,
@@ -708,7 +803,7 @@ export class Pm2Manager {
       content += `source ${processConfig.source}\n`;
     }
 
-    content += `${processConfig.cmd}\n`;
+    content += this.renderProcessCommand(processConfig);
 
     writeFileSync(filePath, content, { mode: 0o755 });
     return filePath;

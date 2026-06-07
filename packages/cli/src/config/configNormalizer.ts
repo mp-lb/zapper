@@ -23,6 +23,7 @@ export interface RawConfig {
   profiles?: Record<string, unknown>;
   git_method?: "http" | "ssh" | "cli";
   init_task?: string;
+  runtime?: Record<string, unknown>;
   whitelists?: Record<string, string[]>;
   native?: Record<string, unknown>;
   bare_metal?: Record<string, unknown>;

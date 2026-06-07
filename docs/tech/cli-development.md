@@ -15,7 +15,6 @@ Zapper is a pnpm workspace:
 
 - Node.js 18+
 - pnpm
-- PM2 (`npm install -g pm2`)
 - Docker (for testing docker services)
 
 ## Getting Started

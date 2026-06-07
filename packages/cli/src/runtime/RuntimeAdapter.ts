@@ -1,5 +1,7 @@
-import { execFileSync } from "child_process";
-import { existsSync, readFileSync } from "fs";
+import { createRequire } from "module";
+import { normalizeHostPath, HostPathContext } from "./hostPaths";
+
+const require = createRequire(import.meta.url);
 
 export interface RuntimeCommand {
   command: string;
@@ -7,11 +9,9 @@ export interface RuntimeCommand {
   label: string;
 }
 
-export interface RuntimeAdapterContext {
-  env?: NodeJS.ProcessEnv;
-  platform?: NodeJS.Platform;
-  procVersionPath?: string;
-  execFileSync?: typeof execFileSync;
+export interface RuntimeAdapterContext extends HostPathContext {
+  nodePath?: string;
+  packageResolve?: (id: string) => string;
 }
 
 interface RuntimeAdapter {
@@ -35,55 +35,6 @@ function directCommand(command: string, args: string[]): RuntimeCommand {
   };
 }
 
-function isWindowsAbsolutePath(value: string): boolean {
-  return /^[a-zA-Z]:[\\/]/.test(value);
-}
-
-function fallbackWslPath(value: string): string {
-  const drive = value[0]?.toLowerCase();
-  const rest = value.slice(2).replace(/\\/g, "/").replace(/^\/+/, "");
-  return `/mnt/${drive}/${rest}`;
-}
-
-function isWsl(context: RuntimeAdapterContext): boolean {
-  if ((context.platform || process.platform) !== "linux") return false;
-  const env = context.env || process.env;
-  if (env.WSL_DISTRO_NAME || env.WSL_INTEROP) return true;
-
-  try {
-    const versionPath = context.procVersionPath || "/proc/version";
-    if (!existsSync(versionPath)) return false;
-    return /microsoft|wsl/i.test(readFileSync(versionPath, "utf8"));
-  } catch {
-    return false;
-  }
-}
-
-function normalizeWslPath(
-  value: string,
-  context: RuntimeAdapterContext,
-): string {
-  if (!isWindowsAbsolutePath(value)) return value;
-
-  const runExecFileSync = context.execFileSync || execFileSync;
-
-  try {
-    return runExecFileSync("wslpath", ["-u", value], {
-      encoding: "utf8",
-    }).trim();
-  } catch {
-    return fallbackWslPath(value);
-  }
-}
-
-function normalizeHostPath(
-  value: string,
-  context: RuntimeAdapterContext,
-): string {
-  if (!isWsl(context)) return value;
-  return normalizeWslPath(value, context);
-}
-
 function resolvePm2FromEnv(
   args: string[],
   context: RuntimeAdapterContext,
@@ -105,10 +56,48 @@ function resolvePm2FromEnv(
   };
 }
 
+function resolvePm2FromPackage(
+  args: string[],
+  context: RuntimeAdapterContext,
+): RuntimeCommand | null {
+  const env = context.env || process.env;
+
+  if (env.ZAPPER_PM2_USE_GLOBAL) return null;
+
+  const resolvePackage = context.packageResolve || require.resolve;
+
+  try {
+    const command = normalizeHostPath(
+      context.nodePath || process.execPath,
+      context,
+    );
+
+    const pm2Entry = normalizeHostPath(resolvePackage("pm2/bin/pm2"), context);
+    const argsPrefix = [pm2Entry, ...args];
+
+    return {
+      command,
+      argsPrefix,
+      label: commandLabel(command, argsPrefix),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function resolveBundledPm2(
+  args: string[],
+  context: RuntimeAdapterContext,
+): RuntimeCommand | null {
+  return (
+    resolvePm2FromEnv(args, context) || resolvePm2FromPackage(args, context)
+  );
+}
+
 function createUnixAdapter(context: RuntimeAdapterContext): RuntimeAdapter {
   return {
     pm2(args) {
-      return resolvePm2FromEnv(args, context) || directCommand("pm2", args);
+      return resolveBundledPm2(args, context) || directCommand("pm2", args);
     },
     docker(args) {
       return directCommand("docker", args);
@@ -140,7 +129,7 @@ function createMacosAdapter(context: RuntimeAdapterContext): RuntimeAdapter {
 function createWindowsAdapter(context: RuntimeAdapterContext): RuntimeAdapter {
   return {
     pm2(args) {
-      return resolvePm2FromEnv(args, context) || directCommand("pm2.cmd", args);
+      return resolveBundledPm2(args, context) || directCommand("pm2.cmd", args);
     },
     docker(args) {
       return directCommand("docker", args);

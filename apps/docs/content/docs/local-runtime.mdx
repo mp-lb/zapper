@@ -118,6 +118,12 @@ implementations. The adapters keep the default behavior simple:
   `ZAPPER_NODE` or `ZAPPER_PM2_JS` value looks like a Windows absolute path, the
   adapter converts it with `wslpath -u` when available and falls back to the
   equivalent `/mnt/<drive>/...` path;
+- Docker startup checks verify both the Docker CLI and daemon. Under WSL, a
+  daemon failure points users at Docker Desktop WSL integration for the current
+  distro;
+- WSL path normalization is shared across runtime, env-file, Docker build,
+  Docker secret, and Docker bind-mount paths so Windows-looking absolute paths
+  are converted before Linux path resolution runs;
 - native Windows falls back to `pm2.cmd` when no bundled PM2 runtime is
   configured.
 
@@ -300,4 +306,3 @@ If the bundled Node approach remains fragile or too heavy, revisit:
 
 The decision should be based on concrete failures from the bundled-runtime
 phase, not on the existence of Node alone.
-

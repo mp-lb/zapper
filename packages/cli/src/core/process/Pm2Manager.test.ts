@@ -1,8 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { existsSync, mkdirSync, rmSync, readdirSync, writeFileSync } from "fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  readdirSync,
+  utimesSync,
+  writeFileSync,
+} from "fs";
 import path from "path";
 import { Pm2Manager } from "./Pm2Manager";
 import { Process } from "../../config/schemas";
+import { renderer } from "../../ui/renderer";
 
 describe("Pm2Manager - Wrapper Script Lifecycle", () => {
   const testDir = path.join(__dirname, ".test-zap");
@@ -81,6 +90,106 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     );
 
     expect(wrapperScripts.length).toBeGreaterThan(0);
+  });
+
+  it("configures PM2 to merge stdout and stderr into one managed log file", async () => {
+    const processConfig: Process = {
+      name: "test-service",
+      cmd: "node server.js",
+    };
+
+    let ecosystemJson: string | undefined;
+    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
+      async (args: string[]) => {
+        if (args[0] === "start") {
+          ecosystemJson = readFileSync(args[1], "utf8");
+        }
+
+        return "";
+      },
+    );
+
+    await Pm2Manager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+    );
+
+    expect(ecosystemJson).toBeDefined();
+
+    const ecosystem = JSON.parse(ecosystemJson!) as {
+      apps: Array<Record<string, unknown>>;
+    };
+
+    expect(ecosystem.apps[0]).toMatchObject({
+      name: "zap.test-project.test-service",
+      log: path.join(zapDir, "logs", "test-project.test-service.log"),
+      merge_logs: true,
+    });
+
+    expect(ecosystem.apps[0]).not.toHaveProperty("out_file");
+    expect(ecosystem.apps[0]).not.toHaveProperty("error_file");
+  });
+
+  it("wraps mise runtime processes with structured tool args", async () => {
+    const processConfig: Process = {
+      name: "test-service",
+      cmd: "pnpm dev",
+      runtime: {
+        provider: "mise",
+        node: "20",
+        pnpm: "latest",
+      },
+    };
+
+    await Pm2Manager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+    );
+
+    const wrapperScript = readdirSync(zapDir).find(
+      (file) =>
+        file.includes("test-project.test-service") && file.endsWith(".sh"),
+    );
+
+    expect(wrapperScript).toBeTruthy();
+
+    const content = readFileSync(path.join(zapDir, wrapperScript!), "utf8");
+
+    expect(content).toContain(
+      "exec mise exec 'node@20' 'pnpm@latest' -- bash -lc 'pnpm dev'",
+    );
+  });
+
+  it("quotes shell commands in mise wrappers", async () => {
+    const processConfig: Process = {
+      name: "test-service",
+      cmd: "node -e \"console.log('hello')\"",
+      runtime: {
+        provider: "mise",
+        node: "lts",
+      },
+    };
+
+    await Pm2Manager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+    );
+
+    const wrapperScript = readdirSync(zapDir).find(
+      (file) =>
+        file.includes("test-project.test-service") && file.endsWith(".sh"),
+    );
+
+    expect(wrapperScript).toBeTruthy();
+
+    const content = readFileSync(path.join(zapDir, wrapperScript!), "utf8");
+
+    expect(content).toContain(
+      `exec mise exec 'node@lts' -- bash -lc 'node -e "console.log('\\''hello'\\'')"'\n`,
+    );
   });
 
   it("should clean up old wrapper scripts when starting new instance", async () => {
@@ -188,5 +297,70 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
 
     expect(scriptsAfterDelete.length).toBe(1);
     expect(scriptsAfterDelete[0]).toContain("service-two");
+  });
+
+  it("shows the last saved log when the PM2 process is gone", async () => {
+    const logsDir = path.join(zapDir, "logs");
+    const logPath = path.join(logsDir, "test-project.test-service.log");
+    const mtime = new Date(2026, 5, 7, 14, 32, 10);
+
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(logPath, "crash output\n");
+    utimesSync(logPath, mtime, mtime);
+
+    const showLogsFromFileSpy = vi
+      .spyOn(Pm2Manager as any, "showLogsFromFile")
+      .mockResolvedValue(undefined);
+
+    const warnSpy = vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
+
+    await Pm2Manager.showLogs("test-service", "test-project", true, testDir);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "test-service is not currently running. Showing logs for the last run from 2026-06-07 14:32:10.",
+    );
+
+    expect(showLogsFromFileSpy).toHaveBeenCalledWith(logPath, false);
+  });
+
+  it("prints the merged managed log without following by default", async () => {
+    const logsDir = path.join(zapDir, "logs");
+    const logPath = path.join(logsDir, "test-project.test-service.log");
+
+    const mergedLog = [
+      "2026-06-07T14:32:10.001Z stdout first",
+      "2026-06-07T14:32:10.002Z stderr second",
+      "2026-06-07T14:32:10.003Z stdout third",
+      "",
+    ].join("\n");
+
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(logPath, mergedLog);
+
+    vi.spyOn(Pm2Manager as any, "getProcessInfo").mockResolvedValue({
+      name: "zap.test-project.test-service",
+    });
+
+    const stdoutSpy = vi
+      .spyOn(globalThis.process.stdout, "write")
+      .mockImplementation(() => true);
+
+    await Pm2Manager.showLogs("test-service", "test-project", false, testDir);
+
+    expect(stdoutSpy).toHaveBeenCalledWith(mergedLog);
+  });
+
+  it("warns clearly when no last-run log exists", async () => {
+    const showLogsFromFileSpy = vi.spyOn(Pm2Manager as any, "showLogsFromFile");
+
+    const warnSpy = vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
+
+    await Pm2Manager.showLogs("test-service", "test-project", true, testDir);
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "No log file found for test-service. The service may never have started.",
+    );
+
+    expect(showLogsFromFileSpy).not.toHaveBeenCalled();
   });
 });

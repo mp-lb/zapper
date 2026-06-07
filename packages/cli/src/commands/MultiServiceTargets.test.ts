@@ -100,6 +100,21 @@ describe("Multi-service command targets", () => {
     expect(infoSpy).toHaveBeenCalledWith("Showing logs for worker");
   });
 
+  it("does not follow logs by default", async () => {
+    const showLogs = vi.fn().mockResolvedValue(undefined);
+    const command = new LogsCommand();
+    const infoSpy = vi.spyOn(renderer.log, "info").mockImplementation(() => {});
+
+    await command.execute({
+      zapper: { showLogs } as unknown as Zapper,
+      service: "api",
+      options: {},
+    });
+
+    expect(showLogs).toHaveBeenCalledWith("api", false);
+    expect(infoSpy).toHaveBeenCalledWith("Showing logs for api");
+  });
+
   it("rejects multiple services for logs with follow enabled", async () => {
     const showLogs = vi.fn().mockResolvedValue(undefined);
     const command = new LogsCommand();

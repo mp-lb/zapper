@@ -106,6 +106,9 @@ List configured services with details and assigned ports
 
 Show logs for one or more services
 
+For native services, if the PM2 process is no longer running but a saved log
+exists, Zapper prints a warning and shows the last saved run log.
+
 | Option | Description |
 | --- | --- |
 | `-f, --follow` | Follow logs (default) |

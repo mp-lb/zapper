@@ -106,9 +106,10 @@ to run project commands through a login-shell-derived environment when needed.
 ## PM2 Reliability
 
 PM2 was another global executable dependency. It is now a CLI production
-dependency for bundled desktop builds, and the macOS app passes `ZAPPER_NODE`
-and `ZAPPER_PM2_JS` so the CLI can invoke PM2 through the bundled Node runtime
-instead of `spawn("pm2")`.
+dependency. The CLI prefers its package-installed `pm2/bin/pm2` entrypoint and
+runs it with the same Node executable that is running Zapper. The macOS app can
+still pass `ZAPPER_NODE` and `ZAPPER_PM2_JS` to force the fully bundled app
+runtime.
 
 Runtime executable lookup is centralized behind platform adapters in the CLI.
 PM2, Docker, shell wrappers, log tailing, and URL opening are resolved through
@@ -116,28 +117,38 @@ the same boundary instead of scattering `process.platform` checks across command
 implementations. The adapters keep the default behavior simple:
 
 - macOS uses the bundled PM2 runtime when `ZAPPER_NODE` and `ZAPPER_PM2_JS` are
-  present, otherwise falls back to `pm2`;
-- Linux uses the same PM2 environment override and otherwise falls back to
-  `pm2`;
+  present, otherwise uses the CLI package's PM2 dependency and falls back to
+  `pm2` only if that cannot be resolved;
+- Linux uses the same PM2 environment override, otherwise uses the CLI
+  package's PM2 dependency and falls back to `pm2` only if that cannot be
+  resolved;
 - WSL is treated as Linux. Linux paths are preferred. If a user-provided
   `ZAPPER_NODE` or `ZAPPER_PM2_JS` value looks like a Windows absolute path, the
   adapter converts it with `wslpath -u` when available and falls back to the
   equivalent `/mnt/<drive>/...` path;
-- native Windows falls back to `pm2.cmd` when no bundled PM2 runtime is
-  configured.
+- Docker startup checks verify both the Docker CLI and daemon. Under WSL, a
+  daemon failure points users at Docker Desktop WSL integration for the current
+  distro;
+- WSL path normalization is shared across runtime, env-file, Docker build,
+  Docker secret, and Docker bind-mount paths so Windows-looking absolute paths
+  are converted before Linux path resolution runs;
+- native Windows follows the same lookup and falls back to `pm2.cmd` when the
+  package PM2 runtime cannot be resolved.
+
+Set `ZAPPER_PM2_USE_GLOBAL=1` to bypass the package dependency and use the
+global PM2 executable. A separately installed PM2 remains useful for manual
+inspection because Zapper still uses PM2's normal daemon and home directory by
+default.
 
 Remaining options if PM2 continues to be a source of local-machine
 compatibility issues:
 
-- include `pm2` in the CLI's production dependencies and run its JavaScript
-  entrypoint with the same Node runtime that runs Zapper;
 - install or vendor a PM2 binary/script into the macOS app bundle;
 - replace PM2 long term with a native process supervisor if PM2 becomes the
   main remaining reliability risk.
 
-The current implementation follows the first option because it preserves PM2
-behavior while removing the global `pm2` lookup for desktop-launched Zapper
-commands.
+The current implementation preserves PM2 behavior while removing the global
+`pm2` lookup from the normal Zapper path.
 
 ## System Registry Role
 
@@ -282,10 +293,10 @@ Status: implemented for macOS release builds.
 - Add diagnostics that distinguish "Zapper runtime failed" from "project
   command failed".
 
-Status: partially implemented. PM2 is bundled and invoked through `ZAPPER_NODE`
-and `ZAPPER_PM2_JS` for desktop-launched CLI commands, with runtime adapter
-functions keeping platform-specific path and command resolution out of command
-implementations. Better diagnostics are still pending.
+Status: partially implemented. PM2 is bundled as a CLI production dependency
+and invoked through runtime adapter functions, with `ZAPPER_NODE` and
+`ZAPPER_PM2_JS` retained for desktop-launched CLI commands. Better diagnostics
+are still pending.
 
 ### Phase 4: Install and Repair UX
 

@@ -37,7 +37,7 @@ vm_status() {
 
 if ! vm_exists; then
   log "Creating base Linux VM '${BASE_VM_NAME}'..."
-  limactl create --name "$BASE_VM_NAME" --tty=false template:ubuntu
+  limactl create --name "$BASE_VM_NAME" --tty=false --disk 30 template:ubuntu
 else
   log "Base VM '${BASE_VM_NAME}' already exists."
 fi

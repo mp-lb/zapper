@@ -15,7 +15,7 @@ export class LogsCommand extends CommandHandler {
       throw new Error("At least one service name is required for logs command");
     }
 
-    const follow = options.follow ?? true;
+    const follow = options.follow ?? false;
 
     if (services.length > 1 && follow) {
       throw new Error(

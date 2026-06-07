@@ -23,10 +23,35 @@ describe("runtime adapters", () => {
     });
   });
 
-  it("falls back to pm2 on Unix when bundled PM2 is not configured", () => {
+  it("uses the CLI package PM2 on Unix when app runtime env is not configured", () => {
     const runtime = resolvePm2Runtime(["list"], {
       platform: "linux",
       env: {},
+      nodePath: "/usr/local/bin/node",
+      packageResolve: (id) => {
+        expect(id).toBe("pm2/bin/pm2");
+        return "/usr/local/lib/node_modules/@mp-lb/zapper/node_modules/pm2/bin/pm2";
+      },
+    });
+
+    expect(runtime).toEqual({
+      command: "/usr/local/bin/node",
+      argsPrefix: [
+        "/usr/local/lib/node_modules/@mp-lb/zapper/node_modules/pm2/bin/pm2",
+        "list",
+      ],
+      label:
+        "/usr/local/bin/node /usr/local/lib/node_modules/@mp-lb/zapper/node_modules/pm2/bin/pm2 list",
+    });
+  });
+
+  it("falls back to pm2 on Unix when package PM2 cannot be resolved", () => {
+    const runtime = resolvePm2Runtime(["list"], {
+      platform: "linux",
+      env: {},
+      packageResolve: () => {
+        throw new Error("missing pm2");
+      },
     });
 
     expect(runtime).toEqual({
@@ -36,16 +61,35 @@ describe("runtime adapters", () => {
     });
   });
 
-  it("falls back to pm2.cmd on native Windows", () => {
+  it("falls back to pm2.cmd on native Windows when package PM2 cannot be resolved", () => {
     const runtime = resolvePm2Runtime(["list"], {
       platform: "win32",
       env: {},
+      packageResolve: () => {
+        throw new Error("missing pm2");
+      },
     });
 
     expect(runtime).toEqual({
       command: "pm2.cmd",
       argsPrefix: ["list"],
       label: "pm2.cmd list",
+    });
+  });
+
+  it("can opt into the global PM2 executable", () => {
+    const runtime = resolvePm2Runtime(["list"], {
+      platform: "linux",
+      env: {
+        ZAPPER_PM2_USE_GLOBAL: "1",
+      },
+      packageResolve: () => "/ignored/pm2/bin/pm2",
+    });
+
+    expect(runtime).toEqual({
+      command: "pm2",
+      argsPrefix: ["list"],
+      label: "pm2 list",
     });
   });
 

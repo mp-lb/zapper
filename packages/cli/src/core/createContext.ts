@@ -1,9 +1,11 @@
 import path from "path";
-import { ZapperConfig } from "../config/schemas";
+import { existsSync } from "fs";
+import { RuntimeConfig, ZapperConfig } from "../config/schemas";
 import { Context, Process, Container, Task, Link } from "../types/Context";
 import { loadState } from "../config/stateLoader";
 import { DEFAULT_INSTANCE_KEY } from "./instanceResolver";
 import { listProfileNames, resolveProfile } from "./profileResolver";
+import { resolveHostPath } from "../runtime";
 
 /**
  * Creates a Context object from a ZapperConfig.
@@ -18,6 +20,9 @@ export function createContext(
   projectRoot: string,
   options: { profileName?: string } = {},
 ): Context {
+  const detectedRuntime = detectRuntime(projectRoot, projectRoot);
+  const rootRuntime = mergeRuntime(detectedRuntime, config.runtime);
+
   // Transform processes from config format to context format
   const processes: Process[] = [];
 
@@ -26,6 +31,7 @@ export function createContext(
     for (const [name, proc] of Object.entries(config.native)) {
       processes.push({
         ...proc,
+        runtime: resolveProcessRuntime(projectRoot, rootRuntime, proc),
         name,
       });
     }
@@ -40,6 +46,7 @@ export function createContext(
 
       processes.push({
         ...proc,
+        runtime: resolveProcessRuntime(projectRoot, rootRuntime, proc),
         name: proc.name,
       });
     }
@@ -104,9 +111,7 @@ export function createContext(
   if (selectedProfile) {
     envFiles = selectedProfile.envFiles;
   } else if (rootEnv && rootEnv.length > 0) {
-    envFiles = rootEnv.map((p) =>
-      path.isAbsolute(p) ? p : path.join(projectRoot, p),
-    );
+    envFiles = rootEnv.map((p) => resolveHostPath(projectRoot, p));
   }
 
   const profiles = listProfileNames(config);
@@ -121,6 +126,7 @@ export function createContext(
     ports: config.ports,
     initTask: config.init_task,
     gitMethod: config.git_method,
+    runtime: rootRuntime,
     taskDelimiters: config.task_delimiters,
     instanceKey: DEFAULT_INSTANCE_KEY,
     instance: undefined,
@@ -136,6 +142,92 @@ export function createContext(
     profile: selectedProfile,
     state,
   };
+}
+
+const RUNTIME_TOOL_KEYS = [
+  "node",
+  "pnpm",
+  "python",
+  "ruby",
+  "go",
+  "terraform",
+] as const;
+
+const RUNTIME_FILES = ["mise.toml", ".mise.toml", ".tool-versions"] as const;
+
+function detectRuntime(
+  runtimeRoot: string,
+  projectRoot: string,
+): RuntimeConfig | undefined {
+  const found = RUNTIME_FILES.filter((file) =>
+    existsSync(path.join(runtimeRoot, file)),
+  );
+
+  if (found.length === 0) return undefined;
+
+  if (found.length > 1) {
+    return {
+      provider: "ambient",
+      warning: `Multiple runtime files detected (${found.join(
+        ", ",
+      )}); falling back to ambient runtime. Set runtime.provider explicitly to override.`,
+    };
+  }
+
+  return {
+    provider: "mise",
+    source: path.relative(projectRoot, path.join(runtimeRoot, found[0])),
+  };
+}
+
+function resolveProcessRuntime(
+  projectRoot: string,
+  rootRuntime: RuntimeConfig | undefined,
+  process: { cwd?: string; runtime?: RuntimeConfig },
+): RuntimeConfig | undefined {
+  const serviceRoot = process.cwd
+    ? resolveHostPath(projectRoot, process.cwd)
+    : projectRoot;
+
+  const serviceRuntime =
+    serviceRoot === projectRoot
+      ? undefined
+      : detectRuntime(serviceRoot, projectRoot);
+
+  return mergeRuntime(serviceRuntime || rootRuntime, process.runtime);
+}
+
+function normalizeRuntime(runtime?: RuntimeConfig): RuntimeConfig | undefined {
+  if (!runtime) return undefined;
+
+  const hasTool =
+    RUNTIME_TOOL_KEYS.some((key) => runtime[key]) ||
+    !!(runtime.tools && Object.keys(runtime.tools).length > 0);
+
+  if (!runtime.provider && hasTool) {
+    return { ...runtime, provider: "mise" };
+  }
+
+  return runtime;
+}
+
+function mergeRuntime(
+  root?: RuntimeConfig,
+  service?: RuntimeConfig,
+): RuntimeConfig | undefined {
+  const normalizedRoot = normalizeRuntime(root);
+  const normalizedService = normalizeRuntime(service);
+
+  if (!normalizedRoot && !normalizedService) return undefined;
+
+  return normalizeRuntime({
+    ...(normalizedRoot || {}),
+    ...(normalizedService || {}),
+    tools: {
+      ...(normalizedRoot?.tools || {}),
+      ...(normalizedService?.tools || {}),
+    },
+  });
 }
 
 function expandServiceDependencies(

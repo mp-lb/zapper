@@ -131,6 +131,32 @@ describe("ZodConfigValidator", () => {
     }).not.toThrow();
   });
 
+  it("should validate top-level and per-service runtime config", () => {
+    const config = {
+      project: "myproj",
+      runtime: {
+        provider: "mise",
+        node: "lts",
+        pnpm: "latest",
+      },
+      native: {
+        frontend: {
+          cmd: "pnpm dev",
+        },
+        legacy: {
+          cmd: "pnpm dev",
+          runtime: {
+            node: 20,
+          },
+        },
+      },
+    };
+
+    expect(() => {
+      ZodConfigValidator.validate(config);
+    }).not.toThrow();
+  });
+
   it("should validate healthcheck object forms", () => {
     const config = {
       project: "myproj",

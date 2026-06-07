@@ -244,4 +244,37 @@ describe("volumeManager", () => {
       namedVolumesToCreate: ["shared-cache", "zap.myproject.abc123.vol1"],
     });
   });
+
+  it("normalizes Windows bind mount sources when running under WSL", () => {
+    const projectRoot = makeTempDir();
+
+    const resolved = resolveContainerVolumes({
+      projectRoot,
+      projectName: "myproject",
+      instanceKey: "default",
+      instanceId: "abc123",
+      serviceName: "api",
+      hostPathContext: {
+        platform: "linux",
+        env: { WSL_DISTRO_NAME: "Ubuntu" },
+      },
+      volumes: [
+        "C:\\Users\\me\\repo\\fixtures:/fixtures:ro",
+        {
+          type: "bind",
+          source: "D:\\cache",
+          target: "/cache",
+          read_only: true,
+        },
+      ],
+    });
+
+    expect(resolved).toEqual({
+      bindings: [
+        "/mnt/c/Users/me/repo/fixtures:/fixtures:ro",
+        "/mnt/d/cache:/cache:ro",
+      ],
+      namedVolumesToCreate: [],
+    });
+  });
 });

@@ -8,6 +8,7 @@ import {
   StoredVolume,
   TopLevelVolume,
   Secret,
+  RuntimeConfig,
 } from "../config/schemas";
 import type { ResolvedProfile } from "../core/profileResolver";
 
@@ -36,6 +37,7 @@ export interface Context {
   ports?: string[]; // Port names from config
   initTask?: string; // Task to run automatically after `zap init`
   gitMethod?: "http" | "ssh" | "cli";
+  runtime?: RuntimeConfig;
   taskDelimiters?: [string, string]; // Custom delimiters for task interpolation
   instanceKey: string; // Selected instance key (default if unspecified)
   instanceId?: string | null; // Instance ID used to namespace this stack

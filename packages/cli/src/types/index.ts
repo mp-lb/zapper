@@ -34,6 +34,7 @@ export type Command =
   | "config"
   | "validate"
   | "env"
+  | "runtime"
   | "launch"
   | "open"
   | "links"

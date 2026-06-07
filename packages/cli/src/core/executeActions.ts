@@ -25,6 +25,7 @@ import {
   getProjectRootHash,
   getSystemRegistryId,
 } from "../system/SystemRegistry";
+import { resolveHostPath } from "../runtime";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -57,16 +58,16 @@ function resolveBuildConfig(
 
   if (typeof build === "string") {
     return {
-      context: path.resolve(projectRoot, build),
+      context: resolveHostPath(projectRoot, build),
       tag: image,
     };
   }
 
-  const context = path.resolve(projectRoot, build.context);
+  const context = resolveHostPath(projectRoot, build.context);
   return {
     context,
     dockerfile: build.dockerfile
-      ? path.resolve(context, build.dockerfile)
+      ? resolveHostPath(context, build.dockerfile)
       : undefined,
     target: build.target,
     args: build.args,
@@ -98,12 +99,12 @@ function resolveSecretVolumes({
     if (!secret) throw new Error(`Secret not found: ${source}`);
 
     if (typeof secret === "string") {
-      volumes.push(`${path.resolve(projectRoot, secret)}:${target}:ro`);
+      volumes.push(`${resolveHostPath(projectRoot, secret)}:${target}:ro`);
       continue;
     }
 
     if (secret.file) {
-      volumes.push(`${path.resolve(projectRoot, secret.file)}:${target}:ro`);
+      volumes.push(`${resolveHostPath(projectRoot, secret.file)}:${target}:ro`);
       continue;
     }
 
@@ -120,7 +121,7 @@ function resolveSecretVolumes({
       mkdirSync(secretDir, { recursive: true, mode: 0o700 });
       const secretPath = path.join(secretDir, source);
       writeFileSync(secretPath, value, { mode: 0o600 });
-      volumes.push(`${secretPath}:${target}:ro`);
+      volumes.push(`${resolveHostPath(projectRoot, secretPath)}:${target}:ro`);
     }
   }
 

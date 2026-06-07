@@ -378,6 +378,7 @@ export class Zapper {
       project: this.context.projectName,
       env_files: this.context.envFiles,
       git_method: this.context.gitMethod,
+      runtime: this.context.runtime,
       native,
       docker,
       volumes: this.context.volumes ?? {},

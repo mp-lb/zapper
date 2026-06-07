@@ -12,6 +12,7 @@ import {
 import { Context, Process, Task, Container } from "../types/Context";
 import { renderer } from "../ui/renderer";
 import { loadPorts, loadPortsForInstance } from "./portsManager";
+import { resolveHostPath } from "../runtime";
 
 interface RawEnvFile {
   envs?: Array<Record<string, string>>;
@@ -420,8 +421,8 @@ export class EnvResolver {
   }
 
   private static resolvePath(filePath: string, projectRoot?: string): string {
-    if (!projectRoot || path.isAbsolute(filePath)) return filePath;
-    return path.join(projectRoot, filePath);
+    if (!projectRoot) return filePath;
+    return resolveHostPath(projectRoot, filePath);
   }
 
   private static loadWhitelistFile(filePath: string): string[] {

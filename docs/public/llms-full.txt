@@ -1,7 +1,11 @@
----
-title: "Zapper"
-description: "A lightweight dev environment runner for local multi-service projects."
----
+# Zapper documentation
+
+This raw document is generated from the Markdown files that power the Zapper VitePress documentation site.
+
+# Source: docs/index.md
+
+# Zapper
+
 A lightweight dev environment runner for local multi-service projects.
 
 ## Install
@@ -69,24 +73,24 @@ zap task seed
 zap task console
 ```
 
-For full reference docs, see [Commands](/docs/commands),
-[Configuration](/docs/configuration), [Services](services.md), and
-[Tasks](/docs/tasks).
+For full reference docs, see [Commands](commands.md),
+[Configuration](configuration.md), [Services](services.md), and
+[Tasks](tasks.md).
 
 For profile-based env files, service selection, and isolated stacks, see
-[Profiles](/docs/profiles).
+[Profiles](profiles.md).
 
 For readiness waits and dependency startup behavior, see
-[Health Checks](/docs/healthchecks).
+[Health Checks](healthchecks.md).
 
 For packaging and local machine runtime plans, see
-[Local Runtime Compatibility](/docs/local-runtime).
+[Local Runtime Compatibility](local-runtime.md).
 
 For the command result and rendering contract, see
-[Command Output](/docs/output).
+[Command Output](output.md).
 
 For CLI development, testing, and release workflow, see
-[CLI Development](/docs/cli-development).
+[CLI Development](cli-development.md).
 
 For the local menu bar app development loop, see
-[macOS Development](/docs/macos-development).
+[macOS Development](macos-development.md).

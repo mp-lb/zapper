@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
 import { renderer } from "../../ui/renderer";
-import { resolveBrewRuntime, resolveDockerRuntime } from "../../runtime";
+import { isWsl, resolveBrewRuntime, resolveDockerRuntime } from "../../runtime";
 
 interface CommandResult {
   code: number;
@@ -48,6 +48,11 @@ async function hasDockerCli(): Promise<boolean> {
   return result.code === 0;
 }
 
+async function hasDockerDaemon(): Promise<CommandResult> {
+  const docker = resolveDockerRuntime(["version"]);
+  return runCommand(docker.command, docker.argsPrefix);
+}
+
 function missingDockerMessage(): string {
   const platform = process.platform;
 
@@ -60,6 +65,28 @@ function missingDockerMessage(): string {
   }
 
   return "Docker is required but not installed. Install Docker and retry.";
+}
+
+function unavailableDockerDaemonMessage(result: CommandResult): string {
+  const details = result.stderr.trim() || result.stdout.trim();
+
+  if (isWsl()) {
+    return [
+      "Docker CLI is installed, but the Docker daemon is not reachable from WSL.",
+      "Open Docker Desktop, enable WSL integration for this distro, then retry.",
+      details ? `Details: ${details}` : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  return [
+    "Docker CLI is installed, but the Docker daemon is not reachable.",
+    "Start Docker Desktop or your Docker daemon, then retry.",
+    details ? `Details: ${details}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 async function tryInstallDocker(): Promise<void> {
@@ -104,8 +131,16 @@ export async function ensureDockerAvailable(): Promise<void> {
   if (!ensureDockerPromise) {
     ensureDockerPromise = (async () => {
       const installed = await hasDockerCli();
-      if (installed) return;
-      await tryInstallDocker();
+
+      if (!installed) {
+        await tryInstallDocker();
+      }
+
+      const daemon = await hasDockerDaemon();
+
+      if (daemon.code !== 0) {
+        throw new Error(unavailableDockerDaemonMessage(daemon));
+      }
     })().finally(() => {
       ensureDockerPromise = null;
     });

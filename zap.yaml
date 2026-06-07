@@ -31,7 +31,12 @@ tasks:
   lint:
     cmds:
       - pnpm lint
+  context-build:
+    cmds:
+      - node scripts/context-files.mjs build {{REST}}
+  context-copy:
+    cmds:
+      - node scripts/context-files.mjs copy {{REST}}
   compile-agents:
     cmds:
-      - npx -y @mp-lb/mdcompile agents-md/index.md -o AGENTS.md --optional --silent
-      - npx -y @mp-lb/mdcompile agents-md/index.md -o CLAUDE.md --optional --silent
+      - zap task context-build -- ~/Code/mgr/agents-md/global.md

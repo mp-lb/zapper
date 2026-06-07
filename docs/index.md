@@ -5,8 +5,11 @@ A lightweight dev environment runner for local multi-service projects.
 ## Install
 
 ```bash
-npm install -g pm2 @mp-lb/zapper
+npm install -g @mp-lb/zapper
 ```
+
+On Windows, run Zapper from WSL2. Use Linux paths in `zap.yaml`, and make sure
+Docker is reachable from that WSL distro before starting Docker services.
 
 ## Create `zap.yaml`
 

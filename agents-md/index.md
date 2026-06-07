@@ -15,5 +15,3 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 @commands.md
 
 @verification.md
-
-@~/Code/mgr/agents-md/global.md

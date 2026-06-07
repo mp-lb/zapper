@@ -27,6 +27,7 @@ export { GitStashCommand } from "./GitStashCommand";
 export { ConfigCommand } from "./ConfigCommand";
 export { ValidateCommand } from "./ValidateCommand";
 export { EnvCommand } from "./EnvCommand";
+export { RuntimeCommand } from "./RuntimeCommand";
 export { LaunchCommand } from "./LaunchCommand";
 export { OpenCommand } from "./OpenCommand";
 export { LinksCommand } from "./LinksCommand";

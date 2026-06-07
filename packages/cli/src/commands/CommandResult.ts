@@ -10,6 +10,7 @@ import type {
 } from "../system";
 import type { ServiceActionName, ServiceActionReport } from "../types";
 import { Context, Task } from "../types/Context";
+import type { RuntimeServiceInfo } from "./RuntimeCommand";
 import type { StackInfo } from "./StackCommand";
 
 export interface ProjectLinkResult {
@@ -59,6 +60,16 @@ export type CommandResult =
   | {
       kind: "env.service";
       resolvedEnv: Record<string, string>;
+    }
+  | {
+      kind: "runtime";
+      project: {
+        provider: string;
+        tools: Record<string, string>;
+        source?: string;
+        warning?: string;
+      };
+      services: RuntimeServiceInfo[];
     }
   | {
       kind: "state";

@@ -1,6 +1,7 @@
 import { Container, StoredVolume, TopLevelVolume, Volume } from "./schemas";
 import { loadState, updateState } from "./stateLoader";
 import { DEFAULT_INSTANCE_KEY, ensureInstance } from "../core/instanceResolver";
+import { HostPathContext, normalizeHostPath } from "../runtime";
 
 export interface ManagedVolumeSpec {
   serviceName: string;
@@ -245,6 +246,14 @@ function parseVolumeString(volume: string): {
   internalDir: string;
   suffix?: string;
 } {
+  const windowsDriveMatch = volume.match(/^([a-zA-Z]:[\\/][^:]*):(.*)$/);
+
+  if (windowsDriveMatch) {
+    const [, source, rest] = windowsDriveMatch;
+    const [internalDir, suffix] = rest.split(":");
+    return { source, internalDir, suffix };
+  }
+
   const [source, internalDir, suffix] = volume.split(":");
   if (!internalDir) return { internalDir: source };
 
@@ -261,6 +270,7 @@ function appendMode(binding: string, mode?: string): string {
 
 function isBindMountSource(source: string): boolean {
   return (
+    /^[a-zA-Z]:[\\/]/.test(source) ||
     source.startsWith("/") ||
     source.startsWith("./") ||
     source.startsWith("../") ||
@@ -268,6 +278,15 @@ function isBindMountSource(source: string): boolean {
     source === ".." ||
     source.startsWith("~/")
   );
+}
+
+function renderBindMount(
+  source: string,
+  target: string,
+  mode?: string,
+  context?: HostPathContext,
+): string {
+  return appendMode(`${normalizeHostPath(source, context)}:${target}`, mode);
 }
 
 function isMountVolume(volume: ContainerVolume): volume is MountVolume {
@@ -279,12 +298,20 @@ function mountMode(volume: MountVolume): string | undefined {
   return volume.mode;
 }
 
-function renderMountVolume(volume: MountVolume): string {
+function renderMountVolume(
+  volume: MountVolume,
+  context?: HostPathContext,
+): string {
   if (!volume.source) {
     return appendMode(volume.target, mountMode(volume));
   }
 
-  return appendMode(`${volume.source}:${volume.target}`, mountMode(volume));
+  return renderBindMount(
+    volume.source,
+    volume.target,
+    mountMode(volume),
+    context,
+  );
 }
 
 function mountSourceNeedsVolumeCreate(volume: MountVolume): string | null {
@@ -341,6 +368,7 @@ export function resolveContainerVolumes({
   serviceName,
   volumes,
   topLevelVolumes,
+  hostPathContext,
 }: {
   projectRoot: string;
   projectName: string;
@@ -349,6 +377,7 @@ export function resolveContainerVolumes({
   serviceName: string;
   volumes?: Container["volumes"];
   topLevelVolumes?: Record<string, TopLevelVolume>;
+  hostPathContext?: HostPathContext;
 }): ResolvedVolumes {
   const bindings: string[] = [];
   const namedVolumesToCreate: string[] = [];
@@ -377,7 +406,14 @@ export function resolveContainerVolumes({
           namedVolumesToCreate.push(resolvedName);
         }
       } else {
-        bindings.push(volume);
+        bindings.push(
+          renderBindMount(
+            parsed.source,
+            parsed.internalDir,
+            parsed.suffix,
+            hostPathContext,
+          ),
+        );
       }
 
       continue;
@@ -405,7 +441,7 @@ export function resolveContainerVolumes({
           namedVolumesToCreate.push(resolvedName);
         }
       } else {
-        bindings.push(renderMountVolume(volume));
+        bindings.push(renderMountVolume(volume, hostPathContext));
       }
 
       continue;

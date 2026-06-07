@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createContext } from "./createContext";
 import { ZapperConfig, ZapperState, Process } from "../config/schemas";
 import * as stateLoader from "../config/stateLoader";
-import { mkdirSync, rmSync, existsSync } from "fs";
+import { mkdirSync, rmSync, existsSync, writeFileSync } from "fs";
 import path from "path";
 import { tmpdir } from "os";
 
@@ -87,6 +87,167 @@ describe("createContext", () => {
       const result = createContext(config, testDir);
 
       expect(result.processes).toHaveLength(0);
+    });
+
+    it("merges top-level runtime defaults into native processes", () => {
+      const config: ZapperConfig = {
+        project: "test-project",
+        runtime: {
+          provider: "mise",
+          node: "lts",
+          pnpm: "latest",
+        },
+        native: {
+          frontend: { cmd: "pnpm dev" },
+          legacy: {
+            cmd: "pnpm dev",
+            runtime: {
+              node: "20",
+            },
+          },
+        },
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.runtime).toEqual({
+        provider: "mise",
+        node: "lts",
+        pnpm: "latest",
+        tools: {},
+      });
+
+      expect(result.processes).toContainEqual({
+        name: "frontend",
+        cmd: "pnpm dev",
+        runtime: {
+          provider: "mise",
+          node: "lts",
+          pnpm: "latest",
+          tools: {},
+        },
+      });
+
+      expect(result.processes).toContainEqual({
+        name: "legacy",
+        cmd: "pnpm dev",
+        runtime: {
+          provider: "mise",
+          node: "20",
+          pnpm: "latest",
+          tools: {},
+        },
+      });
+    });
+
+    it("autodetects mise runtime from mise.toml", () => {
+      writeFileSync(path.join(testDir, "mise.toml"), '[tools]\nnode = "lts"\n');
+
+      const config: ZapperConfig = {
+        project: "test-project",
+        native: {
+          frontend: { cmd: "pnpm dev" },
+        },
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.runtime).toEqual({
+        provider: "mise",
+        source: "mise.toml",
+        tools: {},
+      });
+
+      expect(result.processes).toContainEqual({
+        name: "frontend",
+        cmd: "pnpm dev",
+        runtime: {
+          provider: "mise",
+          source: "mise.toml",
+          tools: {},
+        },
+      });
+    });
+
+    it("autodetects service cwd mise runtime files", () => {
+      writeFileSync(path.join(testDir, "mise.toml"), '[tools]\nnode = "lts"\n');
+      mkdirSync(path.join(testDir, "legacy"), { recursive: true });
+      writeFileSync(
+        path.join(testDir, "legacy", "mise.toml"),
+        '[tools]\nnode = "20"\n',
+      );
+
+      const config: ZapperConfig = {
+        project: "test-project",
+        native: {
+          frontend: { cmd: "pnpm dev" },
+          legacy: { cmd: "pnpm dev", cwd: "./legacy" },
+        },
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.processes).toContainEqual({
+        name: "frontend",
+        cmd: "pnpm dev",
+        runtime: {
+          provider: "mise",
+          source: "mise.toml",
+          tools: {},
+        },
+      });
+
+      expect(result.processes).toContainEqual({
+        name: "legacy",
+        cmd: "pnpm dev",
+        cwd: "./legacy",
+        runtime: {
+          provider: "mise",
+          source: "legacy/mise.toml",
+          tools: {},
+        },
+      });
+    });
+
+    it("falls back to ambient when multiple runtime files are detected", () => {
+      writeFileSync(path.join(testDir, "mise.toml"), '[tools]\nnode = "lts"\n');
+      writeFileSync(path.join(testDir, ".tool-versions"), "nodejs lts\n");
+
+      const config: ZapperConfig = {
+        project: "test-project",
+        native: {
+          frontend: { cmd: "pnpm dev" },
+        },
+      };
+
+      mockLoadState.mockReturnValue({
+        lastUpdated: "2024-01-01T00:00:00.000Z",
+      });
+
+      const result = createContext(config, testDir);
+
+      expect(result.runtime?.provider).toBe("ambient");
+      expect(result.runtime?.warning).toContain(
+        "Multiple runtime files detected",
+      );
+
+      expect(result.processes[0].runtime?.provider).toBe("ambient");
+
+      expect(result.processes[0].runtime?.warning).toContain(
+        "Multiple runtime files detected",
+      );
     });
   });
 

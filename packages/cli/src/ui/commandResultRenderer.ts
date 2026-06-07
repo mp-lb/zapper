@@ -38,6 +38,11 @@ function toJsonPayload(result: CommandResult): unknown {
       };
     case "env.service":
       return result.resolvedEnv;
+    case "runtime":
+      return {
+        project: result.project,
+        services: result.services,
+      };
     case "state":
       return result.state;
     case "stack.id":
@@ -201,6 +206,29 @@ function toJsonPayload(result: CommandResult): unknown {
   }
 }
 
+function formatRuntimeTools(tools: Record<string, string>): string {
+  const entries = Object.entries(tools);
+  if (entries.length === 0) return "-";
+  return entries.map(([name, version]) => `${name}@${version}`).join(" ");
+}
+
+function formatRuntimeLine(
+  name: string,
+  runtime: {
+    provider: string;
+    tools: Record<string, string>;
+    source?: string;
+    warning?: string;
+  },
+): string {
+  const source = runtime.source ? `\t${runtime.source}` : "";
+  const warning = runtime.warning ? `\tWARN: ${runtime.warning}` : "";
+
+  return `${name}\t${runtime.provider}\t${formatRuntimeTools(
+    runtime.tools,
+  )}${source}${warning}`;
+}
+
 export function renderCommandResult(
   result: CommandResult,
   options: RenderCommandResultOptions,
@@ -263,6 +291,17 @@ export function renderCommandResult(
       return;
     case "env.service":
       renderer.machine.envMap(result.resolvedEnv);
+      return;
+    case "runtime":
+      renderer.log.report(
+        [
+          formatRuntimeLine("project", result.project),
+          ...result.services.map((service) =>
+            formatRuntimeLine(service.name, service),
+          ),
+        ].join("\n"),
+      );
+
       return;
     case "stack.id":
       renderer.log.report(result.stackId);

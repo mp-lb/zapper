@@ -16,7 +16,7 @@ This is a snapshot of the copy from the pre-redesign landing page in
 - Product label: `zapper`
 - Headline: `The process manager for agents.`
 - Body: `Declarative, stateful, isolated per worktree. One agent spins the stack up, another checks status. No PIDs, no long-lived terminals, no port clashes. Native processes and Docker containers, one yaml, one CLI.`
-- Primary CTA command: `npm i -g pm2 @mp-lb/zapper`
+- Primary CTA command: `npm i -g @mp-lb/zapper`
 - Secondary CTA: `Read the docs →`
 
 ## Terminal Demo
@@ -59,14 +59,14 @@ $ zap open
 ### Cards
 
 1. `01 · STATEFUL`
-   - Title: `The truth lives on disk`
-   - Body: `zap ps and zap ls return the real state of the stack, not whatever your last terminal session remembered. Any agent, any shell, any time.`
+  - Title: `The truth lives on disk`
+  - Body: `zap ps and zap ls return the real state of the stack, not whatever your last terminal session remembered. Any agent, any shell, any time.`
 2. `02 · DETACHED`
-   - Title: `No long-lived terminals`
-   - Body: `PM2-backed processes keep running after the agent that started them exits. Another agent can zap logs api later. No PIDs to pass around, no babysitting.`
+  - Title: `No long-lived terminals`
+  - Body: `PM2-backed processes keep running after the agent that started them exits. Another agent can zap logs api later. No PIDs to pass around, no babysitting.`
 3. `03 · ISOLATED`
-   - Title: `One stack per worktree`
-   - Body: `Run N agents on N worktrees of the same repo. Each gets its own ports, volumes, and state. Parallel work without coordination overhead.`
+  - Title: `One stack per worktree`
+  - Body: `Run N agents on N worktrees of the same repo. Each gets its own ports, volumes, and state. Parallel work without coordination overhead.`
 
 - CTA: `Read the agent docs →`
 
@@ -156,7 +156,7 @@ docker:
 
 - Heading: `Give your agents a stack they can drive.`
 - Body: `One yaml. One CLI. Stateful, detached, isolated. Works just as well when the only agent at the keyboard is you.`
-- Install command: `npm install -g pm2 @mp-lb/zapper`
+- Install command: `npm install -g @mp-lb/zapper`
 
 ## Footer
 

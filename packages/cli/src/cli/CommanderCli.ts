@@ -28,6 +28,7 @@ import {
   ConfigCommand,
   ValidateCommand,
   EnvCommand,
+  RuntimeCommand,
   LaunchCommand,
   OpenCommand,
   LinksCommand,
@@ -132,6 +133,7 @@ export class CommanderCli {
     this.commandHandlers.set("config", new ConfigCommand());
     this.commandHandlers.set("validate", new ValidateCommand());
     this.commandHandlers.set("env", new EnvCommand());
+    this.commandHandlers.set("runtime", new RuntimeCommand());
     this.commandHandlers.set("launch", new LaunchCommand());
     this.commandHandlers.set("open", new OpenCommand());
     this.commandHandlers.set("links", new LinksCommand());
@@ -382,6 +384,14 @@ export class CommanderCli {
       .allowExcessArguments()
       .action(async (task, _options, command) => {
         await this.executeCommand("task", task, command);
+      });
+
+    this.program
+      .command("runtime")
+      .description("Show native runtime provider/tool resolution")
+      .option("-j, --json", "Output runtime info as minified JSON")
+      .action(async (_options, command) => {
+        await this.executeCommand("runtime", undefined, command);
       });
 
     const profileCmd = this.program
