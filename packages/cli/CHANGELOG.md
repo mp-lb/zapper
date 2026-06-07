@@ -1,5 +1,12 @@
 # @mp-lb/zapper
 
+## 0.20.0
+
+### Minor Changes
+
+- Add local runtime host path support and delegate running service logs to the
+  underlying runtime log command.
+
 ## 0.19.0
 
 ### Minor Changes
