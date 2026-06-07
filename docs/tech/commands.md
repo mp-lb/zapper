@@ -17,6 +17,10 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Configuration](configuration.md) for `zap.yaml` fields, and
 [Command Output](output.md) for the JSON/result contract.
 
+`zap logs` delegates to the underlying runtime log command for running services
+(`pm2 logs` for native services and `docker logs` for containers). If a native
+PM2 service is stopped, Zapper can still show the saved last-run log.
+
 ## Global Options
 
 | Option | Description |
@@ -106,13 +110,10 @@ List configured services with details and assigned ports
 
 Show logs for one or more services
 
-For native services, if the PM2 process is no longer running but a saved log
-exists, Zapper prints a warning and shows the last saved run log.
-
 | Option | Description |
 | --- | --- |
-| `-f, --follow` | Follow logs (default) |
-| `--no-follow` | Do not follow logs (print and exit) |
+| `-f, --follow` | Follow logs |
+| `--no-follow` | Do not follow logs (default) |
 
 ## `zap startup-log <services...>`
 

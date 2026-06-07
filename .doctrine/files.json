@@ -400,12 +400,12 @@
     },
     "docs/tech/commands.md": {
       "storageClass": "text",
-      "hash": "sha256:9dbebc3c1749feab2417a21e13430da39f3689846a798a650d9a473f27d0d68e",
-      "lastSyncedAt": "2026-06-07T09:39:08.567Z",
+      "hash": "sha256:1e89015c481581810dc971471e38c052013eaa2808e647544a3f07839202d4bb",
+      "lastSyncedAt": "2026-06-07T12:26:16.141Z",
       "remoteFileId": "a9010237-c79e-4b4f-a919-81081fd10d5b",
       "remotePath": "/tech/commands.md",
-      "remoteUpdatedAt": "2026-06-07T09:39:14.829Z",
-      "remoteRevisionNumber": 5
+      "remoteUpdatedAt": "2026-06-07T12:26:16.699Z",
+      "remoteRevisionNumber": 7
     },
     "docs/tech/configuration.md": {
       "storageClass": "text",
@@ -679,7 +679,7 @@
       "type": "store-reference"
     },
     "docs/skills": {
-      "lastSeenAt": "2026-06-07T12:18:22.454Z",
+      "lastSeenAt": "2026-06-07T12:25:29.930Z",
       "type": "store-reference"
     },
     "docs/standards": {
@@ -687,11 +687,11 @@
       "type": "store-reference"
     },
     "docs/tech/extensions": {
-      "lastSeenAt": "2026-06-07T12:18:22.454Z",
+      "lastSeenAt": "2026-06-07T12:25:29.930Z",
       "type": "store-reference"
     },
     "docs/tech/standards": {
-      "lastSeenAt": "2026-06-07T12:18:22.454Z",
+      "lastSeenAt": "2026-06-07T12:25:29.930Z",
       "type": "store-reference"
     }
   },

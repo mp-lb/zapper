@@ -445,18 +445,7 @@ export class Pm2Manager {
       `Showing logs for ${prefixedName}${follow ? " (following)" : ""}`,
     );
 
-    const logFile = await this.getLogFilePath(
-      prefixedName,
-      projectName,
-      configDir,
-      instanceId,
-    );
-
-    if (!logFile) {
-      throw new Error(`Could not find log file for ${prefixedName}`);
-    }
-
-    await this.showLogsFromFile(logFile, follow);
+    await this.showLogsWithPm2(prefixedName, follow);
   }
 
   static async getProcessInfo(name: string): Promise<ProcessInfo | null> {
@@ -501,48 +490,6 @@ export class Pm2Manager {
       return processes;
     } catch {
       return [];
-    }
-  }
-
-  private static async getLogFilePath(
-    processName: string,
-    projectName?: string,
-    configDir?: string,
-    instanceId?: string | null,
-  ): Promise<string | null> {
-    try {
-      // For Zapper-managed processes, use our custom log path
-      if (
-        projectName &&
-        processName.startsWith(buildPrefix(projectName, instanceId) + ".")
-      ) {
-        return this.getManagedLogFilePath(
-          processName,
-          projectName,
-          configDir,
-          instanceId,
-        );
-      }
-
-      // For non-Zapper processes, fall back to PM2's default paths
-      const output = await this.runPm2Command(["jlist", "--silent"]);
-
-      const processes = JSON.parse(this.sanitizeJsonOutput(output)) as Array<
-        Record<string, unknown>
-      >;
-
-      const proc = processes.find((p) => p.name === processName);
-
-      if (!proc) {
-        renderer.log.warn(`Process not found: ${processName}`);
-        return null;
-      }
-
-      const pm2Env = proc.pm2_env as Record<string, unknown>;
-      return String(pm2Env.pm_log_path || pm2Env.pm_out_log_path || "");
-    } catch (error) {
-      renderer.log.warn(`Error getting log file path: ${error}`);
-      return null;
     }
   }
 
@@ -630,6 +577,32 @@ export class Pm2Manager {
     } catch (error) {
       renderer.log.warn(`Error showing logs from file: ${error}`);
     }
+  }
+
+  private static async showLogsWithPm2(
+    processName: string,
+    follow: boolean,
+  ): Promise<void> {
+    const args = ["logs", processName, "--lines", "50"];
+    if (!follow) args.push("--nostream");
+
+    return new Promise((resolve, reject) => {
+      const pm2 = this.resolvePm2Command(args);
+      renderer.log.debug(`Running: ${pm2.label}`);
+
+      const child = spawn(pm2.command, pm2.argsPrefix, {
+        stdio: "inherit",
+      });
+
+      child.on("close", (code) => {
+        if (code === 0) resolve();
+        else reject(new Error(`PM2 logs failed with code ${code}`));
+      });
+
+      child.on("error", (err) => {
+        reject(new Error(`Failed to run PM2 logs: ${err.message}`));
+      });
+    });
   }
 
   private static async runCommand(

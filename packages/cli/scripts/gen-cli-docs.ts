@@ -1,8 +1,8 @@
 /**
- * Generates docs/commands.md from the commander command tree.
+ * Generates docs/tech/commands.md from the commander command tree.
  *
- *   tsx scripts/gen-cli-docs.ts          # write docs/commands.md
- *   tsx scripts/gen-cli-docs.ts --check  # fail if docs/commands.md is stale
+ *   tsx scripts/gen-cli-docs.ts          # write docs/tech/commands.md
+ *   tsx scripts/gen-cli-docs.ts --check  # fail if docs/tech/commands.md is stale
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { relative } from "node:path";

@@ -253,8 +253,8 @@ export class CommanderCli {
       .alias("l")
       .description("Show logs for one or more services")
       .argument("<services...>", "Services to show logs for")
-      .option("-f, --follow", "Follow logs (default)", true)
-      .option("--no-follow", "Do not follow logs (print and exit)")
+      .option("-f, --follow", "Follow logs")
+      .option("--no-follow", "Do not follow logs (default)")
       .action(async (services, _options, command) => {
         await this.executeCommand("logs", services, command);
       });

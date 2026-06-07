@@ -1,6 +1,6 @@
 /**
- * Zapper-specific assembly of docs/commands.md: wraps the generated commander
- * reference in a hand-authored header/footer. The generator itself
+ * Zapper-specific assembly of docs/tech/commands.md: wraps the generated
+ * commander reference in a hand-authored header/footer. The generator itself
  * (generateCliReference) lives in the shared @mp-lb/cli-docs package; the zapper
  * details (which command tree, which shortcuts, the narrative prose) live here.
  */
@@ -20,7 +20,7 @@ export const COMMANDS_DOC_PATH = join(
   "..",
   "..",
   "docs",
-  "internals",
+  "tech",
   "commands.md",
 );
 

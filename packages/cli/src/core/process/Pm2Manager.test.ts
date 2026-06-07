@@ -323,31 +323,66 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     expect(showLogsFromFileSpy).toHaveBeenCalledWith(logPath, false);
   });
 
-  it("prints the merged managed log without following by default", async () => {
-    const logsDir = path.join(zapDir, "logs");
-    const logPath = path.join(logsDir, "test-project.test-service.log");
-
-    const mergedLog = [
-      "2026-06-07T14:32:10.001Z stdout first",
-      "2026-06-07T14:32:10.002Z stderr second",
-      "2026-06-07T14:32:10.003Z stdout third",
-      "",
-    ].join("\n");
-
-    mkdirSync(logsDir, { recursive: true });
-    writeFileSync(logPath, mergedLog);
-
+  it("uses PM2 logs directly for running services without following by default", async () => {
     vi.spyOn(Pm2Manager as any, "getProcessInfo").mockResolvedValue({
       name: "zap.test-project.test-service",
     });
 
-    const stdoutSpy = vi
-      .spyOn(globalThis.process.stdout, "write")
-      .mockImplementation(() => true);
+    const showLogsWithPm2Spy = vi
+      .spyOn(Pm2Manager as any, "showLogsWithPm2")
+      .mockResolvedValue(undefined);
 
     await Pm2Manager.showLogs("test-service", "test-project", false, testDir);
 
-    expect(stdoutSpy).toHaveBeenCalledWith(mergedLog);
+    expect(showLogsWithPm2Spy).toHaveBeenCalledWith(
+      "zap.test-project.test-service",
+      false,
+    );
+  });
+
+  it("uses PM2 logs directly for running services with follow enabled", async () => {
+    vi.spyOn(Pm2Manager as any, "getProcessInfo").mockResolvedValue({
+      name: "zap.test-project.test-service",
+    });
+
+    const showLogsWithPm2Spy = vi
+      .spyOn(Pm2Manager as any, "showLogsWithPm2")
+      .mockResolvedValue(undefined);
+
+    await Pm2Manager.showLogs("test-service", "test-project", true, testDir);
+
+    expect(showLogsWithPm2Spy).toHaveBeenCalledWith(
+      "zap.test-project.test-service",
+      true,
+    );
+  });
+
+  it("passes --nostream only for non-follow PM2 logs", async () => {
+    const resolvePm2CommandSpy = vi
+      .spyOn(Pm2Manager as any, "resolvePm2Command")
+      .mockImplementation((args: string[]) => ({
+        command: globalThis.process.execPath,
+        argsPrefix: ["-e", ""],
+        label: `pm2 ${args.join(" ")}`,
+      }));
+
+    await (Pm2Manager as any).showLogsWithPm2("zap.test-project.api", false);
+    await (Pm2Manager as any).showLogsWithPm2("zap.test-project.api", true);
+
+    expect(resolvePm2CommandSpy).toHaveBeenNthCalledWith(1, [
+      "logs",
+      "zap.test-project.api",
+      "--lines",
+      "50",
+      "--nostream",
+    ]);
+
+    expect(resolvePm2CommandSpy).toHaveBeenNthCalledWith(2, [
+      "logs",
+      "zap.test-project.api",
+      "--lines",
+      "50",
+    ]);
   });
 
   it("warns clearly when no last-run log exists", async () => {

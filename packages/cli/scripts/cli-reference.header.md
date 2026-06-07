@@ -16,3 +16,7 @@ The reference below is generated from the commander command tree, so it always
 matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Configuration](configuration.md) for `zap.yaml` fields, and
 [Command Output](output.md) for the JSON/result contract.
+
+`zap logs` delegates to the underlying runtime log command for running services
+(`pm2 logs` for native services and `docker logs` for containers). If a native
+PM2 service is stopped, Zapper can still show the saved last-run log.
