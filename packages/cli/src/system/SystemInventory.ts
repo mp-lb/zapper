@@ -5,6 +5,7 @@ import { DockerManager } from "../core/docker/DockerManager";
 import { Pm2Manager } from "../core/process/Pm2Manager";
 import { parseServiceName } from "../utils/nameBuilder";
 import { loadSystemRegistry, SystemRegistryProject } from "./SystemRegistry";
+import { OrphanScanner } from "./OrphanScanner";
 
 export type SystemProjectState = "active" | "inactive" | "stale" | "unresolved";
 
@@ -28,7 +29,7 @@ export interface SystemProjectStatus {
   error?: string;
 }
 
-export type SystemResourceType = "pm2" | "container" | "volume";
+export type SystemResourceType = "pm2" | "container" | "volume" | "process";
 export type SystemResourceClassification =
   | "dangling"
   | "legacy"
@@ -44,6 +45,8 @@ export interface SystemResourceAuditEntry {
   classification: SystemResourceClassification;
   location: string;
   reason: string;
+  // OS process ID, set for "process" entries (orphans PM2 no longer manages).
+  pid?: number;
 }
 
 export interface SystemResourceAuditResult {
@@ -362,6 +365,52 @@ function classifyVolumeResource(
   return null;
 }
 
+// A PM2 entry whose recorded working directory is gone belongs to a deleted
+// checkout/instance dir. PM2 keeps running (or endlessly restarting) it, so it
+// must be pruned regardless of what the registry says about its name.
+function classifyMissingCwdProcess(process: {
+  name: string;
+  cwd?: string;
+}): SystemResourceAuditEntry | null {
+  if (!process.cwd || fs.existsSync(process.cwd)) return null;
+  const parsed = parseServiceName(process.name);
+  if (!parsed) return null;
+
+  return {
+    type: "pm2",
+    name: process.name,
+    project: parsed.project,
+    instanceId: parsed.instanceId,
+    service: parsed.service,
+    classification: "dangling",
+    location: process.cwd,
+    reason: "Process working directory no longer exists",
+  };
+}
+
+// Survivors of a PM2 daemon crash: OS processes still running a Zapper wrapper
+// script that no longer exists on disk (its checkout/instance dir was deleted).
+// PM2 does not know about them, so they are found by scanning OS processes.
+function classifyOrphanWrapperProcesses(
+  pm2Processes: Array<{ pid: number }>,
+): SystemResourceAuditEntry[] {
+  const managedPids = new Set(pm2Processes.map((process) => process.pid));
+
+  return OrphanScanner.listWrapperProcesses()
+    .filter(
+      (wrapper) =>
+        !managedPids.has(wrapper.pid) && !fs.existsSync(wrapper.scriptPath),
+    )
+    .map((wrapper) => ({
+      type: "process" as const,
+      name: `pid ${wrapper.pid}`,
+      classification: "dangling" as const,
+      location: wrapper.scriptPath,
+      reason: "Wrapper script and its instance directory no longer exist",
+      pid: wrapper.pid,
+    }));
+}
+
 export async function auditSystemResources(): Promise<SystemResourceAuditResult> {
   const [projects, pm2Processes, dockerContainers, dockerVolumes] =
     await Promise.all([
@@ -375,9 +424,14 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
   const resources: SystemResourceAuditEntry[] = [];
 
   for (const process of pm2Processes) {
-    const entry = classifyServiceResource("pm2", process.name, index);
+    const entry =
+      classifyMissingCwdProcess(process) ??
+      classifyServiceResource("pm2", process.name, index);
+
     if (entry) resources.push(entry);
   }
+
+  resources.push(...classifyOrphanWrapperProcesses(pm2Processes));
 
   for (const container of dockerContainers) {
     const entry = classifyServiceResource("container", container.name, index);
@@ -410,6 +464,8 @@ export async function cleanupSystemResources(options: {
       await DockerManager.removeContainer(resource.name);
     } else if (resource.type === "volume") {
       await DockerManager.removeVolume(resource.name);
+    } else if (resource.type === "process" && resource.pid) {
+      Pm2Manager.killDetachedProcessTree(resource.pid);
     }
   }
 

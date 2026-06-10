@@ -6,6 +6,7 @@ import { DockerManager } from "../core/docker/DockerManager";
 import { Pm2Manager } from "../core/process/Pm2Manager";
 import type { Context } from "../types/Context";
 import { auditSystemResources } from "./SystemInventory";
+import { OrphanScanner } from "./OrphanScanner";
 import { touchSystemProject } from "./SystemRegistry";
 
 function makeContext(projectRoot: string): Context {
@@ -78,6 +79,8 @@ describe("SystemInventory", () => {
     vi.spyOn(DockerManager, "listVolumes").mockResolvedValue([
       { name: "zap.unregistered.abc123.vol1" },
     ]);
+
+    vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -186,5 +189,86 @@ describe("SystemInventory", () => {
     ).toBeUndefined();
 
     expect(audit.resources).toEqual([]);
+  });
+
+  it("flags PM2 processes whose working directory no longer exists as dangling", async () => {
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+      {
+        name: "zap.anyproject.gone123.api",
+        pid: 11,
+        status: "online",
+        uptime: 100,
+        memory: 1,
+        cpu: 0,
+        restarts: 0,
+        cwd: path.join(tempDir, "deleted-instance"),
+      },
+    ]);
+
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    const audit = await auditSystemResources();
+
+    expect(audit.resources).toEqual([
+      expect.objectContaining({
+        type: "pm2",
+        name: "zap.anyproject.gone123.api",
+        classification: "dangling",
+        reason: "Process working directory no longer exists",
+      }),
+    ]);
+  });
+
+  it("flags non-PM2 wrapper processes whose script is gone, skipping live scripts and PM2-managed pids", async () => {
+    const liveScript = path.join(tempDir, ".zap", "proj.svc.111.sh");
+    fs.mkdirSync(path.dirname(liveScript), { recursive: true });
+    fs.writeFileSync(liveScript, "#!/bin/bash\n");
+
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([]);
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    vi.mocked(OrphanScanner.listWrapperProcesses).mockReturnValue([
+      { pid: 100, scriptPath: "/gone/dir/.zap/proj.svc.222.sh" },
+      { pid: 200, scriptPath: liveScript },
+    ]);
+
+    const audit = await auditSystemResources();
+
+    expect(audit.resources).toEqual([
+      expect.objectContaining({
+        type: "process",
+        pid: 100,
+        classification: "dangling",
+        location: "/gone/dir/.zap/proj.svc.222.sh",
+      }),
+    ]);
+  });
+
+  it("does not report a wrapper pid that PM2 still manages", async () => {
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+      {
+        name: "zap.unregistered.abc123.api",
+        pid: 300,
+        status: "online",
+        uptime: 100,
+        memory: 1,
+        cpu: 0,
+        restarts: 0,
+        cwd: tempDir,
+      },
+    ]);
+
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    vi.mocked(OrphanScanner.listWrapperProcesses).mockReturnValue([
+      { pid: 300, scriptPath: "/gone/dir/.zap/proj.svc.333.sh" },
+    ]);
+
+    const audit = await auditSystemResources();
+
+    expect(audit.resources.filter((r) => r.type === "process")).toEqual([]);
   });
 });

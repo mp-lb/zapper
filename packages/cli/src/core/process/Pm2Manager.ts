@@ -11,7 +11,7 @@ import path from "path";
 import { Process } from "../../config/schemas";
 import { ProcessInfo } from "../../types/index";
 import { renderer } from "../../ui/renderer";
-import { buildServiceName, buildPrefix } from "../../utils/nameBuilder";
+import { buildServiceName } from "../../utils/nameBuilder";
 import {
   resolvePm2Runtime,
   resolveBashRuntime,
@@ -109,9 +109,19 @@ export class Pm2Manager {
             return resolved;
           })(),
           env: processConfig.resolvedEnv || {},
-          log: path.join(
-            logsDir,
-            `${projectName}.${processConfig.name as string}.log`,
+          // PM2 7 ignores the `log` attribute; out_file/error_file are the
+          // supported way to get a combined managed log file.
+          out_file: this.managedLogFilePath(
+            projectName,
+            processConfig.name as string,
+            configDir,
+            instanceId,
+          ),
+          error_file: this.managedLogFilePath(
+            projectName,
+            processConfig.name as string,
+            configDir,
+            instanceId,
           ),
           merge_logs: true,
           // Limit restarts for faster feedback in local development
@@ -197,6 +207,14 @@ export class Pm2Manager {
     } catch (error) {
       renderer.log.warn(`Error killing process tree for PID ${pid}: ${error}`);
     }
+  }
+
+  /**
+   * Kill the process tree of an orphan Zapper wrapper that PM2 no longer
+   * manages (e.g. survivors of a PM2 daemon crash found by the system audit).
+   */
+  static killDetachedProcessTree(pid: number): void {
+    this.killProcessTree(pid);
   }
 
   /**
@@ -320,15 +338,20 @@ export class Pm2Manager {
     projectName: string,
     processName: string,
     configDir?: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _instanceId?: string | null,
+    instanceId?: string | null,
   ): Promise<void> {
     try {
       const { rmSync, unlinkSync, existsSync } = await import("fs");
       const logsDir = path.join(configDir || ".", ".zap", "logs");
 
-      // Remove the combined log file
-      const logPath = path.join(logsDir, `${projectName}.${processName}.log`);
+      // Remove the combined log file. The path is stack-namespaced so one
+      // stack's cleanup can never delete another stack's logs.
+      const logPath = this.managedLogFilePath(
+        projectName,
+        processName,
+        configDir,
+        instanceId,
+      );
 
       if (existsSync(logPath)) {
         unlinkSync(logPath);
@@ -412,12 +435,7 @@ export class Pm2Manager {
 
     if (!processInfo) {
       const lastRunLogFile = projectName
-        ? this.getManagedLogFilePath(
-            prefixedName,
-            projectName,
-            configDir,
-            instanceId,
-          )
+        ? this.managedLogFilePath(projectName, name, configDir, instanceId)
         : null;
 
       if (lastRunLogFile && existsSync(lastRunLogFile)) {
@@ -493,20 +511,23 @@ export class Pm2Manager {
     }
   }
 
-  private static getManagedLogFilePath(
-    processName: string,
+  /**
+   * Managed combined log file for a service, namespaced by stack ID so that
+   * stacks sharing a local copy (isolated profiles) never collide.
+   */
+  private static managedLogFilePath(
     projectName: string,
+    serviceName: string,
     configDir?: string,
     instanceId?: string | null,
   ): string {
     const logsDir = path.join(configDir || ".", ".zap", "logs");
 
-    const baseName = processName.replace(
-      buildPrefix(projectName, instanceId) + ".",
-      "",
-    );
+    const baseName = instanceId
+      ? `${projectName}.${instanceId}.${serviceName}`
+      : `${projectName}.${serviceName}`;
 
-    return path.join(logsDir, `${projectName}.${baseName}.log`);
+    return path.join(logsDir, `${baseName}.log`);
   }
 
   private static formatLogTimestamp(date: Date): string {

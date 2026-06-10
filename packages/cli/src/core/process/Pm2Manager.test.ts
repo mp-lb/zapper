@@ -121,14 +121,85 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       apps: Array<Record<string, unknown>>;
     };
 
+    // PM2 7 ignores the `log` attribute, so the managed log file must be
+    // configured through out_file/error_file pointing at the same path.
+    const managedLog = path.join(
+      zapDir,
+      "logs",
+      "test-project.test-service.log",
+    );
+
     expect(ecosystem.apps[0]).toMatchObject({
       name: "zap.test-project.test-service",
-      log: path.join(zapDir, "logs", "test-project.test-service.log"),
+      out_file: managedLog,
+      error_file: managedLog,
       merge_logs: true,
     });
 
-    expect(ecosystem.apps[0]).not.toHaveProperty("out_file");
-    expect(ecosystem.apps[0]).not.toHaveProperty("error_file");
+    expect(ecosystem.apps[0]).not.toHaveProperty("log");
+  });
+
+  it("namespaces the managed log file by instance ID", async () => {
+    const processConfig: Process = {
+      name: "test-service",
+      cmd: "node server.js",
+    };
+
+    let ecosystemJson: string | undefined;
+    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
+      async (args: string[]) => {
+        if (args[0] === "start") {
+          ecosystemJson = readFileSync(args[1], "utf8");
+        }
+
+        return "";
+      },
+    );
+
+    await Pm2Manager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+      "abc123",
+    );
+
+    const ecosystem = JSON.parse(ecosystemJson!) as {
+      apps: Array<Record<string, unknown>>;
+    };
+
+    const managedLog = path.join(
+      zapDir,
+      "logs",
+      "test-project.abc123.test-service.log",
+    );
+
+    expect(ecosystem.apps[0]).toMatchObject({
+      name: "zap.test-project.abc123.test-service",
+      out_file: managedLog,
+      error_file: managedLog,
+    });
+  });
+
+  it("only cleans up the stopped stack's log file, not other stacks' logs", async () => {
+    const logsDir = path.join(zapDir, "logs");
+    mkdirSync(logsDir, { recursive: true });
+
+    const ownLog = path.join(logsDir, "test-project.abc123.test-service.log");
+    const otherLog = path.join(logsDir, "test-project.zzz999.test-service.log");
+    writeFileSync(ownLog, "own\n");
+    writeFileSync(otherLog, "other\n");
+
+    vi.spyOn(Pm2Manager as any, "runPm2Command").mockResolvedValue("[]");
+
+    await Pm2Manager.deleteProcess(
+      "test-service",
+      "test-project",
+      testDir,
+      "abc123",
+    );
+
+    expect(existsSync(ownLog)).toBe(false);
+    expect(existsSync(otherLog)).toBe(true);
   });
 
   it("wraps mise runtime processes with structured tool args", async () => {
