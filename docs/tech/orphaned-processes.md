@@ -58,6 +58,35 @@ done
 
 **Key file**: `~/Code/zapper/packages/cli/src/core/process/Pm2Manager.ts`
 
+### Orphans from deleted checkouts / instance dirs
+
+**Symptom**: Processes running from a directory that no longer exists (e.g. a
+removed worktree under `~/Code/__instances__/`), sometimes holding ports.
+
+**Root cause**: Deleting a checkout does not stop its PM2-managed processes —
+PM2 is a user-global daemon. The leftover PM2 entry then restarts the missing
+wrapper script forever, error-spamming `~/.pm2/pm2.log`. In June 2026 this
+grew the log to 20GB, filled the disk, and crashed the PM2 daemon (ENOSPC). A
+daemon crash empties PM2's process table without killing anything: every
+managed process becomes an unmanaged orphan, and `zap ps` reports services
+DOWN while they still run and hold ports.
+
+**Fix applied**: `zap gprune` now detects and kills both PM2 entries whose
+working directory no longer exists and unmanaged wrapper survivors whose
+`.zap/*.sh` script is gone. Dash stops a checkout's zapper stacks (`zap down`
+per stack) before removing an instance.
+
+### Misleading "No log file found ... may never have started"
+
+**Root cause**: PM2 7 ignores the ecosystem `log` attribute, so the managed
+log file in `.zap/logs/` was never written; once a PM2 entry disappeared
+(daemon crash, delete), `zap logs` claimed the service never started. The log
+path was also shared between stacks, so an isolated profile's cleanup deleted
+the default stack's log.
+
+**Fix applied**: ecosystems use `out_file`/`error_file`, and managed log files
+are stack-namespaced: `.zap/logs/<project>.<stackId>.<service>.log`.
+
 ## Cleanup Commands
 
 If orphaned processes are detected, clean them up:
