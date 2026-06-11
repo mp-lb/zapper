@@ -12,6 +12,8 @@ import {
   getStaleSystemRegistryProjects,
   pruneSystemRegistry,
 } from "../system";
+import { OrphanScanner } from "../system/OrphanScanner";
+import { PortOrphanScanner } from "../system/PortOrphanScanner";
 
 export class GlobalCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult> {
@@ -56,6 +58,8 @@ export class GlobalCommand extends CommandHandler {
   }
 
   private async handleList(projectName?: string): Promise<CommandResult> {
+    const orphans = await this.findOrphanProcesses();
+
     if (projectName) {
       // Show info for specific project
       const targets = await this.getProjectTargets(projectName);
@@ -70,6 +74,7 @@ export class GlobalCommand extends CommandHandler {
             containers: targets.containers,
           },
         ],
+        orphans,
       };
     }
 
@@ -78,7 +83,49 @@ export class GlobalCommand extends CommandHandler {
       kind: "global.list",
       allProjects: true,
       projects,
+      orphans,
     };
+  }
+
+  /**
+   * Processes still doing Zapper work that PM2 knows nothing about —
+   * survivors of a PM2 daemon kill. Found two ways: OS processes running a
+   * .zap wrapper script, and listeners on zap-assigned ports outside any
+   * PM2-managed process tree.
+   */
+  private async findOrphanProcesses(): Promise<
+    Array<{ name: string; pid: number; location: string; reason: string }>
+  > {
+    const managedPids = new Set(
+      (await Pm2Manager.listProcesses())
+        .map((process) => process.pid)
+        .filter(Boolean),
+    );
+
+    const wrapperOrphans =
+      OrphanScanner.findUnmanagedWrapperRoots(managedPids);
+
+    const ignorePids = new Set(wrapperOrphans.map((wrapper) => wrapper.pid));
+
+    const portOrphans = PortOrphanScanner.findOrphanPortListeners(
+      managedPids,
+      ignorePids,
+    );
+
+    return [
+      ...wrapperOrphans.map((wrapper) => ({
+        name: `pid ${wrapper.pid}`,
+        pid: wrapper.pid,
+        location: wrapper.scriptPath,
+        reason: "Running a Zapper wrapper but unknown to PM2",
+      })),
+      ...portOrphans.map((orphan) => ({
+        name: `pid ${orphan.pid} (${orphan.command})`,
+        pid: orphan.pid,
+        location: `${orphan.project} port ${orphan.port} ($${orphan.portName})`,
+        reason: `Listening on zap-assigned port ${orphan.port} but unknown to PM2`,
+      })),
+    ];
   }
 
   private async handlePrune(force?: boolean): Promise<CommandResult> {

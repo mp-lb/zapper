@@ -18,6 +18,7 @@ import {
   resolveTailRuntime,
   RuntimeCommand,
 } from "../../runtime";
+import { OrphanScanner } from "../../system/OrphanScanner";
 
 export class Pm2Manager {
   static async startProcess(
@@ -129,6 +130,13 @@ export class Pm2Manager {
           autorestart: true,
           max_restarts: 2,
           min_uptime: 4000, // Must stay up 4s to count as successful start
+          // PM2 only counts "unstable" restarts within min_uptime*max_restarts
+          // of created_at, and created_at is never reset by restarts. An app
+          // that starts crashing later in life (e.g. its wrapper script was
+          // deleted) therefore bypasses max_restarts entirely and loops
+          // unbounded. Exponential backoff (capped at 15s by PM2) throttles
+          // any such loop; it resets once the app runs stably again.
+          exp_backoff_restart_delay: 100,
         },
       ],
     } as Record<string, unknown>;
@@ -271,8 +279,92 @@ export class Pm2Manager {
       ? buildServiceName(projectName, name, instanceId)
       : name;
 
+    const info = await this.getProcessInfo(prefixedName);
+
+    if (info && this.hasMissingWrapperScript(info)) {
+      await this.killManagedProcessTree(prefixedName);
+      await this.runPm2Command(["delete", prefixedName]);
+
+      throw new Error(
+        `Cannot restart ${prefixedName}: its wrapper script no longer exists (${info.script}). ` +
+          `The registration was removed from PM2 to prevent a crash loop; start the service again to recreate it.`,
+      );
+    }
+
     await this.killManagedProcessTree(prefixedName);
     await this.runPm2Command(["restart", prefixedName]);
+  }
+
+  /**
+   * A registration whose .zap wrapper script is gone can only crash-loop
+   * (bash exits 127 instantly, PM2 restarts it forever — its max_restarts cap
+   * does not apply to apps that start failing later in life). Such an app
+   * must be deregistered, never started or restarted.
+   */
+  static hasMissingWrapperScript(info: Pick<ProcessInfo, "script">): boolean {
+    return Boolean(
+      info.script &&
+      /\/\.zap\/[^/]+\.sh$/.test(info.script) &&
+      !existsSync(info.script),
+    );
+  }
+
+  /**
+   * Deregister every PM2 app whose Zapper wrapper script no longer exists on
+   * disk. Returns the names that were removed.
+   */
+  static async deregisterMissingScriptApps(): Promise<string[]> {
+    const processes = await this.listProcesses();
+    const removed: string[] = [];
+
+    for (const proc of processes) {
+      if (!this.hasMissingWrapperScript(proc)) continue;
+
+      renderer.log.warn(
+        `Deregistering ${proc.name}: wrapper script no longer exists (${proc.script})`,
+      );
+
+      await this.killManagedProcessTree(proc.name);
+
+      try {
+        await this.runPm2Command(["delete", proc.name], 1);
+        removed.push(proc.name);
+      } catch (error) {
+        renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
+      }
+    }
+
+    return removed;
+  }
+
+  /**
+   * Stop and deregister every PM2 app whose wrapper script lives under the
+   * given .zap directory — all stacks and instances of that local copy, not
+   * just the current one. Must run before the directory is deleted, so no
+   * registration is left pointing at a missing script (which would
+   * crash-loop unbounded).
+   */
+  static async deregisterAppsUnderZapDir(zapDir: string): Promise<string[]> {
+    const prefix = path.resolve(zapDir) + path.sep;
+    const processes = await this.listProcesses();
+    const removed: string[] = [];
+
+    for (const proc of processes) {
+      if (!proc.script || !path.resolve(proc.script).startsWith(prefix)) {
+        continue;
+      }
+
+      await this.killManagedProcessTree(proc.name);
+
+      try {
+        await this.runPm2Command(["delete", proc.name]);
+        removed.push(proc.name);
+      } catch (error) {
+        renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
+      }
+    }
+
+    return removed;
   }
 
   static async deleteProcess(
@@ -503,6 +595,9 @@ export class Pm2Manager {
         cwd: String(
           (proc["pm2_env"] as Record<string, unknown>)["pm_cwd"] || "",
         ),
+        script: String(
+          (proc["pm2_env"] as Record<string, unknown>)["pm_exec_path"] || "",
+        ),
       }));
 
       return processes;
@@ -693,20 +788,19 @@ export class Pm2Manager {
           // Only retry once on state corruption or version mismatch
           if ((isStateCorruption || isVersionMismatch) && retryCount === 0) {
             renderer.log.warn(
-              `PM2 state corruption detected, resetting PM2 and retrying...`,
+              isVersionMismatch
+                ? `PM2 daemon/CLI version mismatch detected, restarting the PM2 daemon...`
+                : `PM2 state corruption detected, restarting the PM2 daemon...`,
             );
 
             try {
-              // Kill PM2 daemon to reset state
-              await this.runPm2Command(["kill"], 1);
-              // Wait a bit for PM2 to fully stop
-              await new Promise((r) => setTimeout(r, 500));
+              await this.recoverPm2Daemon();
               // Retry the original command
               const result = await this.runPm2Command(args, 1);
               resolve(result);
               return;
             } catch (resetError) {
-              renderer.log.warn(`PM2 reset failed: ${resetError}`);
+              renderer.log.warn(`PM2 recovery failed: ${resetError}`);
               // Fall through to original error
             }
           }
@@ -723,6 +817,94 @@ export class Pm2Manager {
         reject(new Error(`Failed to run PM2 command: ${err.message}`));
       });
     });
+  }
+
+  /**
+   * Restart the PM2 daemon without losing anyone's processes.
+   *
+   * A bare `pm2 kill` takes down every project's apps at once, so a daemon
+   * restart must restore what was running: snapshot the process table first,
+   * kill the daemon, terminate any process trees that survived the kill
+   * (they would otherwise linger as orphans holding their ports, blocking
+   * every later start of that service), resurrect the snapshot, and drop any
+   * registration whose wrapper script is gone so a stale app cannot come
+   * back crash-looping.
+   */
+  private static async recoverPm2Daemon(): Promise<void> {
+    let saved = false;
+
+    try {
+      // --force writes the dump even when the table is empty; without it a
+      // failed save would leave an ancient dump that resurrect would replay.
+      await this.runPm2Command(["save", "--force"], 1);
+      saved = true;
+    } catch (error) {
+      renderer.log.warn(
+        `Could not snapshot the PM2 process table; processes will not be auto-restored after the daemon restart: ${error}`,
+      );
+    }
+
+    await this.runPm2Command(["kill"], 1);
+    await new Promise((r) => setTimeout(r, 500));
+
+    await this.killWrapperSurvivors();
+
+    if (saved) {
+      try {
+        await this.runPm2Command(["resurrect"], 1);
+      } catch (error) {
+        renderer.log.warn(
+          `PM2 resurrect failed after daemon restart: ${error}`,
+        );
+      }
+
+      await this.deregisterMissingScriptApps();
+    }
+  }
+
+  /**
+   * After a daemon kill nothing should still be running a .zap wrapper; any
+   * survivor is an orphan that will hold its port and break the next start
+   * of its service. SIGTERM the trees, then SIGKILL whatever ignored it.
+   */
+  private static async killWrapperSurvivors(): Promise<void> {
+    const survivors = OrphanScanner.listWrapperProcesses();
+    if (survivors.length === 0) return;
+
+    for (const survivor of survivors) {
+      renderer.log.warn(
+        `Killing process tree that survived the PM2 daemon kill (PID ${survivor.pid}, ${survivor.scriptPath})`,
+      );
+
+      this.killProcessTree(survivor.pid);
+    }
+
+    await new Promise((r) => setTimeout(r, 1000));
+
+    for (const survivor of OrphanScanner.listWrapperProcesses()) {
+      try {
+        globalThis.process.kill(-survivor.pid, "SIGKILL");
+      } catch (e) {
+        void e;
+      }
+
+      try {
+        globalThis.process.kill(survivor.pid, "SIGKILL");
+      } catch (e) {
+        void e;
+      }
+    }
+
+    await new Promise((r) => setTimeout(r, 200));
+    const remaining = OrphanScanner.listWrapperProcesses();
+
+    if (remaining.length > 0) {
+      renderer.log.warn(
+        `Processes survived the PM2 daemon kill and could not be terminated (PIDs ${remaining
+          .map((p) => p.pid)
+          .join(", ")}); they may still hold their ports`,
+      );
+    }
   }
 
   private static resolvePm2Command(args: string[]): RuntimeCommand {

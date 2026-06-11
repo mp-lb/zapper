@@ -659,6 +659,33 @@ export const renderer = {
       return sections.join("\n\n");
     },
 
+    globalOrphansText(
+      orphans: Array<{
+        name: string;
+        location: string;
+        reason: string;
+      }>,
+    ): string {
+      const sections: string[] = [
+        renderer.heading.text(
+          "Orphaned processes",
+          `${orphans.length} ${pluralize(orphans.length, "process", "processes")}`,
+        ),
+        "",
+        labeledList(
+          ["PROCESS", "DETAILS"],
+          orphans.map((orphan): [string, string] => [
+            orphan.name,
+            `${orphan.location} — ${orphan.reason}`,
+          ]),
+        ),
+        "",
+        dim("Run `zap global prune` to clean these up"),
+      ];
+
+      return sections.join("\n");
+    },
+
     noProjectsFoundToKillText(): string {
       return "No zap projects found to kill.";
     },

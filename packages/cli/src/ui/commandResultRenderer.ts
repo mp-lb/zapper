@@ -103,6 +103,7 @@ function toJsonPayload(result: CommandResult): unknown {
       return {
         allProjects: result.allProjects,
         projects: result.projects,
+        orphans: result.orphans,
       };
     case "global.kill":
       return {
@@ -373,14 +374,20 @@ export function renderCommandResult(
 
       return;
     case "global.list":
-      if (result.projects.length === 0) {
+      if (result.projects.length === 0 && result.orphans.length === 0) {
         renderer.log.info(renderer.command.noProjectsFoundText());
         return;
       }
 
-      renderer.log.report(
-        renderer.command.globalListText(result.projects, result.allProjects),
-      );
+      if (result.projects.length > 0) {
+        renderer.log.report(
+          renderer.command.globalListText(result.projects, result.allProjects),
+        );
+      }
+
+      if (result.orphans.length > 0) {
+        renderer.log.report(renderer.command.globalOrphansText(result.orphans));
+      }
 
       return;
 

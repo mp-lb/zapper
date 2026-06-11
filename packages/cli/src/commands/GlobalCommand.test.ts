@@ -22,6 +22,17 @@ vi.mock("../system", () => ({
   pruneSystemRegistry: vi.fn(),
 }));
 
+vi.mock("../system/OrphanScanner", () => ({
+  OrphanScanner: {
+    listWrapperProcesses: vi.fn(() => []),
+    findUnmanagedWrapperRoots: vi.fn(() => []),
+  },
+}));
+
+vi.mock("../system/PortOrphanScanner", () => ({
+  PortOrphanScanner: { findOrphanPortListeners: vi.fn(() => []) },
+}));
+
 const mockedConfirm = vi.mocked(confirm);
 const mockedAuditSystemResources = vi.mocked(auditSystemResources);
 const mockedCleanupSystemResources = vi.mocked(cleanupSystemResources);
@@ -99,6 +110,7 @@ describe("GlobalCommand", () => {
           containers: [],
         },
       ],
+      orphans: [],
     });
   });
 
@@ -113,6 +125,7 @@ describe("GlobalCommand", () => {
       kind: "global.list",
       allProjects: true,
       projects: [],
+      orphans: [],
     });
   });
 

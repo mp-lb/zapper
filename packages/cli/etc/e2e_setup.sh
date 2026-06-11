@@ -52,7 +52,7 @@ limactl shell "$BASE_VM_NAME" -- env NODE_MAJOR="$NODE_MAJOR" VM_READY_FILE="$VM
 set -euo pipefail
 
 sudo apt-get update
-sudo apt-get install -y curl ca-certificates gnupg rsync build-essential git
+sudo apt-get install -y curl ca-certificates gnupg rsync build-essential git lsof
 
 if ! command -v node >/dev/null 2>&1 || ! node -v | grep -Eq "^v${NODE_MAJOR}\."; then
   curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | sudo -E bash -

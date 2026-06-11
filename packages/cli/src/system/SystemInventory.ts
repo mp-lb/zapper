@@ -6,6 +6,8 @@ import { Pm2Manager } from "../core/process/Pm2Manager";
 import { parseServiceName } from "../utils/nameBuilder";
 import { loadSystemRegistry, SystemRegistryProject } from "./SystemRegistry";
 import { OrphanScanner } from "./OrphanScanner";
+import { PortOrphanScanner } from "./PortOrphanScanner";
+import { listLiveParentMap, pidBelongsToTree } from "./processTree";
 
 export type SystemProjectState = "active" | "inactive" | "stale" | "unresolved";
 
@@ -388,19 +390,42 @@ function classifyMissingCwdProcess(process: {
   };
 }
 
+// A PM2 entry whose wrapper script is gone (its checkout/instance dir was
+// deleted while the registration remained) can only crash-loop: bash exits
+// 127 instantly and PM2 restarts it forever — PM2's restart cap does not
+// apply to apps that start failing later in life.
+function classifyMissingScriptProcess(process: {
+  name: string;
+  script?: string;
+}): SystemResourceAuditEntry | null {
+  if (!Pm2Manager.hasMissingWrapperScript(process)) return null;
+  const parsed = parseServiceName(process.name);
+
+  return {
+    type: "pm2",
+    name: process.name,
+    project: parsed?.project,
+    instanceId: parsed?.instanceId,
+    service: parsed?.service,
+    classification: "dangling",
+    location: process.script || "",
+    reason:
+      "Wrapper script no longer exists; the registration can only crash-loop",
+  };
+}
+
 // Survivors of a PM2 daemon crash: OS processes still running a Zapper wrapper
 // script that no longer exists on disk (its checkout/instance dir was deleted).
 // PM2 does not know about them, so they are found by scanning OS processes.
 function classifyOrphanWrapperProcesses(
   pm2Processes: Array<{ pid: number }>,
 ): SystemResourceAuditEntry[] {
-  const managedPids = new Set(pm2Processes.map((process) => process.pid));
+  const managedPids = new Set(
+    pm2Processes.map((process) => process.pid).filter(Boolean),
+  );
 
-  return OrphanScanner.listWrapperProcesses()
-    .filter(
-      (wrapper) =>
-        !managedPids.has(wrapper.pid) && !fs.existsSync(wrapper.scriptPath),
-    )
+  return OrphanScanner.findUnmanagedWrapperRoots(managedPids)
+    .filter((wrapper) => !fs.existsSync(wrapper.scriptPath))
     .map((wrapper) => ({
       type: "process" as const,
       name: `pid ${wrapper.pid}`,
@@ -409,6 +434,38 @@ function classifyOrphanWrapperProcesses(
       reason: "Wrapper script and its instance directory no longer exist",
       pid: wrapper.pid,
     }));
+}
+
+// Survivors of a PM2 daemon kill that exec'd past their wrapper: processes
+// still listening on a zap-assigned port while PM2 knows nothing about them.
+// They block every later start of the owning service with "port already in
+// use" while PM2 shows it as errored.
+function classifyOrphanPortListeners(
+  pm2Processes: Array<{ pid: number }>,
+  wrapperOrphans: SystemResourceAuditEntry[],
+): SystemResourceAuditEntry[] {
+  const managedPids = new Set(
+    pm2Processes.map((process) => process.pid).filter(Boolean),
+  );
+
+  const ignorePids = new Set(
+    wrapperOrphans
+      .map((entry) => entry.pid)
+      .filter((pid): pid is number => Boolean(pid)),
+  );
+
+  return PortOrphanScanner.findOrphanPortListeners(managedPids, ignorePids).map(
+    (orphan) => ({
+      type: "process" as const,
+      name: `pid ${orphan.pid} (${orphan.command})`,
+      project: orphan.project,
+      instanceId: orphan.instanceId || undefined,
+      classification: "dangling" as const,
+      location: `${orphan.project} port ${orphan.port} ($${orphan.portName})`,
+      reason: `Listening on zap-assigned port ${orphan.port} but unknown to PM2 (survivor of a PM2 daemon kill)`,
+      pid: orphan.pid,
+    }),
+  );
 }
 
 export async function auditSystemResources(): Promise<SystemResourceAuditResult> {
@@ -426,12 +483,15 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
   for (const process of pm2Processes) {
     const entry =
       classifyMissingCwdProcess(process) ??
+      classifyMissingScriptProcess(process) ??
       classifyServiceResource("pm2", process.name, index);
 
     if (entry) resources.push(entry);
   }
 
-  resources.push(...classifyOrphanWrapperProcesses(pm2Processes));
+  const wrapperOrphans = classifyOrphanWrapperProcesses(pm2Processes);
+  resources.push(...wrapperOrphans);
+  resources.push(...classifyOrphanPortListeners(pm2Processes, wrapperOrphans));
 
   for (const container of dockerContainers) {
     const entry = classifyServiceResource("container", container.name, index);
@@ -457,6 +517,23 @@ export async function cleanupSystemResources(options: {
     (resource) => options.includeVolumes || resource.type !== "volume",
   );
 
+  // PM2 restarts change wrapper PIDs between the audit's PM2 and OS scans,
+  // so a PID flagged as an orphan may since have become (or always been) part
+  // of a managed tree. Re-check against a fresh PM2 table before killing.
+  const hasProcessOrphans = resources.some(
+    (resource) => resource.type === "process" && resource.pid,
+  );
+
+  const freshManagedPids = hasProcessOrphans
+    ? new Set(
+        (await Pm2Manager.listProcesses())
+          .map((process) => process.pid)
+          .filter(Boolean),
+      )
+    : new Set<number>();
+
+  const parents = hasProcessOrphans ? listLiveParentMap() : new Map();
+
   for (const resource of resources) {
     if (resource.type === "pm2") {
       await Pm2Manager.deleteProcess(resource.name);
@@ -465,6 +542,7 @@ export async function cleanupSystemResources(options: {
     } else if (resource.type === "volume") {
       await DockerManager.removeVolume(resource.name);
     } else if (resource.type === "process" && resource.pid) {
+      if (pidBelongsToTree(resource.pid, freshManagedPids, parents)) continue;
       Pm2Manager.killDetachedProcessTree(resource.pid);
     }
   }

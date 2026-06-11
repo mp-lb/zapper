@@ -733,6 +733,11 @@ export class Zapper {
     const zapDir = path.join(this.context.projectRoot, ".zap");
 
     if (fs.existsSync(zapDir)) {
+      // stopProcesses only covers the current stack. Deleting .zap while any
+      // other stack/instance of this local copy still has a PM2 registration
+      // would leave that registration pointing at a missing wrapper script,
+      // which crash-loops unbounded — deregister them all first.
+      await Pm2Manager.deregisterAppsUnderZapDir(zapDir);
       fs.rmSync(zapDir, { recursive: true, force: true });
       renderer.log.info(renderer.command.removedZapDirText());
     } else {

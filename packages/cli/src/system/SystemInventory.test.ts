@@ -7,7 +7,15 @@ import { Pm2Manager } from "../core/process/Pm2Manager";
 import type { Context } from "../types/Context";
 import { auditSystemResources } from "./SystemInventory";
 import { OrphanScanner } from "./OrphanScanner";
+import { PortOrphanScanner } from "./PortOrphanScanner";
 import { touchSystemProject } from "./SystemRegistry";
+
+// Keep ancestry checks deterministic: with no parent links, a pid belongs to
+// a tree only when it is itself a root.
+vi.mock("./processTree", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./processTree")>();
+  return { ...actual, listLiveParentMap: () => new Map<number, number>() };
+});
 
 function makeContext(projectRoot: string): Context {
   return {
@@ -81,6 +89,7 @@ describe("SystemInventory", () => {
     ]);
 
     vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
+    vi.spyOn(PortOrphanScanner, "findOrphanPortListeners").mockReturnValue([]);
   });
 
   afterEach(() => {
@@ -216,6 +225,67 @@ describe("SystemInventory", () => {
         name: "zap.anyproject.gone123.api",
         classification: "dangling",
         reason: "Process working directory no longer exists",
+      }),
+    ]);
+  });
+
+  it("flags PM2 registrations whose wrapper script no longer exists as dangling", async () => {
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+      {
+        name: "zap.anyproject.gone456.api",
+        pid: 12,
+        status: "errored",
+        uptime: 0,
+        memory: 0,
+        cpu: 0,
+        restarts: 162000,
+        cwd: tempDir,
+        script: path.join(tempDir, "deleted", ".zap", "proj.api.123.sh"),
+      },
+    ]);
+
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    const audit = await auditSystemResources();
+
+    expect(audit.resources).toEqual([
+      expect.objectContaining({
+        type: "pm2",
+        name: "zap.anyproject.gone456.api",
+        classification: "dangling",
+        reason:
+          "Wrapper script no longer exists; the registration can only crash-loop",
+      }),
+    ]);
+  });
+
+  it("reports processes holding zap-assigned ports that are unknown to PM2", async () => {
+    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([]);
+    vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
+    vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
+
+    vi.mocked(PortOrphanScanner.findOrphanPortListeners).mockReturnValue([
+      {
+        project: "someproj",
+        instanceKey: "default",
+        instanceId: "abc123",
+        portName: "API_PORT",
+        port: 51234,
+        pid: 4242,
+        command: "node",
+      },
+    ]);
+
+    const audit = await auditSystemResources();
+
+    expect(audit.resources).toEqual([
+      expect.objectContaining({
+        type: "process",
+        pid: 4242,
+        project: "someproj",
+        classification: "dangling",
+        reason: expect.stringContaining("port 51234"),
       }),
     ]);
   });

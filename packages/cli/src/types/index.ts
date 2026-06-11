@@ -7,6 +7,8 @@ export interface ProcessInfo {
   cpu: number;
   restarts: number;
   cwd?: string;
+  // Script PM2 executes (pm2_env.pm_exec_path) — the .zap wrapper for Zapper apps.
+  script?: string;
 }
 
 export * from "./Context";

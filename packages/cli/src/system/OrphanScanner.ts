@@ -1,4 +1,5 @@
 import { execSync } from "child_process";
+import { listLiveParentMap, pidBelongsToTree } from "./processTree";
 
 export interface WrapperOsProcess {
   pid: number;
@@ -40,5 +41,27 @@ export const OrphanScanner = {
     } catch {
       return [];
     }
+  },
+
+  /**
+   * Wrapper processes outside every PM2-managed process tree, reduced to
+   * tree roots. Ancestry matters twice here: a managed wrapper forks helper
+   * subshells that share its command line (so direct PID comparison against
+   * PM2's table flags healthy services), and an orphaned tree's subshells
+   * must be reported once via their root, not per process.
+   */
+  findUnmanagedWrapperRoots(managedPids: Set<number>): WrapperOsProcess[] {
+    const parents = listLiveParentMap();
+
+    const unmanaged = this.listWrapperProcesses().filter(
+      (wrapper) => !pidBelongsToTree(wrapper.pid, managedPids, parents),
+    );
+
+    const unmanagedPids = new Set(unmanaged.map((wrapper) => wrapper.pid));
+
+    return unmanaged.filter((wrapper) => {
+      const parent = parents.get(wrapper.pid);
+      return !parent || !pidBelongsToTree(parent, unmanagedPids, parents);
+    });
   },
 };
