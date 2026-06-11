@@ -62,6 +62,16 @@ providers:
     version: "~> 1.0"
     config:
       api_token: "{{cred.VERCEL_API_TOKEN}}"
+  aws:
+    source: hashicorp/aws
+    version: "~> 5.0"
+    config:
+      region: us-east-1
+      # Static keys are optional — when the credentials aren't set these
+      # render empty and the provider falls back to ambient AWS config
+      # (profile/SSO/instance role).
+      access_key: "{{cred.AWS_ACCESS_KEY_ID}}"
+      secret_key: "{{cred.AWS_SECRET_ACCESS_KEY}}"
 
 # Per-module default params (merged under each project's deploy block):
 # network facts the modules need, without touching project files.

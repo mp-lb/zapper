@@ -91,6 +91,27 @@ no container action, no URL) — project factories, registries, budgets, DNS.
 
 A bare Terraform folder is a valid module; `module.yaml` is optional.
 
+## Bundled module library
+
+- `cloud-run-web` — public HTTP container service on Cloud Run, custom domain
+  via Cloud Run domain mapping + Cloudflare DNS.
+- `gce-worker` — always-on container worker on a small GCE VM.
+- `vercel-static` — Vercel-hosted static frontend with custom domain; upload
+  runs as a post-apply hook.
+- `gcp-project` — project factory: the per-project GCP project (billing,
+  APIs); destroying it deletes the GCP project.
+- `project-base` — per-project base resources (the Docker artifact registry).
+- `gcp-budget` — monthly billing budget with spend alerts.
+- `posthog-proxy` — proxied CNAME for PostHog's managed reverse proxy.
+- `shared-mongo-atlas` — binding: scoped user + database on the network's
+  shared Atlas cluster; injects `MONGODB_URL`.
+- `upstash-redis` — one Upstash Redis database for the project; injects
+  `REDIS_URL`.
+- `aws-s3` — private, versioned S3 bucket + an IAM user scoped to that bucket
+  only; injects `AWS_S3_BUCKET`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`,
+  `AWS_SECRET_ACCESS_KEY`. AWS auth via the network's provider config
+  (`{{cred.AWS_*}}`) or ambient AWS configuration.
+
 ## module.yaml
 
 Only what Terraform can't declare:
@@ -131,8 +152,10 @@ hooks:
 Service env is one `env:` list — bare names whitelisted from a pool, literals
 committed inline. The pool is piped in (`<your secrets tooling> | zap arc
 deploy`, JSON or dotenv on stdin) or comes from the network's fallback
-resolver command. Binding modules (shared databases, redis) inject their env
-vars on top via module.yaml — injections need no declaring.
+resolver command. Binding modules (shared databases, redis, buckets) inject
+their env vars via module.yaml — injections need no declaring, and they fill
+gaps only: a service's own env entry (whitelist or literal) wins on conflict,
+so divergence stays declared in the deploy block.
 
 ## Network config
 

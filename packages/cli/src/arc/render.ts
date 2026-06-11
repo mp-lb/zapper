@@ -243,9 +243,11 @@ export function renderDeployment(opts: RenderOptions): Deployment {
     }
   }
 
+  // Injections fill the gaps; a service's own env entries (whitelist or
+  // literal) win on conflict — divergence is declared explicitly.
   for (const instance of containerInstances) {
     const params = tfParams.get(instance)!;
-    params.env = { ...tfEscapeMap(serviceEnv[instance.key]), ...injected };
+    params.env = { ...injected, ...tfEscapeMap(serviceEnv[instance.key]) };
   }
 
   // Assemble Terraform JSON.

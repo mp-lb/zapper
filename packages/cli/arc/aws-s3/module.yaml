@@ -1,0 +1,13 @@
+# aws-s3: a private, versioned S3 bucket + an IAM user scoped to it, the
+# bucket name and the user's access key injected into every sibling container
+# service. AWS auth comes from the network's provider config ({{cred.AWS_*}})
+# or ambient AWS configuration (profile/SSO) — no credentials are declared
+# here so ambient setups aren't blocked.
+defaults:
+  bucket: "{slug}-{service}"
+  username: "arc-{slug}-{service}"
+env:
+  AWS_S3_BUCKET: "{{output.bucket}}"
+  AWS_REGION: "{{output.region}}"
+  AWS_ACCESS_KEY_ID: "{{output.access_key_id}}"
+  AWS_SECRET_ACCESS_KEY: "{{output.secret_access_key}}"

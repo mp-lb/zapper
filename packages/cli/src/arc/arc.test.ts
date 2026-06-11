@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   expandVars,
@@ -10,8 +10,9 @@ import {
   maskSecrets,
   kebabKeysToSnake,
 } from "./template";
+import { fileURLToPath } from "node:url";
 import { resolveServiceEnv, bareEnvKeys } from "./env";
-import { resolveModules } from "./modules";
+import { loadModuleManifest, resolveModules } from "./modules";
 import { renderDeployment } from "./render";
 import { NetworkConfig, ProjectManifest, deployBlockSchema } from "./schemas";
 
@@ -107,7 +108,9 @@ function tempModuleLib(): string {
   writeFileSync(join(dir, "binding", "main.tf"), "");
   writeFileSync(
     join(dir, "binding", "module.yaml"),
-    ["env:", '  DB_URL: "{{output.url}}"'].join("\n"),
+    ["env:", '  DB_URL: "{{output.url}}"', '  DB_HOST: "{{output.host}}"'].join(
+      "\n",
+    ),
   );
 
   mkdirSync(join(dir, "factory"));
@@ -148,7 +151,7 @@ function testManifest(): ProjectManifest {
           module: "web",
           domain: "api.example.com",
           "min-instances": 2,
-          env: ["A", "B=lit"],
+          env: ["A", "B=lit", "DB_HOST=pinned"],
         },
         db: { module: "binding" },
       },
@@ -196,11 +199,13 @@ describe("renderDeployment", () => {
     expect(deployment.serviceUrls).toEqual({ api: "https://api.example.com" });
   });
 
-  it("injects sibling module env into container services", () => {
+  it("injects sibling module env into container services; explicit entries win", () => {
     expect(main.module.svc_api.env).toEqual({
       A: "a-value",
       B: "lit",
       DB_URL: "${module.svc_db.url}",
+      // Whitelisted/literal env beats the binding's DB_HOST injection.
+      DB_HOST: "pinned",
     });
 
     expect(main.module.svc_db.env).toBeUndefined();
@@ -218,6 +223,29 @@ describe("renderDeployment", () => {
     ).toEqual({
       value: "${module.svc_api.project_id}",
       sensitive: true,
+    });
+  });
+});
+
+describe("bundled aws-s3 module", () => {
+  const manifest = loadModuleManifest(
+    join(dirname(fileURLToPath(import.meta.url)), "../../arc/aws-s3"),
+  );
+
+  it("is a binding (no container action) with convention-named defaults", () => {
+    expect(manifest.action).toBeUndefined();
+    expect(manifest.defaults).toEqual({
+      bucket: "{slug}-{service}",
+      username: "arc-{slug}-{service}",
+    });
+  });
+
+  it("injects the bucket and scoped access key into sibling services", () => {
+    expect(manifest.env).toEqual({
+      AWS_S3_BUCKET: "{{output.bucket}}",
+      AWS_REGION: "{{output.region}}",
+      AWS_ACCESS_KEY_ID: "{{output.access_key_id}}",
+      AWS_SECRET_ACCESS_KEY: "{{output.secret_access_key}}",
     });
   });
 });
