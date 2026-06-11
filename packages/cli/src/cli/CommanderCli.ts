@@ -4,6 +4,7 @@ import { Zapper } from "../core/Zapper";
 import { logger, LogLevel } from "../utils/logger";
 import { renderer } from "../ui/renderer";
 import { renderCommandResult } from "../ui/commandResultRenderer";
+import { createArcCommand } from "../arc/command";
 import { captureCommandRun } from "../analytics";
 import {
   UpCommand,
@@ -159,6 +160,10 @@ export class CommanderCli {
       .option("-v, --verbose", "Increase logging verbosity")
       .option("-q, --quiet", "Reduce logging output")
       .option("-d, --debug", "Enable debug logging");
+
+    // Zap Arc: self-contained deploy command group (no Zapper runtime
+    // context; owns the reserved `deploy` zap.yaml key).
+    this.program.addCommand(createArcCommand());
 
     this.program
       .command("up")

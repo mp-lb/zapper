@@ -74,6 +74,13 @@ links:
 - `tasks` defines one-off commands.
 - `homepage`, `links`, and `notes` expose project metadata to CLI and tools.
 
+### Reserved External Keys
+
+The top-level `deploy` key is reserved for external tools (deployment
+tooling). Zapper strips it at the parse boundary: it is never validated,
+normalized, or visible to the rest of Zapper. Its schema is owned entirely by
+the external tool that reads `zap.yaml` directly.
+
 ## Environment Files
 
 Root `env` is a file stack:

@@ -57,4 +57,27 @@ unexpected_key: true
       );
     }
   });
+
+  it("should strip the reserved deploy key without validating its contents", () => {
+    const configPath = path.join(testDir, "zap.yaml");
+
+    writeFileSync(
+      configPath,
+      `project: myproj
+native:
+  api:
+    cmd: npm run dev
+deploy:
+  services:
+    api:
+      module: cloud-run-web
+      anything-goes: [1, 2, 3]
+`,
+    );
+
+    const parsed = parseYamlFile(configPath);
+
+    expect(parsed.native?.api.cmd).toBe("npm run dev");
+    expect("deploy" in parsed).toBe(false);
+  });
 });

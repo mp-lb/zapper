@@ -1,0 +1,28 @@
+# Example ArcNet network config. Copy this somewhere you control (it's the
+# sharing seam — your org's cloud footprint) and point
+# ~/.config/arcnet/config.yaml at it:
+#
+#   network: /path/to/your/network.yaml
+#   credentials: /path/to/your/credentials.env
+#
+name: example
+gcp:
+  # Optional naming convention: derive each project's GCP project as
+  # <project-prefix>-<slug>. Omit it and each project states its own
+  # `gcp-project:` in its deploy block instead. Either way every project gets
+  # its own GCP project (created on first deploy; billing linked, APIs
+  # enabled) — the per-project inventory/drift/teardown unit.
+  # project-prefix: example
+  # Network-level GCP project: holds the Terraform state bucket.
+  network-project: example-arcnet
+  region: us-central1
+  state-bucket: example-arcnet-terraform-state
+  # billing-account: 000000-AAAAAA-000000   # default: first open account
+dns:
+  # Cloudflare zone that per-service domains are created in.
+  zone: example.com
+env:
+  # Fallback env resolver, run from the project dir, printing JSON or dotenv.
+  # The primary interface is piping the pool: <your tooling> | arcnet deploy
+  resolver: cat .env.production
+  public-file: .env.production

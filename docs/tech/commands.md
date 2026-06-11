@@ -17,9 +17,10 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Configuration](configuration.md) for `zap.yaml` fields, and
 [Command Output](output.md) for the JSON/result contract.
 
-`zap logs` delegates to the underlying runtime log command for running services
-(`pm2 logs` for native services and `docker logs` for containers). If a native
-PM2 service is stopped, Zapper can still show the saved last-run log.
+`zap logs` delegates to the underlying runtime log command for running services.
+Native service logs use PM2's raw mode so output is not prefixed with PM2
+process metadata. If a native PM2 service is stopped, Zapper can still show the
+saved last-run log.
 
 ## Global Options
 
@@ -32,6 +33,39 @@ PM2 service is stopped, Zapper can still show the saved last-run log.
 | `-v, --verbose` | Increase logging verbosity |
 | `-q, --quiet` | Reduce logging output |
 | `-d, --debug` | Enable debug logging |
+
+## `zap arc`
+
+Deploy this zap project to the cloud from its deploy: block
+
+| Option | Description |
+| --- | --- |
+| `--config <file>` | arc operator config file (default ~/.config/zap-arc/config.yaml) |
+
+### `zap arc plan`
+
+Render Terraform from the deploy block and show the plan
+
+### `zap arc deploy`
+
+Deploy: build images, apply Terraform, upload frontends
+
+| Option | Description |
+| --- | --- |
+| `--keep` | keep the rendered Terraform dir on failure for debugging |
+
+### `zap arc destroy`
+
+Tear down: terraform destroy, optionally delete the GCP project
+
+| Option | Description |
+| --- | --- |
+| `--yes` | skip terraform's confirmation prompt |
+| `--delete-gcp-project` | after destroy, delete the project's GCP project entirely |
+
+### `zap arc bootstrap`
+
+One-time network setup: network GCP project, state bucket, docker auth
 
 ## `zap up [services...]`
 
@@ -249,6 +283,7 @@ Switch the saved profile for this project
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Shut down services no longer needed without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ### `zap profile reset`
@@ -257,6 +292,7 @@ Reset to the default profile
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Shut down services no longer needed without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ## `zap state`
