@@ -40,11 +40,22 @@ locals {
   })
 }
 
+# A metadata-only change (new image tag) doesn't restart the running
+# container, so the instance is replaced whenever the image changes — the
+# Terraform-native worker reset.
+resource "terraform_data" "image" {
+  input = var.image
+}
+
 resource "google_compute_instance" "main" {
   name         = var.name
   machine_type = var.machine_type
   zone         = "${var.region}-a"
   tags         = [var.name]
+
+  lifecycle {
+    replace_triggered_by = [terraform_data.image]
+  }
 
   boot_disk {
     initialize_params {

@@ -1,0 +1,4 @@
+# gce-worker: an always-on container worker VM.
+action: container
+defaults:
+  name: "{slug}-{service}"

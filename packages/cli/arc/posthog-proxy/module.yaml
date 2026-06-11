@@ -1,0 +1,4 @@
+# posthog-proxy: Cloudflare DNS for PostHog's managed reverse proxy.
+credentials:
+  - name: CLOUDFLARE_API_TOKEN
+    why: proxied CNAME record for the PostHog proxy

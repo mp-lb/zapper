@@ -1,28 +1,82 @@
-# Example ArcNet network config. Copy this somewhere you control (it's the
+# Example arc network config. Copy this somewhere you control (it's the
 # sharing seam — your org's cloud footprint) and point
-# ~/.config/arcnet/config.yaml at it:
+# ~/.config/zap-arc/config.yaml at it:
 #
 #   network: /path/to/your/network.yaml
 #   credentials: /path/to/your/credentials.env
 #
+# The arc engine understands none of the providers below — backend, providers,
+# registry and module defaults are data passed through to Terraform.
 name: example
-gcp:
-  # Optional naming convention: derive each project's GCP project as
-  # <project-prefix>-<slug>. Omit it and each project states its own
-  # `gcp-project:` in its deploy block instead. Either way every project gets
-  # its own GCP project (created on first deploy; billing linked, APIs
-  # enabled) — the per-project inventory/drift/teardown unit.
-  # project-prefix: example
-  # Network-level GCP project: holds the Terraform state bucket.
-  network-project: example-arcnet
-  region: us-central1
-  state-bucket: example-arcnet-terraform-state
-  # billing-account: 000000-AAAAAA-000000   # default: first open account
+
+# Extra top-level string keys are template variables, usable as {var} in any
+# value here (and in module-defaults). Built-ins: {slug} (the project),
+# {service} (in per-module defaults), {network}.
+region: us-central1
+# One GCP project per code project — the inventory/drift/teardown unit.
+gcp-project: example-{slug}
+# Used by `zap arc bootstrap` (with region): the network-level GCP project
+# holding the Terraform state bucket.
+network-project: example-arcnet
+billing-account: 000000-AAAAAA-000000
+
 dns:
-  # Cloudflare zone that per-service domains are created in.
+  # Cloudflare zone that per-service domains are created in (passed to
+  # domain-bearing modules as dns_zone).
   zone: example.com
+
 env:
   # Fallback env resolver, run from the project dir, printing JSON or dotenv.
-  # The primary interface is piping the pool: <your tooling> | arcnet deploy
+  # The primary interface is piping the pool: <your tooling> | zap arc deploy
   resolver: cat .env.production
   public-file: .env.production
+
+# Passthrough → the terraform backend block.
+backend:
+  gcs:
+    bucket: example-arcnet-terraform-state
+    prefix: terraform/state/{slug}
+
+# Container image template; arc appends /<service>:<git-sha>.
+registry: "{region}-docker.pkg.dev/{gcp-project}/{slug}"
+
+# Passthrough → required_providers + provider blocks. Config values may use
+# {{cred.NAME}} (from the operator credentials file) and {var}s.
+providers:
+  google:
+    source: hashicorp/google
+    version: "~> 5.0"
+    config:
+      project: "{gcp-project}"
+      region: "{region}"
+      default_labels:
+        arc-managed: "true"
+        arc-project: "{slug}"
+  cloudflare:
+    source: cloudflare/cloudflare
+    version: "~> 4.0"
+    config:
+      api_token: "{{cred.CLOUDFLARE_API_TOKEN}}"
+  vercel:
+    source: vercel/vercel
+    version: "~> 1.0"
+    config:
+      api_token: "{{cred.VERCEL_API_TOKEN}}"
+
+# Per-module default params (merged under each project's deploy block):
+# network facts the modules need, without touching project files.
+module-defaults:
+  gcp-project:
+    project-id: "{gcp-project}"
+    billing-account: "{billing-account}"
+  project-base:
+    region: "{region}"
+  cloud-run-web:
+    gcp-project-id: "{gcp-project}"
+    region: "{region}"
+  gce-worker:
+    region: "{region}"
+
+# Module library override (a local path; default: the library bundled with
+# the zap package).
+# modules: /path/to/your/modules

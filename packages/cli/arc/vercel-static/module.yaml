@@ -1,0 +1,47 @@
+# vercel-static: Terraform owns the Vercel project + DNS; the upload itself
+# is a post-apply hook. Reserved service params it reads: build (optional
+# local build command, run with the service's deploy env), deploy-path (what
+# to upload), local-config (vercel.json path), remote-build (framework
+# projects: build via Vercel's CLI and upload only the build output —
+# uploading the whole monorepo for a remote build overwhelms Vercel's
+# files API).
+defaults:
+  name: "{slug}-{service}-arc"
+credentials:
+  - name: VERCEL_API_TOKEN
+    why: create the Vercel project and upload deploys
+  - name: CLOUDFLARE_API_TOKEN
+    why: DNS record for the frontend domain
+hooks:
+  post-apply:
+    - name: vercel upload
+      env:
+        VERCEL_PROJECT_ID: "{{output.project_id}}"
+        ARC_VERCEL_BUILD: "{{params.build}}"
+        ARC_VERCEL_DEPLOY_PATH: "{{params.deploy-path}}"
+        ARC_VERCEL_LOCAL_CONFIG: "{{params.local-config}}"
+        ARC_VERCEL_REMOTE_BUILD: "{{params.remote-build}}"
+      run: |
+        set -euo pipefail
+        VERCEL_ORG_ID="$(curl -fsS -H "Authorization: Bearer ${VERCEL_API_TOKEN}" https://api.vercel.com/v2/user \
+          | node -e 'let d="";process.stdin.on("data",c=>d+=c);process.stdin.on("end",()=>console.log(JSON.parse(d).user.id))')"
+        export VERCEL_ORG_ID
+        if [ -n "${ARC_VERCEL_BUILD}" ]; then
+          bash -c "${ARC_VERCEL_BUILD}"
+        fi
+        if [ "${ARC_VERCEL_REMOTE_BUILD}" = "true" ]; then
+          npx -y vercel pull --yes --environment=production --token="${VERCEL_API_TOKEN}"
+          while IFS= read -r kv; do
+            if [ -n "${kv}" ]; then
+              export "${kv?}"
+            fi
+          done <<< "$(node -e 'const env=JSON.parse(process.env.ARC_SERVICE_ENV||"{}");for(const [k,v] of Object.entries(env))console.log(`${k}=${v}`)')"
+          npx -y vercel build --prod --token="${VERCEL_API_TOKEN}"
+          npx -y vercel deploy --prebuilt --prod --yes --token="${VERCEL_API_TOKEN}"
+          exit 0
+        fi
+        args=(--prod --yes --token="${VERCEL_API_TOKEN}")
+        if [ -n "${ARC_VERCEL_LOCAL_CONFIG}" ]; then
+          args+=(--local-config "${ARC_VERCEL_LOCAL_CONFIG}")
+        fi
+        npx -y vercel deploy "${ARC_VERCEL_DEPLOY_PATH:-.}" "${args[@]}"

@@ -1,0 +1,8 @@
+# cloud-run-web: a public HTTP container service. Everything Terraform can't
+# declare; all other params (port, scaling, memory…) are variables.tf.
+action: container
+defaults:
+  name: "{slug}-{service}"
+credentials:
+  - name: CLOUDFLARE_API_TOKEN
+    why: DNS record for the service domain

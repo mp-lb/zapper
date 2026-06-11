@@ -1,0 +1,14 @@
+# shared-mongo-atlas: a binding onto the network's shared Atlas cluster — a
+# scoped user + database, connection string injected into every container
+# service. Cluster facts (atlas-project-id, cluster-host) belong in the
+# network config's module-defaults.
+defaults:
+  username: "arc-{slug}"
+  database: "{slug}"
+credentials:
+  - name: MONGODB_ATLAS_PUBLIC_KEY
+    why: scoped database user on the shared Atlas cluster
+  - name: MONGODB_ATLAS_PRIVATE_KEY
+    why: scoped database user on the shared Atlas cluster
+env:
+  MONGODB_URL: "{{output.url}}"
