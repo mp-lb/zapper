@@ -29,12 +29,20 @@ function toJsonPayload(result: CommandResult): unknown {
         status: "success",
         action: "profile.use",
         profile: result.profile,
+        ...(result.previousProfile
+          ? { previousProfile: result.previousProfile }
+          : {}),
+        ...(result.hotSwap ? { hotSwap: result.hotSwap } : {}),
       };
     case "profiles.reset":
       return {
         status: "success",
         action: "profile.reset",
         profile: result.profile,
+        ...(result.previousProfile
+          ? { previousProfile: result.previousProfile }
+          : {}),
+        ...(result.hotSwap ? { hotSwap: result.hotSwap } : {}),
       };
     case "env.service":
       return result.resolvedEnv;
@@ -288,9 +296,23 @@ export function renderCommandResult(
       return;
     case "profiles.selected":
       renderer.log.info(`Selected profile: ${result.profile}`);
+
+      if (result.hotSwap?.cleanupSkipped.length) {
+        renderer.log.info(
+          `Left running: ${result.hotSwap.cleanupSkipped.join(", ")}`,
+        );
+      }
+
       return;
     case "profiles.reset":
       renderer.log.info(`Reset profile to: ${result.profile}`);
+
+      if (result.hotSwap?.cleanupSkipped.length) {
+        renderer.log.info(
+          `Left running: ${result.hotSwap.cleanupSkipped.join(", ")}`,
+        );
+      }
+
       return;
     case "env.service":
       renderer.machine.envMap(result.resolvedEnv);

@@ -9,6 +9,7 @@ import { DockerCommand, dockerCommandToArgs } from "../../config/dockerCommand";
 
 interface DockerConfig {
   image: string;
+  hostname?: string;
   ports?: string[];
   volumes?: string[];
   networks?: string[];
@@ -125,6 +126,7 @@ export class DockerManager {
 
   private static buildRunArgs(name: string, config: DockerConfig): string[] {
     const args = ["run", "-d", "--name", name];
+    if (config.hostname) args.push("--hostname", config.hostname);
     if (config.labels)
       for (const [k, v] of Object.entries(config.labels))
         args.push("--label", `${k}=${v}`);

@@ -461,6 +461,29 @@ export class Zapper {
     };
   }
 
+  async stopProfileProcesses(
+    profileName: string,
+    processNames: string[],
+    reporter?: ServiceActionReporter,
+  ): Promise<ServiceActionReport> {
+    if (!this.context) throw new ContextNotLoadedError();
+
+    const configPath = this.context.configPath;
+
+    if (!configPath) {
+      throw new Error("Config path not loaded");
+    }
+
+    const zapper = new Zapper();
+    await zapper.loadConfig(configPath, {
+      profile: profileName,
+      __command: "profile",
+      __skipSystemRegistryTouch: true,
+    });
+
+    return zapper.stopProcesses(processNames, reporter);
+  }
+
   async restartProcesses(
     processNames?: string[],
     reporter?: ServiceActionReporter,

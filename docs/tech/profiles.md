@@ -193,15 +193,13 @@ profiles:
     isolate: true
 ```
 
-Switching from `default` to `proddata` updates the same local stack. The initial
-implementation is intentionally simple:
+Switching from `default` to `proddata` updates the same local stack. Zapper
+hot-swaps non-isolated profiles by saving the selected profile, ensuring the
+new profile's services are running, and leaving shared services alone.
 
-1. Stop the current non-isolated stack.
-2. Save the selected profile.
-3. Start the newly selected profile.
-
-Later, Zapper can optimize this by diffing services, env files, ports, and
-dependencies, then restarting only affected services.
+If the previous profile included services that the new profile no longer needs,
+Zapper prompts before stopping them. Press Enter to accept the default cleanup,
+or pass `--force` to skip the prompt. `--json` and `--jsonl` do not prompt.
 
 Starting `e2e` does not disturb `default` or `proddata`. It uses an isolated
 stack derived from the profile.

@@ -8,7 +8,11 @@ import type {
   SystemResourceAuditResult,
   SystemRegistryProject,
 } from "../system";
-import type { ServiceActionName, ServiceActionReport } from "../types";
+import type {
+  ServiceActionName,
+  ServiceActionReport,
+  ServiceExecutionReport,
+} from "../types";
 import { Context, Task } from "../types/Context";
 import type { RuntimeServiceInfo } from "./RuntimeCommand";
 import type { StackInfo } from "./StackCommand";
@@ -17,6 +21,13 @@ export interface ProjectLinkResult {
   name: string;
   url: string;
   isHomepage: boolean;
+}
+
+export interface ProfileHotSwapReport {
+  started: ServiceExecutionReport;
+  stopped?: ServiceExecutionReport;
+  cleanupCandidates: string[];
+  cleanupSkipped: string[];
 }
 
 export type CommandResult =
@@ -52,10 +63,14 @@ export type CommandResult =
   | {
       kind: "profiles.selected";
       profile: string;
+      previousProfile?: string;
+      hotSwap?: ProfileHotSwapReport;
     }
   | {
       kind: "profiles.reset";
       profile: string;
+      previousProfile?: string;
+      hotSwap?: ProfileHotSwapReport;
     }
   | {
       kind: "env.service";

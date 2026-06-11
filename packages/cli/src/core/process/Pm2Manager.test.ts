@@ -527,7 +527,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     );
   });
 
-  it("passes --nostream only for non-follow PM2 logs", async () => {
+  it("uses raw PM2 logs and passes --nostream only for non-follow logs", async () => {
     const resolvePm2CommandSpy = vi
       .spyOn(Pm2Manager as any, "resolvePm2Command")
       .mockImplementation((args: string[]) => ({
@@ -544,6 +544,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       "zap.test-project.api",
       "--lines",
       "50",
+      "--raw",
       "--nostream",
     ]);
 
@@ -552,6 +553,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       "zap.test-project.api",
       "--lines",
       "50",
+      "--raw",
     ]);
   });
 

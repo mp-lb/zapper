@@ -336,6 +336,7 @@ async function executeAction(
         dockerName,
         {
           image,
+          ...(c.hostname ? { hostname: c.hostname } : {}),
           ports,
           volumes: [...resolvedVolumes.bindings, ...secretVolumes],
           networks: c.networks,

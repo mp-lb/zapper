@@ -153,6 +153,7 @@ describe("DockerManager.startContainerAsync", () => {
 
     await DockerManager.startContainerAsync("zap.test.db", {
       image: "postgres:15",
+      hostname: "database",
       command: "postgres -c log_statement=all",
     });
 
@@ -163,6 +164,8 @@ describe("DockerManager.startContainerAsync", () => {
         "-d",
         "--name",
         "zap.test.db",
+        "--hostname",
+        "database",
         "postgres:15",
         "postgres",
         "-c",

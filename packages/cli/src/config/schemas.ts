@@ -252,6 +252,7 @@ export const ContainerSchema = z
     name: z.string().optional(),
     image: z.string().min(1, "Image cannot be empty").optional(),
     build: BuildSchema.optional(),
+    hostname: z.string().min(1, "Hostname cannot be empty").optional(),
     ports: z.array(z.string().min(1, "Port cannot be empty")).optional(),
     env: EnvSchema.optional(),
     volumes: z.array(ContainerVolumeSchema).optional(),

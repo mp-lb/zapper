@@ -95,6 +95,7 @@ describe("executeActions", () => {
       docker: {
         database: {
           image: "postgres:15",
+          hostname: "database",
           ports: ["5432:5432"],
           volumes: [
             "postgres_data:/var/lib/postgresql/data",
@@ -257,6 +258,7 @@ describe("executeActions", () => {
         "zap.test-project.database",
         {
           image: "postgres:15",
+          hostname: "database",
           ports: ["5432:5432"],
           volumes: [
             "postgres_data:/var/lib/postgresql/data",

@@ -429,6 +429,10 @@ export class CommanderCli {
       .command("use")
       .description("Switch the saved profile for this project")
       .argument("<name>", "Profile name to select")
+      .option(
+        "-y, --force",
+        "Shut down services no longer needed without prompting",
+      )
       .option("-j, --json", "Output as minified JSON")
       .action(async (name, _options, command) => {
         await this.executeCommand("profile", ["use", name], command);
@@ -437,6 +441,10 @@ export class CommanderCli {
     profileCmd
       .command("reset")
       .description("Reset to the default profile")
+      .option(
+        "-y, --force",
+        "Shut down services no longer needed without prompting",
+      )
       .option("-j, --json", "Output as minified JSON")
       .action(async (_options, command) => {
         await this.executeCommand("profile", ["reset"], command);

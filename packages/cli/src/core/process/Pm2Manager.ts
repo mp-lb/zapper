@@ -708,7 +708,7 @@ export class Pm2Manager {
     processName: string,
     follow: boolean,
   ): Promise<void> {
-    const args = ["logs", processName, "--lines", "50"];
+    const args = ["logs", processName, "--lines", "50", "--raw"];
     if (!follow) args.push("--nostream");
 
     return new Promise((resolve, reject) => {
