@@ -409,12 +409,12 @@
     },
     "docs/tech/configuration.md": {
       "storageClass": "text",
-      "hash": "sha256:a5c7923256db07547e58a169f855417a19ac3fa3988f1e63790efb00f488ce8b",
-      "lastSyncedAt": "2026-06-03T23:35:37.579Z",
+      "hash": "sha256:9bd607372ce041273fb0c7d97f375315e9de4e11998c2bbb37ef22cb79a561c7",
+      "lastSyncedAt": "2026-06-11T16:36:30.181Z",
       "remoteFileId": "60253b0e-42f1-438a-8b59-150e11453162",
-      "remotePath": "/docs/tech/configuration.md",
-      "remoteUpdatedAt": "2026-06-03T23:35:43.710Z",
-      "remoteRevisionNumber": 2
+      "remotePath": "/tech/configuration.md",
+      "remoteUpdatedAt": "2026-06-11T16:36:44.428Z",
+      "remoteRevisionNumber": 3
     },
     "docs/tech/env-var-mgmt.md": {
       "storageClass": "text",
@@ -1199,7 +1199,7 @@
       "type": "store-reference"
     },
     "docs/skills": {
-      "lastSeenAt": "2026-06-11T02:35:59.143Z",
+      "lastSeenAt": "2026-06-11T17:07:41.662Z",
       "type": "store-reference"
     },
     "docs/standards": {
@@ -1207,11 +1207,11 @@
       "type": "store-reference"
     },
     "docs/tech/extensions": {
-      "lastSeenAt": "2026-06-11T02:35:59.143Z",
+      "lastSeenAt": "2026-06-11T17:07:41.662Z",
       "type": "store-reference"
     },
     "docs/tech/standards": {
-      "lastSeenAt": "2026-06-11T02:35:59.143Z",
+      "lastSeenAt": "2026-06-11T17:07:41.662Z",
       "type": "store-reference"
     }
   },
