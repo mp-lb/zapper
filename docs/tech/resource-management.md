@@ -42,8 +42,13 @@ instance recorded in the local `.zap/state.json`. They usually come from another
 checkout, older state, or manual resource creation.
 
 Use `zap global list` (or `zap global ls`, `zap g ls`) for a machine-wide view
-of discovered Zapper PM2 and Docker container resources. Use
-`zap global kill <project>` when you want project-wide cleanup across checkouts.
+of discovered Zapper PM2 and Docker container resources. It also lists
+**orphaned processes**: processes still doing Zapper work that PM2 knows
+nothing about (typically survivors of a PM2 daemon kill) — wrapper processes
+outside any PM2-managed tree, and listeners on zap-assigned ports. Orphans
+hold their old ports, so the owning service fails to start with "port already
+in use" while PM2 reports it errored. Use `zap global kill <project>` when you
+want project-wide cleanup across checkouts.
 
 ## Cleanup Commands
 
@@ -62,6 +67,10 @@ of discovered Zapper PM2 and Docker container resources. Use
     dependency, mid-edit), its live resources are left alone rather than offered
     for deletion, so a temporarily broken project is never pruned out from under
     you.
+  - It also flags PM2 registrations whose `.zap` wrapper script no longer exists
+    (they can only crash-loop), and orphaned processes unknown to PM2 — wrapper
+    survivors of a daemon kill and listeners on zap-assigned ports. Orphan
+    process trees are killed after a fresh re-check against PM2's table.
 - `zap volume prune` deletes stale generated Docker volumes for the selected
   instance.
 - `zap volume reset` forgets generated volume assignments in `.zap/state.json`

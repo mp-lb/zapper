@@ -76,6 +76,42 @@ working directory no longer exists and unmanaged wrapper survivors whose
 `.zap/*.sh` script is gone. Dash stops a checkout's zapper stacks (`zap down`
 per stack) before removing an instance.
 
+### Crash loops from stale registrations (the cap that didn't apply)
+
+**Symptom**: A PM2 app whose `.zap` wrapper script was deleted restarts
+unbounded (~270/sec observed), even though Zapper registers apps with
+`max_restarts: 2`.
+
+**Root cause**: PM2 only counts "unstable" restarts within
+`min_uptime * max_restarts` of `created_at`, and `created_at` is never reset
+by restarts (pm2 7.0.1, `God.js handleExit`). An app that starts instant-
+exiting *later in life* — its script deleted long after registration — never
+trips the cap. Fresh registrations crash inside the window and stop normally,
+which is why the cap appears to work in testing.
+
+**Fix applied**: three layers. Registrations whose wrapper script is gone are
+deregistered instead of restarted (`zap restart`, the system audit/`gprune`,
+and the post-recovery sweep). Ecosystems set `exp_backoff_restart_delay: 100`,
+which throttles any remaining loop to one restart per 15s and resets once the
+app runs stably. `zap reset` deregisters every PM2 app under `.zap` (all
+stacks/instances) before deleting the directory.
+
+### PM2 daemon kills taking down every project
+
+**Root cause**: Zapper's PM2 corruption/version-mismatch recovery ran a bare
+`pm2 kill`, which stops every project's apps at once. Worse, a kill can fail
+to terminate a process tree (observed with the mgr terminal-daemon): the tree
+survives reparented to launchd, holds its port, and every later start of that
+service fails with "port already in use" while PM2 shows it errored.
+
+**Fix applied**: recovery now snapshots the process table (`pm2 save
+--force`), kills the daemon, terminates surviving wrapper trees (SIGTERM then
+SIGKILL), resurrects the snapshot so other projects come back, and sweeps
+registrations whose scripts are missing. Survivors that exec'd past their
+wrapper are detected by port: `zap global list` reports processes listening on
+zap-assigned ports that belong to no PM2-managed tree, and `gprune` kills
+them.
+
 ### Misleading "No log file found ... may never have started"
 
 **Root cause**: PM2 7 ignores the ecosystem `log` attribute, so the managed
@@ -115,7 +151,7 @@ pm2 list
 
 - Zapper uses PM2 to manage processes. Each process is wrapped in a bash script at `.zap/<project>.<process>.<timestamp>.sh`
 - The wrapper script sets PATH, redirects stderr with coloring, and `exec`s the actual command
-- Zapper configures PM2 with `autorestart: true` but limits `max_restarts: 2` for faster feedback in local development
+- Zapper configures PM2 with `autorestart: true`, `max_restarts: 2` for fast feedback on fresh registrations, and `exp_backoff_restart_delay: 100` to throttle late-onset crash loops the cap cannot stop (see above)
 - The process tree typically looks like: PM2 -> bash wrapper -> pnpm -> tsx/vite/next -> node/esbuild
 - When PM2 kills a process, only the bash wrapper receives the signal. Children must be killed explicitly.
 - The VS Code extension spawns 5 commands per project per poll cycle: `status --json`, `task --json`, `profile list --json`, `state`, `config --pretty`
