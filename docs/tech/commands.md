@@ -17,9 +17,10 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Configuration](configuration.md) for `zap.yaml` fields, and
 [Command Output](output.md) for the JSON/result contract.
 
-`zap logs` delegates to the underlying runtime log command for running services
-(`pm2 logs` for native services and `docker logs` for containers). If a native
-PM2 service is stopped, Zapper can still show the saved last-run log.
+`zap logs` delegates to the underlying runtime log command for running services.
+Native service logs use PM2's raw mode so output is not prefixed with PM2
+process metadata. If a native PM2 service is stopped, Zapper can still show the
+saved last-run log.
 
 ## Global Options
 
@@ -281,6 +282,7 @@ Switch the saved profile for this project
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Shut down services no longer needed without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ### `zap profile reset`
@@ -289,6 +291,7 @@ Reset to the default profile
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Shut down services no longer needed without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ## `zap state`
