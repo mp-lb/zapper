@@ -82,6 +82,7 @@ resource "vercel_project_domain" "www" {
 
 # Apex domains can't CNAME; Vercel publishes a stable A record for them.
 resource "cloudflare_record" "main" {
+  allow_overwrite = true
   zone_id = data.cloudflare_zone.main.id
   name    = var.domain
   content = local.is_apex ? "76.76.21.21" : "cname.vercel-dns.com"
@@ -91,6 +92,7 @@ resource "cloudflare_record" "main" {
 }
 
 resource "cloudflare_record" "www" {
+  allow_overwrite = true
   count   = local.www_redirect ? 1 : 0
   zone_id = data.cloudflare_zone.main.id
   name    = "www.${var.domain}"

@@ -29,6 +29,7 @@ data "cloudflare_zone" "main" {
 }
 
 resource "cloudflare_record" "main" {
+  allow_overwrite = true
   zone_id = data.cloudflare_zone.main.id
   name    = var.domain
   content = var.target

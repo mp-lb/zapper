@@ -177,6 +177,7 @@ resource "google_cloud_run_domain_mapping" "main" {
 }
 
 resource "cloudflare_record" "main" {
+  allow_overwrite = true
   zone_id = data.cloudflare_zone.main.id
   name    = var.domain
   content = google_cloud_run_domain_mapping.main.status[0].resource_records[0].rrdata
