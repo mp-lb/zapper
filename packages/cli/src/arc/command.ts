@@ -162,24 +162,62 @@ function deployVercel(ctx: ArcContext): void {
       run("bash", ["-c", vd.build], { cwd: ctx.projectDir, env: vd.env });
     }
 
+    const vercelEnv = {
+      VERCEL_PROJECT_ID: outputs[vd.outputName].value,
+      VERCEL_ORG_ID: orgId,
+    };
+
+    if (vd.remoteBuild) {
+      // Framework projects: build locally via Vercel's CLI and upload only
+      // the build output. Uploading the whole monorepo for a remote build
+      // overwhelms Vercel's files API.
+      run(
+        "npx",
+        [
+          "-y",
+          "vercel",
+          "pull",
+          "--yes",
+          "--environment=production",
+          `--token=${token}`,
+        ],
+        {
+          cwd: ctx.projectDir,
+          env: vercelEnv,
+        },
+      );
+
+      run("npx", ["-y", "vercel", "build", "--prod", `--token=${token}`], {
+        cwd: ctx.projectDir,
+        env: { ...vercelEnv, ...vd.env },
+      });
+
+      run(
+        "npx",
+        [
+          "-y",
+          "vercel",
+          "deploy",
+          "--prebuilt",
+          "--prod",
+          "--yes",
+          `--token=${token}`,
+        ],
+        {
+          cwd: ctx.projectDir,
+          env: vercelEnv,
+        },
+      );
+
+      continue;
+    }
+
     const args = ["-y", "vercel", "deploy"];
     if (vd.deployPath !== ".") args.push(vd.deployPath);
     args.push("--prod", "--yes", `--token=${token}`);
     if (vd.localConfig) args.push("--local-config", vd.localConfig);
 
-    if (vd.remoteBuild) {
-      for (const [k, v] of Object.entries(vd.env)) {
-        args.push("--env", `${k}=${v}`, "--build-env", `${k}=${v}`);
-      }
-    }
-
-    run("npx", args, {
-      cwd: ctx.projectDir,
-      env: {
-        VERCEL_PROJECT_ID: outputs[vd.outputName].value,
-        VERCEL_ORG_ID: orgId,
-      },
-    });
+    run("npx", args, { cwd: ctx.projectDir, env: vercelEnv });
   }
 }
 
