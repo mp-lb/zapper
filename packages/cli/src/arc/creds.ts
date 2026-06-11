@@ -40,10 +40,18 @@ export function parseDotenv(content: string): Record<string, string> {
   return result;
 }
 
+// File first, process env as fallback — CI provides credentials as env vars
+// (GitHub secrets); locally the credentials file wins per key.
 export function loadCredentials(): Record<string, string> {
+  const fromEnv: Record<string, string> = {};
+
+  for (const [k, v] of Object.entries(process.env)) {
+    if (v !== undefined) fromEnv[k] = v;
+  }
+
   const path = credentialsPath();
-  if (!existsSync(path)) return {};
-  return parseDotenv(readFileSync(path, "utf8"));
+  if (!existsSync(path)) return fromEnv;
+  return { ...fromEnv, ...parseDotenv(readFileSync(path, "utf8")) };
 }
 
 export { credentialsPath };
