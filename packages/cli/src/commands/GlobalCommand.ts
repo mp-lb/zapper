@@ -102,8 +102,7 @@ export class GlobalCommand extends CommandHandler {
         .filter(Boolean),
     );
 
-    const wrapperOrphans =
-      OrphanScanner.findUnmanagedWrapperRoots(managedPids);
+    const wrapperOrphans = OrphanScanner.findUnmanagedWrapperRoots(managedPids);
 
     const ignorePids = new Set(wrapperOrphans.map((wrapper) => wrapper.pid));
 

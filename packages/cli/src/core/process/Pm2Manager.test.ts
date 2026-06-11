@@ -539,9 +539,9 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
     const liveScript = path.join(zapDir, "proj.svc.111.sh");
     writeFileSync(liveScript, "#!/bin/bash\n");
 
-    expect(
-      Pm2Manager.hasMissingWrapperScript({ script: liveScript }),
-    ).toBe(false);
+    expect(Pm2Manager.hasMissingWrapperScript({ script: liveScript })).toBe(
+      false,
+    );
 
     expect(
       Pm2Manager.hasMissingWrapperScript({
@@ -621,7 +621,11 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
     const removed = await Pm2Manager.deregisterMissingScriptApps();
 
     expect(removed).toEqual(["zap.gone.def456.api"]);
-    expect(runPm2Spy).toHaveBeenCalledWith(["delete", "zap.gone.def456.api"], 1);
+    expect(runPm2Spy).toHaveBeenCalledWith(
+      ["delete", "zap.gone.def456.api"],
+      1,
+    );
+
     expect(runPm2Spy).not.toHaveBeenCalledWith(
       ["delete", "zap.proj.abc123.live"],
       expect.anything(),
@@ -666,6 +670,10 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
         return "";
       });
 
+    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
+      processInfo({}),
+    ] as any);
+
     const { OrphanScanner } = await import("../../system/OrphanScanner");
 
     const scannerSpy = vi
@@ -678,7 +686,7 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
 
     await (Pm2Manager as any).recoverPm2Daemon();
 
-    expect(calls).toEqual([["save", "--force"], ["kill"], ["resurrect"]]);
+    expect(calls).toEqual([["save"], ["kill"], ["resurrect"]]);
     expect(scannerSpy).toHaveBeenCalled();
     expect(sweepSpy).toHaveBeenCalled();
     expect(runPm2Spy).toHaveBeenCalledWith(["kill"], 1);
@@ -696,6 +704,10 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
       },
     );
 
+    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
+      processInfo({}),
+    ] as any);
+
     const { OrphanScanner } = await import("../../system/OrphanScanner");
     vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
     vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
@@ -704,7 +716,27 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
 
     await (Pm2Manager as any).recoverPm2Daemon();
 
-    expect(calls).toEqual([["save", "--force"], ["kill"]]);
+    expect(calls).toEqual([["save"], ["kill"]]);
     expect(sweepSpy).not.toHaveBeenCalled();
+  });
+
+  it("never resurrects a stale dump when the table was empty before the kill", async () => {
+    const calls: string[][] = [];
+
+    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
+      async (...callArgs: unknown[]) => {
+        calls.push(callArgs[0] as string[]);
+        return "";
+      },
+    );
+
+    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([]);
+
+    const { OrphanScanner } = await import("../../system/OrphanScanner");
+    vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
+
+    await (Pm2Manager as any).recoverPm2Daemon();
+
+    expect(calls).toEqual([["kill"]]);
   });
 });

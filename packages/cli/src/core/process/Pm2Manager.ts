@@ -831,17 +831,22 @@ export class Pm2Manager {
    * back crash-looping.
    */
   private static async recoverPm2Daemon(): Promise<void> {
+    // Snapshot only when there is something to restore: with an empty table
+    // `pm2 save` leaves the previous dump file untouched (pm2 7's CLI drops
+    // the --force flag), and resurrecting that stale dump would start
+    // processes that were not running.
+    const hadProcesses = (await this.listProcesses()).length > 0;
     let saved = false;
 
-    try {
-      // --force writes the dump even when the table is empty; without it a
-      // failed save would leave an ancient dump that resurrect would replay.
-      await this.runPm2Command(["save", "--force"], 1);
-      saved = true;
-    } catch (error) {
-      renderer.log.warn(
-        `Could not snapshot the PM2 process table; processes will not be auto-restored after the daemon restart: ${error}`,
-      );
+    if (hadProcesses) {
+      try {
+        await this.runPm2Command(["save"], 1);
+        saved = true;
+      } catch (error) {
+        renderer.log.warn(
+          `Could not snapshot the PM2 process table; processes will not be auto-restored after the daemon restart: ${error}`,
+        );
+      }
     }
 
     await this.runPm2Command(["kill"], 1);
