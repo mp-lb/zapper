@@ -92,7 +92,10 @@ export function renderRefsDeep<T>(
 
   if (value !== null && typeof value === "object") {
     return Object.fromEntries(
-      Object.entries(value).map(([k, v]) => [k, renderRefsDeep(v, resolve, what)]),
+      Object.entries(value).map(([k, v]) => [
+        k,
+        renderRefsDeep(v, resolve, what),
+      ]),
     ) as T;
   }
 

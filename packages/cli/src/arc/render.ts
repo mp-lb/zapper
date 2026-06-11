@@ -1,7 +1,11 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { NetworkConfig, ProjectManifest, RESERVED_MODULE_KEYS } from "./schemas";
+import {
+  NetworkConfig,
+  ProjectManifest,
+  RESERVED_MODULE_KEYS,
+} from "./schemas";
 import { ModuleInstance } from "./modules";
 import { resolveServiceEnv } from "./env";
 import {
@@ -202,7 +206,11 @@ export function renderDeployment(opts: RenderOptions): Deployment {
     const hookText = [
       ...mod.hooks["pre-apply"],
       ...mod.hooks["post-apply"],
-    ].flatMap((hook) => [hook.run ?? "", hook.task ?? "", ...Object.values(hook.env)]);
+    ].flatMap((hook) => [
+      hook.run ?? "",
+      hook.task ?? "",
+      ...Object.values(hook.env),
+    ]);
 
     for (const name of hookText.flatMap(collectOutputRefs)) {
       outputs[`${instance.tfName}_${name}`] = {

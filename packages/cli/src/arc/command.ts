@@ -8,7 +8,11 @@ import { loadNetwork } from "./network";
 import { loadCredentials, credentialsPath } from "./creds";
 import { resolveEnvPool, parseEnvText, bareEnvKeys } from "./env";
 import { renderDeployment, Deployment } from "./render";
-import { resolveModules, discoverRemoteManifests, ModuleInstance } from "./modules";
+import {
+  resolveModules,
+  discoverRemoteManifests,
+  ModuleInstance,
+} from "./modules";
 import { runHooks, requireModuleCredentials } from "./hooks";
 import { expandVars } from "./template";
 import { NetworkConfig, ProjectManifest } from "./schemas";

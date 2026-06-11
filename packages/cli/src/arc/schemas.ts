@@ -53,9 +53,7 @@ export const networkConfigSchema = z
       "public-file": z.string().default(".env.production"),
     }),
     // Passthrough → the terraform backend block. Values may use {var}s.
-    backend: z
-      .record(z.string(), z.record(z.string(), z.unknown()))
-      .optional(),
+    backend: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
     // Passthrough → provider blocks. Config values may use {var}s and
     // {{cred.NAME}}.
     providers: z

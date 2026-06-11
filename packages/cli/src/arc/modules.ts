@@ -70,7 +70,12 @@ function resolveOne(
       );
     }
 
-    return { ...base, source: dir, remote: false, manifest: loadModuleManifest(dir) };
+    return {
+      ...base,
+      source: dir,
+      remote: false,
+      manifest: loadModuleManifest(dir),
+    };
   }
 
   if (/^[A-Za-z0-9_-]+$/.test(ref)) {
@@ -90,7 +95,12 @@ function resolveOne(
       );
     }
 
-    return { ...base, source: dir, remote: false, manifest: loadModuleManifest(dir) };
+    return {
+      ...base,
+      source: dir,
+      remote: false,
+      manifest: loadModuleManifest(dir),
+    };
   }
 
   return { ...base, source: ref, remote: true, manifest: EMPTY_MANIFEST };
