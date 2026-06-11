@@ -217,17 +217,19 @@ function formatRuntimeLine(
   name: string,
   runtime: {
     provider: string;
+    shell?: string;
     tools: Record<string, string>;
     source?: string;
     warning?: string;
   },
 ): string {
+  const shell = runtime.shell ? `\tshell=${runtime.shell}` : "";
   const source = runtime.source ? `\t${runtime.source}` : "";
   const warning = runtime.warning ? `\tWARN: ${runtime.warning}` : "";
 
   return `${name}\t${runtime.provider}\t${formatRuntimeTools(
     runtime.tools,
-  )}${source}${warning}`;
+  )}${shell}${source}${warning}`;
 }
 
 export function renderCommandResult(

@@ -65,6 +65,7 @@ export type CommandResult =
       kind: "runtime";
       project: {
         provider: string;
+        shell?: string;
         tools: Record<string, string>;
         source?: string;
         warning?: string;

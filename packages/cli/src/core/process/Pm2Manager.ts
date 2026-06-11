@@ -19,6 +19,12 @@ import {
   RuntimeCommand,
 } from "../../runtime";
 import { OrphanScanner } from "../../system/OrphanScanner";
+import { captureShellEnv } from "./shellEnvCapture";
+
+interface ShellCapture {
+  shell: string;
+  env: Record<string, string>;
+}
 
 export class Pm2Manager {
   static async startProcess(
@@ -65,12 +71,15 @@ export class Pm2Manager {
       instanceId,
     );
 
+    const shellCapture = await this.resolveShellCapture(processConfig);
+
     // Create a minimal wrapper script for PM2 to execute
     const wrapperScript = this.createWrapperScript(
       projectName,
       processConfig,
       configDir,
       instanceId,
+      shellCapture,
     );
 
     renderer.log.debug(
@@ -958,12 +967,86 @@ export class Pm2Manager {
     return `${processConfig.cmd}\n`;
   }
 
+  /**
+   * For `runtime.provider: shell`, captures the user's login-shell environment
+   * so wrapper scripts carry it instead of the env `zap` happened to inherit.
+   * Any failure (unsupported platform, missing shell, capture error) falls
+   * back to ambient behavior with a warning — it never fails the stack.
+   */
+  private static async resolveShellCapture(
+    processConfig: Process,
+  ): Promise<ShellCapture | undefined> {
+    if (processConfig.runtime?.provider !== "shell") return undefined;
+
+    const name = processConfig.name as string;
+
+    if (process.platform === "win32") {
+      renderer.log.warn(
+        `runtime.provider "shell" is not supported on native Windows; using ambient environment for ${name}`,
+      );
+
+      return undefined;
+    }
+
+    const shell = processConfig.runtime?.shell || process.env.SHELL;
+
+    if (!shell) {
+      renderer.log.warn(
+        `runtime.provider "shell": no shell configured and $SHELL is unset; using ambient environment for ${name}`,
+      );
+
+      return undefined;
+    }
+
+    const result = await captureShellEnv(shell);
+
+    if (!result.ok) {
+      renderer.log.warn(
+        `runtime.provider "shell": capturing environment from ${shell} failed (${result.error}); using ambient environment for ${name}`,
+      );
+
+      return undefined;
+    }
+
+    return { shell, env: result.env };
+  }
+
+  // Vars whose login-shell values describe the capture session, not the
+  // toolchain; baking them would mislead the wrapped process.
+  private static readonly SHELL_CAPTURE_SKIP_VARS = new Set([
+    "PWD",
+    "OLDPWD",
+    "SHLVL",
+    "_",
+  ]);
+
+  private static renderShellCaptureExports(
+    capture: ShellCapture,
+    processConfig: Process,
+  ): string {
+    const resolvedKeys = new Set(Object.keys(processConfig.resolvedEnv || {}));
+
+    let content = `# Environment captured from login shell: ${capture.shell}\n`;
+
+    for (const [key, value] of Object.entries(capture.env)) {
+      if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) continue;
+      if (this.SHELL_CAPTURE_SKIP_VARS.has(key)) continue;
+      // Process-specific env (ports, zap.yaml env) must win over the capture
+      if (resolvedKeys.has(key)) continue;
+
+      content += `export ${key}=${this.shellQuote(value)}\n`;
+    }
+
+    return content;
+  }
+
   private static createWrapperScript(
     projectName: string,
     processConfig: Process,
     configDir: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     _instanceId?: string | null,
+    shellCapture?: ShellCapture,
   ): string {
     const zapDir = path.join(configDir, ".zap");
     const timestamp = Date.now();
@@ -972,8 +1055,10 @@ export class Pm2Manager {
 
     let content = "#!/usr/bin/env bash\n";
 
-    // Export PATH from the shell that ran `zap up` to ensure consistent tool versions
-    if (process.env.PATH) {
+    if (shellCapture) {
+      content += this.renderShellCaptureExports(shellCapture, processConfig);
+    } else if (process.env.PATH) {
+      // Export PATH from the shell that ran `zap up` to ensure consistent tool versions
       content += `export PATH="${process.env.PATH}"\n`;
     }
 

@@ -124,6 +124,7 @@ const RuntimeToolVersionSchema = z
 export const RuntimeSchema = z
   .object({
     provider: RuntimeProviderSchema.optional(),
+    shell: z.string().min(1).optional(),
     source: z.string().min(1).optional(),
     warning: z.string().min(1).optional(),
     node: RuntimeToolVersionSchema.optional(),

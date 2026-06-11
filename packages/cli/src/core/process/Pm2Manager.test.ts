@@ -10,6 +10,7 @@ import {
 } from "fs";
 import path from "path";
 import { Pm2Manager } from "./Pm2Manager";
+import { clearShellEnvCaptureCache } from "./shellEnvCapture";
 import { Process } from "../../config/schemas";
 import { renderer } from "../../ui/renderer";
 
@@ -261,6 +262,104 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     expect(content).toContain(
       `exec mise exec 'node@lts' -- bash -lc 'node -e "console.log('\\''hello'\\'')"'\n`,
     );
+  });
+
+  describe("shell runtime provider", () => {
+    const fakeShell = path.join(__dirname, ".test-zap", "fake-shell");
+
+    const readWrapper = (): string => {
+      const wrapperScript = readdirSync(zapDir).find(
+        (file) =>
+          file.includes("test-project.test-service") && file.endsWith(".sh"),
+      );
+
+      expect(wrapperScript).toBeTruthy();
+      return readFileSync(path.join(zapDir, wrapperScript!), "utf8");
+    };
+
+    beforeEach(() => {
+      clearShellEnvCaptureCache();
+
+      // Stands in for a login shell: injects a marker var, then runs the
+      // capture script Pm2Manager passes via -ilc.
+      writeFileSync(
+        fakeShell,
+        `#!/bin/sh\nexport ZAP_TEST_TOOL="fake-node"\nexec /bin/sh -c "$2"\n`,
+        { mode: 0o755 },
+      );
+    });
+
+    afterEach(() => {
+      clearShellEnvCaptureCache();
+    });
+
+    it("bakes the captured login-shell environment into the wrapper", async () => {
+      const processConfig: Process = {
+        name: "test-service",
+        cmd: "pnpm dev",
+        runtime: { provider: "shell", shell: fakeShell },
+      };
+
+      await Pm2Manager.startProcessWithTempEcosystem(
+        "test-project",
+        processConfig,
+        testDir,
+      );
+
+      const content = readWrapper();
+
+      expect(content).toContain(
+        `# Environment captured from login shell: ${fakeShell}`,
+      );
+
+      expect(content).toContain("export ZAP_TEST_TOOL='fake-node'");
+      expect(content).toMatch(/export PATH='[^']+'/);
+      expect(content).not.toContain(`export PATH="${process.env.PATH}"`);
+    });
+
+    it("lets process-specific resolved env win over captured vars", async () => {
+      const processConfig: Process = {
+        name: "test-service",
+        cmd: "pnpm dev",
+        runtime: { provider: "shell", shell: fakeShell },
+        resolvedEnv: { ZAP_TEST_TOOL: "from-zap-yaml" },
+      };
+
+      await Pm2Manager.startProcessWithTempEcosystem(
+        "test-project",
+        processConfig,
+        testDir,
+      );
+
+      expect(readWrapper()).not.toContain("export ZAP_TEST_TOOL=");
+    });
+
+    it("falls back to ambient with a warning when the shell is missing", async () => {
+      const warnSpy = vi
+        .spyOn(renderer.log, "warn")
+        .mockImplementation(() => {});
+
+      const processConfig: Process = {
+        name: "test-service",
+        cmd: "pnpm dev",
+        runtime: { provider: "shell", shell: "/nonexistent/shell" },
+      };
+
+      await Pm2Manager.startProcessWithTempEcosystem(
+        "test-project",
+        processConfig,
+        testDir,
+      );
+
+      const content = readWrapper();
+
+      expect(content).toContain(`export PATH="${process.env.PATH}"`);
+      expect(content).not.toContain("captured from login shell");
+
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("/nonexistent/shell"),
+      );
+    });
   });
 
   it("should clean up old wrapper scripts when starting new instance", async () => {

@@ -98,10 +98,20 @@ present, native PM2 wrapper scripts execute the service command through
 previous captured-`PATH` behavior and reports the ambiguity in `zap runtime`.
 Projects can still set `runtime.provider` explicitly as an escape hatch.
 
-In practice, the CLI should capture the launch environment used for `zap up`
-and write PM2 wrapper scripts with the relevant `PATH` and process environment.
-The desktop app can provide a bundled Zapper runtime while still asking the CLI
-to run project commands through a login-shell-derived environment when needed.
+For projects without mise, `runtime.provider: shell` reconstructs a
+login-shell-derived environment: at `zap up`, the CLI spawns the user's shell
+(`$SHELL`, or `runtime.shell`) once as a login + interactive shell, captures
+its environment, and bakes it into the PM2 wrapper scripts. This is the same
+approach as VS Code's shell environment resolution, and it means a
+Finder-launched desktop app can still start processes that depend on
+nvm-installed node or other rc-file-initialized tools. Restarting through
+Zapper regenerates the wrapper with a fresh capture, so the environment does
+not stay frozen at an earlier `zap up`. If capture fails, or on native
+Windows, Zapper warns and falls back to ambient behavior.
+
+With `ambient` (the default), the CLI captures the launch environment used for
+`zap up` and writes PM2 wrapper scripts with that `PATH` — useful from a
+terminal, but only as good as the environment `zap` inherited.
 
 ## PM2 Reliability
 

@@ -175,9 +175,22 @@ Supported provider values:
 
 - `ambient` uses the existing captured environment.
 - `mise` runs the command through `mise exec`.
-- `shell` is reserved for shell-oriented compatibility and currently behaves
-  like `ambient`.
+- `shell` captures the environment from the user's login shell and bakes it
+  into the PM2 wrapper, so processes find tools (nvm-installed node, shims)
+  even when `zap up` runs outside an interactive shell. The shell defaults to
+  `$SHELL` and can be overridden with `runtime.shell`. Each `zap up` or
+  restart re-captures. If capture fails (missing shell, non-zero exit,
+  timeout) or on native Windows, Zapper warns and falls back to `ambient`.
 - `none` skips Zapper runtime wrapping and runs the command as written.
+
+```yaml
+runtime:
+  provider: shell
+  shell: /bin/zsh # optional, defaults to $SHELL
+```
+
+`zap runtime` reports the provider per service and, for `shell`, which shell
+binary the environment is captured from.
 
 Supported first-class tool fields are `node`, `pnpm`, `python`, `ruby`, `go`,
 and `terraform`. Other mise tools can be declared under `tools`:
