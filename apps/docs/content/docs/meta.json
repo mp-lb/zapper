@@ -7,6 +7,7 @@
     "services",
     "tasks",
     "profiles",
+    "arc",
     "instances",
     "project-metadata",
     "project-roots",

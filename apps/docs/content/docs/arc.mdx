@@ -1,0 +1,146 @@
+---
+title: "Deploy (Zap Arc)"
+description: "Deploy a zap project to the cloud from a deploy: block in zap.yaml — on your own cloud accounts."
+---
+
+Zap Arc deploys a zap project to the cloud from a top-level `deploy:` block in
+`zap.yaml`. The pitch in one line: your `zap.yaml`, deployed — a `render.yaml`
+that's deployable, on your own cloud accounts.
+
+Arc is opt-in: projects without a `deploy:` block are unaffected. Under the
+hood it is Zapper's Terraform integration — manifest in, Terraform + lifecycle
+out. The engine is provider-agnostic: all provider knowledge (GCP, Vercel,
+Cloudflare, …) lives in data — a network config you control and a module
+library — never in engine code.
+
+## Commands
+
+```bash
+zap arc plan       # render Terraform from the deploy block and show the plan
+zap arc deploy     # build/push images, apply Terraform, run hooks
+zap arc destroy    # terraform destroy of everything in state
+zap arc bootstrap  # one-time network setup
+```
+
+- `zap arc deploy` runs pre-apply hooks, applies project-level modules, builds
+  and pushes container images, applies Terraform against central state, then
+  runs post-apply hooks. `--keep` retains the rendered Terraform on failure.
+- `zap arc destroy` removes everything in state. If the deploy block includes
+  a `gcp-project` module, this deletes the project's GCP project too (30-day
+  recovery window).
+- `zap arc bootstrap` is the one-time setup for a new network: the
+  network-level GCP project, the Terraform state bucket, and docker auth. It
+  is the one GCP-aware convenience in the engine, and needs `network-project`
+  and `region` template vars and a `gcs` backend in the network config.
+
+## Three configuration layers
+
+1. **Project** — the `deploy:` block in `zap.yaml` (below). Committed with
+   the code; says *what* the project deploys.
+2. **Network** — a `network.yaml` describing your cloud footprint: Terraform
+   backend, providers, image registry template, DNS zone, module defaults,
+   env resolver. This is the sharing seam — one network config serves every
+   project you deploy. See the
+   [annotated example](https://github.com/mp-lb/zapper/blob/main/docs/tech/arc-network.example.yaml).
+3. **Operator** — `~/.config/zap-arc/config.yaml`, a two-line pointer:
+   `network:` (path to the network config) and `credentials:` (a dotenv of
+   provider tokens). Override with `zap arc --config` or `ZAP_ARC_CONFIG`.
+   GCP auth comes from gcloud application-default credentials.
+
+## The deploy block
+
+```yaml
+deploy:
+  project:            # project-level modules: no service semantics
+    gcp:
+      module: gcp-project
+    registry:
+      module: project-base
+      depends-on: [gcp]
+  services:
+    backend:
+      module: cloud-run-web
+      domain: api.example.com
+      port: 8080            # any non-reserved key passes through to Terraform
+      min-instances: 1
+      env:
+        - SOME_SECRET                     # bare KEY: whitelisted from the pool
+        - PUBLIC_URL=https://example.com  # KEY=value: committed literal
+```
+
+**Params are pure pass-through.** Every key that isn't reserved flows to the
+module's Terraform variables verbatim (kebab→snake on the key). The manifest
+*is* the module's `variables.tf`: unknown params fail at terraform plan, and
+defaults live in the module. The reserved structural keys are arc's own:
+`module`, `domain`, `env`, `dockerfile`, `build`, `deploy-path`,
+`remote-build`, `local-config`, `vercel-name`, `depends-on`.
+
+Setting `domain` passes `domain` and `dns_zone` (the network's zone name) to
+the module — each module does its own zone lookup.
+
+`deploy.project` entries are modules without service semantics (no env map,
+no container, no URL) — project factories, registries, budgets, DNS.
+`depends-on: [<entry key>]` orders them; arc applies all project modules
+before images push and services apply.
+
+## Service env and the pool
+
+Service env is one `env:` list. Bare names are whitelisted from a **pool**;
+`KEY=value` entries are literals committed inline. The pool is piped in on
+stdin (JSON or dotenv):
+
+```bash
+<your secrets tooling> | zap arc deploy
+```
+
+or comes from the network config's fallback `resolver` command. Binding
+modules (shared databases, redis, buckets) inject their env vars via their
+`module.yaml` — injections need no declaring, and they fill gaps only: a
+service's own env entry wins on conflict, so divergence stays declared in the
+deploy block.
+
+## Modules
+
+A module is a Terraform folder, plus an optional `module.yaml` for the things
+Terraform can't declare: a container build (`action: container`), default
+params, required operator credentials, env vars to inject into sibling
+services, and pre/post-apply hooks. A bare Terraform folder is a valid
+module.
+
+`module:` resolves three ways:
+
+- **Bare slug** (`cloud-run-web`) — the module library bundled with the zap
+  package. A network config can point `modules:` at its own library instead.
+- **Terraform source URL** (`github.com/org/repo//mod?ref=v1`) — passed
+  through as the Terraform module source; Terraform fetches, caches and pins
+  it. Remote modules never mean remote code execution beyond their declared
+  hook commands.
+- **`./relative`** — resolved against the project dir: the raw-Terraform
+  escape hatch and one-off plugins.
+
+The bundled library includes `cloud-run-web` (public HTTP container service),
+`gce-worker` (always-on container worker), `vercel-static` (static frontend),
+`gcp-project` and `project-base` (per-project GCP project + registry),
+`gcp-budget`, `posthog-proxy`, `shared-mongo-atlas`, `upstash-redis`, and
+`aws-s3` (private bucket + scoped IAM user).
+
+## Network config
+
+`backend:` and `providers:` in `network.yaml` are passthrough maps rendered
+straight into the Terraform backend/provider blocks. Provider configs may use
+`{{cred.NAME}}` from the operator credentials file, and any string may use
+`{var}` template variables — `{slug}`, `{network}`, plus every extra
+top-level string key the network config defines (e.g. `region`). `registry:`
+is the image template arc appends `/<service>:<tag>` to, and
+`module-defaults:` feeds network facts (regions, billing accounts, cluster
+hosts) to modules without touching project files.
+
+Start from the
+[example network config](https://github.com/mp-lb/zapper/blob/main/docs/tech/arc-network.example.yaml):
+copy it somewhere you control, point `~/.config/zap-arc/config.yaml` at it,
+run `zap arc bootstrap` once, then `zap arc deploy` per project.
+
+For the full contract — module.yaml fields, hooks, template scopes, param
+merge order — see the
+[arc reference](https://github.com/mp-lb/zapper/blob/main/docs/tech/arc.md)
+in the repo.
