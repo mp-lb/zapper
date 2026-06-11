@@ -46,20 +46,4 @@ export function loadCredentials(): Record<string, string> {
   return parseDotenv(readFileSync(path, "utf8"));
 }
 
-export function requireCredential(
-  creds: Record<string, string>,
-  key: string,
-  why: string,
-): string {
-  const value = creds[key];
-
-  if (!value) {
-    throw new Error(
-      `Missing operator credential ${key} (${why}). Add it to ${credentialsPath()}.`,
-    );
-  }
-
-  return value;
-}
-
 export { credentialsPath };

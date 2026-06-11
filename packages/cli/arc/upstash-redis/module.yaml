@@ -1,0 +1,11 @@
+# upstash-redis: one Upstash Redis database for the project, its URL injected
+# into every container service.
+defaults:
+  name: "{slug}-{service}-arc"
+credentials:
+  - name: UPSTASH_EMAIL
+    why: Upstash Redis database
+  - name: UPSTASH_API_KEY
+    why: Upstash Redis database
+env:
+  REDIS_URL: "{{output.redis_url}}"

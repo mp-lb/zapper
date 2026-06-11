@@ -5,24 +5,30 @@ import { join } from "node:path";
 import { homedir } from "node:os";
 import { loadManifest } from "./manifest";
 import { loadNetwork } from "./network";
-import { loadCredentials, requireCredential } from "./creds";
-import { resolveEnvPool, parseEnvText } from "./env";
+import { loadCredentials, credentialsPath } from "./creds";
+import { resolveEnvPool, parseEnvText, bareEnvKeys } from "./env";
 import { renderDeployment, Deployment } from "./render";
-import { NetworkConfig } from "./schemas";
+import { resolveModules, discoverRemoteManifests, ModuleInstance } from "./modules";
+import { runHooks, requireModuleCredentials } from "./hooks";
+import { expandVars } from "./template";
+import { NetworkConfig, ProjectManifest } from "./schemas";
 
 // Zap Arc: deploy a zap project to the cloud from its `deploy:` block.
 // Self-contained command group — needs no Zapper runtime context, and reads
 // zap.yaml itself (zapper-core strips the deploy key at its parse boundary;
 // arc owns that schema).
+//
+// The engine is provider-agnostic: backend, providers, registry and module
+// params are data (network config + module library). The only built-in
+// provider actions are docker build/push (`action: container`) and the
+// gcloud bootstrap convenience below.
 
 function run(
   cmd: string,
   args: string[],
   opts: { cwd?: string; env?: Record<string, string> } = {},
 ): void {
-  const shown = args.map((a) => a.replace(/(--token=)\S+/, "$1***"));
-
-  console.log(`\n> ${cmd} ${shown.join(" ")}`);
+  console.log(`\n> ${cmd} ${args.join(" ")}`);
 
   const result = spawnSync(cmd, args, {
     cwd: opts.cwd,
@@ -49,8 +55,11 @@ interface ArcContext {
   projectDir: string;
   network: NetworkConfig;
   creds: Record<string, string>;
-  deployment: Deployment;
+  manifest: ProjectManifest;
   envPool: Record<string, string>;
+  tag: string;
+  instances: ModuleInstance[];
+  deployment: Deployment;
 }
 
 // The env pool can be piped in (`<secrets pipeline> | zap arc deploy`) — the
@@ -72,10 +81,16 @@ async function prepare(opts: { stubEnv?: boolean } = {}): Promise<ArcContext> {
   const creds = loadCredentials();
   const manifest = loadManifest(projectDir);
 
+  const instances = resolveModules(manifest, network.modulesDir, projectDir);
+  requireModuleCredentials(instances, creds, credentialsPath());
+
   let envPool: Record<string, string>;
 
   if (opts.stubEnv) {
-    const names = Object.values(manifest.deploy.services).flatMap((s) => s.env);
+    const names = Object.values(manifest.deploy.services).flatMap((s) =>
+      bareEnvKeys(s.env),
+    );
+
     envPool = Object.fromEntries(names.map((n) => [n, ""]));
     console.log("env pool: stubbed (destroy)");
   } else {
@@ -102,19 +117,50 @@ async function prepare(opts: { stubEnv?: boolean } = {}): Promise<ArcContext> {
     creds,
     envPool,
     imageTag: tag,
+    instances,
   });
 
   console.log(`rendered terraform → ${deployment.dir}`);
-  return { projectDir, network, creds, deployment, envPool };
+
+  return {
+    projectDir,
+    network,
+    creds,
+    manifest,
+    envPool,
+    tag,
+    instances,
+    deployment,
+  };
 }
 
-function terraformInit(ctx: ArcContext): void {
+// init, then — when URL modules are in play — read their module.yaml from
+// Terraform's module cache and re-render with what they declare (env
+// injections, actions, hooks). Zap never implements module fetching.
+function initAndDiscover(ctx: ArcContext): void {
+  run("terraform", ["init", "-input=false"], { cwd: ctx.deployment.dir });
+
+  if (!ctx.deployment.hasRemote) return;
+
+  ctx.instances = discoverRemoteManifests(ctx.deployment.dir, ctx.instances);
+  requireModuleCredentials(ctx.instances, ctx.creds, credentialsPath());
+
+  ctx.deployment = renderDeployment({
+    manifest: ctx.manifest,
+    network: ctx.network,
+    creds: ctx.creds,
+    envPool: ctx.envPool,
+    imageTag: ctx.tag,
+    instances: ctx.instances,
+    dir: ctx.deployment.dir,
+  });
+
   run("terraform", ["init", "-input=false"], { cwd: ctx.deployment.dir });
 }
 
 function buildAndPushImages(ctx: ArcContext): void {
   for (const build of ctx.deployment.containerBuilds) {
-    // Cloud Run / GCE run amd64; the local machine may be arm64.
+    // Cloud container runtimes are amd64; the local machine may be arm64.
     run(
       "docker",
       [
@@ -134,118 +180,16 @@ function buildAndPushImages(ctx: ArcContext): void {
   }
 }
 
-function vercelOrgId(token: string): string {
-  const out = capture(
-    `curl -fsS -H "Authorization: Bearer ${token}" https://api.vercel.com/v2/user`,
-  );
+function readOutputs(ctx: ArcContext): Record<string, string> {
+  if (ctx.deployment.outputNames.length === 0) return {};
 
-  return JSON.parse(out).user.id;
-}
-
-function deployVercel(ctx: ArcContext): void {
-  if (ctx.deployment.vercelDeploys.length === 0) return;
-
-  const token = requireCredential(
-    ctx.creds,
-    "VERCEL_API_TOKEN",
-    "Vercel deploys",
-  );
-
-  const orgId = vercelOrgId(token);
-
-  const outputs = JSON.parse(
+  const raw = JSON.parse(
     capture("terraform output -json", { cwd: ctx.deployment.dir }),
-  ) as Record<string, { value: string }>;
+  ) as Record<string, { value: unknown }>;
 
-  for (const vd of ctx.deployment.vercelDeploys) {
-    if (vd.build) {
-      run("bash", ["-c", vd.build], { cwd: ctx.projectDir, env: vd.env });
-    }
-
-    const args = ["-y", "vercel", "deploy"];
-    if (vd.deployPath !== ".") args.push(vd.deployPath);
-    args.push("--prod", "--yes", `--token=${token}`);
-    if (vd.localConfig) args.push("--local-config", vd.localConfig);
-
-    if (vd.remoteBuild) {
-      for (const [k, v] of Object.entries(vd.env)) {
-        args.push("--env", `${k}=${v}`, "--build-env", `${k}=${v}`);
-      }
-    }
-
-    run("npx", args, {
-      cwd: ctx.projectDir,
-      env: {
-        VERCEL_PROJECT_ID: outputs[vd.outputName].value,
-        VERCEL_ORG_ID: orgId,
-      },
-    });
-  }
-}
-
-function resetWorkers(ctx: ArcContext): void {
-  for (const worker of ctx.deployment.workers) {
-    run("gcloud", [
-      "compute",
-      "instances",
-      "reset",
-      worker.instanceName,
-      `--zone=${ctx.network.gcp.region}-a`,
-      `--project=${ctx.deployment.gcpProject}`,
-      "--quiet",
-    ]);
-  }
-}
-
-const PROJECT_APIS = [
-  "run.googleapis.com",
-  "artifactregistry.googleapis.com",
-  "compute.googleapis.com",
-  "cloudresourcemanager.googleapis.com",
-];
-
-// One GCP project per code project, created on first deploy. Existing
-// projects are assumed configured (describe succeeds → skip).
-function ensureGcpProject(network: NetworkConfig, gcpProject: string): void {
-  try {
-    capture(
-      `gcloud projects describe ${gcpProject} --format='value(projectId)'`,
-    );
-
-    return;
-  } catch {
-    console.log(`GCP project ${gcpProject} does not exist — creating`);
-  }
-
-  run("gcloud", [
-    "projects",
-    "create",
-    gcpProject,
-    "--labels=arc-managed=true",
-  ]);
-
-  const billing =
-    network.gcp["billing-account"] ??
-    capture(
-      "gcloud billing accounts list --filter=open=true --format='value(name)' --limit=1",
-    );
-
-  if (!billing)
-    throw new Error("No open billing account found; link billing manually.");
-  run("gcloud", [
-    "billing",
-    "projects",
-    "link",
-    gcpProject,
-    `--billing-account=${billing}`,
-  ]);
-
-  run("gcloud", [
-    "services",
-    "enable",
-    ...PROJECT_APIS,
-    `--project=${gcpProject}`,
-  ]);
+  return Object.fromEntries(
+    Object.entries(raw).map(([name, output]) => [name, String(output.value)]),
+  );
 }
 
 function fail(error: unknown): never {
@@ -276,7 +220,7 @@ export function createArcCommand(): Command {
         const ctx = await prepare();
 
         try {
-          terraformInit(ctx);
+          initAndDiscover(ctx);
           run("terraform", ["plan", "-input=false"], {
             cwd: ctx.deployment.dir,
           });
@@ -290,7 +234,7 @@ export function createArcCommand(): Command {
 
   arc
     .command("deploy")
-    .description("Deploy: build images, apply Terraform, upload frontends")
+    .description("Deploy: build images, apply Terraform, run module hooks")
     .option(
       "--keep",
       "keep the rendered Terraform dir on failure for debugging",
@@ -301,16 +245,29 @@ export function createArcCommand(): Command {
         let failed = false;
 
         try {
-          ensureGcpProject(ctx.network, ctx.deployment.gcpProject);
-          terraformInit(ctx);
-          // Registry must exist before images push; idempotent and quick.
-          run(
-            "terraform",
-            ["apply", "-target=module.base", "-auto-approve", "-input=false"],
-            {
-              cwd: ctx.deployment.dir,
-            },
-          );
+          initAndDiscover(ctx);
+
+          await runHooks("pre-apply", {
+            projectDir: ctx.projectDir,
+            creds: ctx.creds,
+            deployment: ctx.deployment,
+          });
+
+          // Project-level modules (project factory, registry, …) must exist
+          // before images push or services apply; idempotent and quick.
+          if (ctx.deployment.projectTargets.length > 0) {
+            run(
+              "terraform",
+              [
+                "apply",
+                ...ctx.deployment.projectTargets.map((t) => `-target=${t}`),
+                "-auto-approve",
+                "-input=false",
+                "-lock-timeout=10m",
+              ],
+              { cwd: ctx.deployment.dir },
+            );
+          }
 
           buildAndPushImages(ctx);
           run(
@@ -321,8 +278,12 @@ export function createArcCommand(): Command {
             },
           );
 
-          deployVercel(ctx);
-          resetWorkers(ctx);
+          await runHooks("post-apply", {
+            projectDir: ctx.projectDir,
+            creds: ctx.creds,
+            deployment: ctx.deployment,
+            outputs: readOutputs(ctx),
+          });
 
           console.log("\nzap arc deploy complete:");
 
@@ -349,35 +310,18 @@ export function createArcCommand(): Command {
   arc
     .command("destroy")
     .description(
-      "Tear down: terraform destroy, optionally delete the GCP project",
+      "Tear down everything Terraform manages for this project (including a deploy.project GCP project module, if present)",
     )
     .option("--yes", "skip terraform's confirmation prompt")
-    .option(
-      "--delete-gcp-project",
-      "after destroy, delete the project's GCP project entirely",
-    )
-    .action(async (opts: { yes?: boolean; deleteGcpProject?: boolean }) => {
+    .action(async (opts: { yes?: boolean }) => {
       try {
         const ctx = await prepare({ stubEnv: true });
 
         try {
-          terraformInit(ctx);
+          initAndDiscover(ctx);
           const args = ["destroy", "-input=false", "-lock-timeout=10m"];
           if (opts.yes) args.push("-auto-approve");
           run("terraform", args, { cwd: ctx.deployment.dir });
-
-          if (opts.deleteGcpProject) {
-            run("gcloud", [
-              "projects",
-              "delete",
-              ctx.deployment.gcpProject,
-              "--quiet",
-            ]);
-
-            console.log(
-              `GCP project ${ctx.deployment.gcpProject} scheduled for deletion (30-day recovery window).`,
-            );
-          }
 
           console.log(
             `\nzap arc destroy complete for '${ctx.deployment.project}'.`,
@@ -398,9 +342,26 @@ export function createArcCommand(): Command {
     .action(() => {
       try {
         const network = loadNetwork();
-        const { region } = network.gcp;
-        const networkProject = network.gcp["network-project"];
-        const bucket = network.gcp["state-bucket"];
+
+        // Bootstrap is the one GCP-aware convenience left in the engine. It
+        // reads the network's template vars — networks on other clouds simply
+        // don't run it.
+        const networkProject = network.vars["network-project"];
+        const region = network.vars["region"];
+
+        if (!networkProject || !region) {
+          throw new Error(
+            "Bootstrap needs 'network-project' and 'region' keys in the network config.",
+          );
+        }
+
+        const bucket = network.backend?.gcs?.bucket;
+
+        if (typeof bucket !== "string") {
+          throw new Error(
+            "Bootstrap supports the gcs backend only — set backend.gcs.bucket in the network config.",
+          );
+        }
 
         const adc = join(
           homedir(),
@@ -413,7 +374,40 @@ export function createArcCommand(): Command {
           );
         }
 
-        ensureGcpProject(network, networkProject);
+        try {
+          capture(
+            `gcloud projects describe ${networkProject} --format='value(projectId)'`,
+          );
+
+          console.log(`Network project ${networkProject} exists`);
+        } catch {
+          run("gcloud", [
+            "projects",
+            "create",
+            networkProject,
+            "--labels=arc-managed=true",
+          ]);
+
+          const billing =
+            network.vars["billing-account"] ??
+            capture(
+              "gcloud billing accounts list --filter=open=true --format='value(name)' --limit=1",
+            );
+
+          if (!billing) {
+            throw new Error(
+              "No open billing account found; link billing manually.",
+            );
+          }
+
+          run("gcloud", [
+            "billing",
+            "projects",
+            "link",
+            networkProject,
+            `--billing-account=${billing}`,
+          ]);
+        }
 
         try {
           capture(
@@ -441,12 +435,15 @@ export function createArcCommand(): Command {
           ]);
         }
 
-        run("gcloud", [
-          "auth",
-          "configure-docker",
-          `${region}-docker.pkg.dev`,
-          "--quiet",
-        ]);
+        if (network.registry) {
+          const host = expandVars(
+            network.registry,
+            { ...network.vars, slug: "x", network: network.name },
+            "network registry template",
+          ).split("/")[0];
+
+          run("gcloud", ["auth", "configure-docker", host, "--quiet"]);
+        }
 
         run("gcloud", [
           "auth",

@@ -1,10 +1,17 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { NetworkConfig, ProjectManifest, ServiceDeploy } from "./schemas";
-import { whitelistEnv } from "./env";
-import { requireCredential } from "./creds";
-import { projectGcpId } from "./network";
+import { NetworkConfig, ProjectManifest, RESERVED_MODULE_KEYS } from "./schemas";
+import { ModuleInstance } from "./modules";
+import { resolveServiceEnv } from "./env";
+import {
+  expandVars,
+  expandVarsDeep,
+  renderRefs,
+  renderRefsDeep,
+  collectOutputRefs,
+  kebabKeysToSnake,
+} from "./template";
 
 // Terraform's JSON syntax runs template interpolation on every string, so
 // literal values must escape ${ and %{ . Module references are inserted raw.
@@ -18,8 +25,17 @@ function tfEscapeMap(env: Record<string, string>): Record<string, string> {
   );
 }
 
-function tfName(service: string): string {
-  return `svc_${service.replaceAll("-", "_")}`;
+function tfEscapeDeep<T>(value: T): T {
+  if (typeof value === "string") return tfEscape(value) as T;
+  if (Array.isArray(value)) return value.map(tfEscapeDeep) as T;
+
+  if (value !== null && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, tfEscapeDeep(v)]),
+    ) as T;
+  }
+
+  return value;
 }
 
 export interface ContainerBuild {
@@ -28,29 +44,23 @@ export interface ContainerBuild {
   dockerfile: string;
 }
 
-export interface VercelDeploy {
-  service: string;
-  outputName: string;
-  deployPath: string;
-  build?: string;
-  localConfig?: string;
-  remoteBuild: boolean;
-  env: Record<string, string>;
-}
-
-export interface WorkerRef {
-  service: string;
-  instanceName: string;
-}
-
 export interface Deployment {
   dir: string;
   project: string;
-  gcpProject: string;
+  instances: ModuleInstance[];
   containerBuilds: ContainerBuild[];
-  vercelDeploys: VercelDeploy[];
-  workers: WorkerRef[];
   serviceUrls: Record<string, string>;
+  // Raw resolved env (pool whitelist + literals, no injections) per service —
+  // what hooks run with.
+  serviceEnv: Record<string, Record<string, string>>;
+  // Per-instance merged params, keys as written (kebab) — the {{params.*}}
+  // namespace for hooks and module.yaml templates.
+  hookParams: Record<string, Record<string, unknown>>;
+  // Root outputs wired for {{output.*}} hook references.
+  outputNames: string[];
+  // terraform -target args for the staged project-modules apply.
+  projectTargets: string[];
+  hasRemote: boolean;
 }
 
 interface RenderOptions {
@@ -59,318 +69,251 @@ interface RenderOptions {
   creds: Record<string, string>;
   envPool: Record<string, string>;
   imageTag: string;
+  instances: ModuleInstance[];
+  // Re-render into an existing dir (after remote module.yaml discovery).
+  dir?: string;
 }
 
-function param(svc: ServiceDeploy, key: string): unknown {
-  return (svc as Record<string, unknown>)[key];
-}
+const RESERVED = new Set<string>(RESERVED_MODULE_KEYS);
 
 export function renderDeployment(opts: RenderOptions): Deployment {
-  const { manifest, network, creds, envPool, imageTag } = opts;
+  const { manifest, network, creds, envPool, imageTag, instances } = opts;
   const slug = manifest.slug;
-  const services = Object.entries(manifest.deploy.services);
 
-  // One GCP project per code project: the inventory/teardown/drift boundary.
-  const MODULES_DIR = network.modules;
+  // The {var} vocabulary: built-ins + the network's extra keys (which may
+  // themselves reference the built-ins, e.g. gcp-project: mp-lb-{slug}).
+  const baseVars = { slug, network: network.name };
 
-  if (!MODULES_DIR) {
-    throw new Error(
-      "network config has no resolved modules path (loadNetwork bug)",
-    );
-  }
-
-  const gcpProject = projectGcpId(
-    network,
-    slug,
-    manifest.deploy["gcp-project"],
-  );
-
-  const registry = `${network.gcp.region}-docker.pkg.dev/${gcpProject}/${slug}`;
-
-  const byModule = (m: string) => services.filter(([, s]) => s.module === m);
-  const cloudRuns = byModule("cloud-run-web");
-  const gceWorkers = byModule("gce-worker");
-  const vercels = byModule("vercel-static");
-  const redises = byModule("upstash-redis");
-  const sharedRedises = byModule("shared-redis");
-  const mongos = byModule("shared-mongo");
-
-  if (redises.length + sharedRedises.length > 1)
-    throw new Error("At most one redis service supported");
-  if (mongos.length > 1)
-    throw new Error("At most one shared-mongo service supported");
-
-  const modules: Record<string, Record<string, unknown>> = {
-    network: {
-      source: join(MODULES_DIR, "network"),
-      zone: network.dns.zone,
-    },
-    base: {
-      source: join(MODULES_DIR, "project-base"),
-      project_slug: slug,
-      region: network.gcp.region,
-    },
+  const ctx: Record<string, string> = {
+    ...expandVarsDeep(network.vars, baseVars, "network config vars"),
+    ...baseVars,
   };
 
-  // Bindings: env vars injected into every container service. Values are
-  // either Terraform references (redis/mongo modules, raw) or literals
-  // (escaped).
-  const injected: Record<string, string> = {};
+  const registryBase = network.registry
+    ? expandVars(network.registry, ctx, "network registry template")
+    : undefined;
 
-  if (redises.length === 1) {
-    const [name, svc] = redises[0];
-    const envVar = (param(svc, "env-var") as string) ?? "REDIS_URL";
-    injected[envVar] = `\${module.${tfName(name)}.redis_url}`;
-  }
+  const warnedCreds = new Set<string>();
 
-  // Shared Redis: one network instance, cooperative isolation via a
-  // per-project queue prefix (apps read QUEUE_PREFIX; see job-system).
-  if (sharedRedises.length === 1) {
-    const [, svc] = sharedRedises[0];
-    const envVar = (param(svc, "env-var") as string) ?? "REDIS_URL";
+  const credValue = (key: string, what: string): string => {
+    const value = creds[key];
 
-    const prefixEnvVar =
-      (param(svc, "prefix-env-var") as string) ?? "QUEUE_PREFIX";
-
-    injected[envVar] = tfEscape(
-      requireCredential(creds, "ARC_SHARED_REDIS_URL", "shared-redis binding"),
-    );
-
-    injected[prefixEnvVar] = (param(svc, "prefix") as string) ?? slug;
-  }
-
-  if (mongos.length === 1) {
-    const [name, svc] = mongos[0];
-    const envVar = (param(svc, "env-var") as string) ?? "MONGODB_URL";
-    const database = (param(svc, "database") as string) ?? slug;
-
-    if (network.atlas) {
-      // IaC binding: scoped Atlas user created on the shared cluster.
-      modules[tfName(name)] = {
-        source: join(MODULES_DIR, "shared-mongo-atlas"),
-        atlas_project_id: network.atlas["project-id"],
-        cluster_host: network.atlas["cluster-host"],
-        username: (param(svc, "username") as string) ?? `arc-${slug}`,
-        database,
-      };
-
-      injected[envVar] = `\${module.${tfName(name)}.url}`;
-    } else {
-      // Generic fallback: caller-supplied URL template.
-      const template = requireCredential(
-        creds,
-        "ARC_SHARED_MONGO_URL_TEMPLATE",
-        "shared-mongo binding; a connection URL containing a {db} placeholder",
-      );
-
-      if (!template.includes("{db}")) {
-        throw new Error(
-          "ARC_SHARED_MONGO_URL_TEMPLATE must contain a {db} placeholder",
+    if (value === undefined) {
+      if (!warnedCreds.has(key)) {
+        warnedCreds.add(key);
+        console.warn(
+          `warning: credential ${key} not set (${what}) — rendered empty`,
         );
       }
 
-      injected[envVar] = tfEscape(template.replaceAll("{db}", database));
+      return "";
+    }
+
+    return value;
+  };
+
+  const byKey = new Map<string, ModuleInstance>();
+
+  for (const instance of instances) {
+    if (byKey.has(instance.key)) {
+      throw new Error(
+        `Deploy entry key '${instance.key}' is used by both a project entry and a service — keys must be unique across deploy.project and deploy.services.`,
+      );
+    }
+
+    byKey.set(instance.key, instance);
+  }
+
+  const containerBuilds: ContainerBuild[] = [];
+  const serviceUrls: Record<string, string> = {};
+  const serviceEnv: Record<string, Record<string, string>> = {};
+  const hookParams: Record<string, Record<string, unknown>> = {};
+  const tfParams = new Map<ModuleInstance, Record<string, unknown>>();
+  const outputs: Record<string, { value: string; sensitive: boolean }> = {};
+  const containerInstances: ModuleInstance[] = [];
+
+  // Pass 1 — per-instance params. Merge order: module variables.tf defaults
+  // (Terraform's own) < module.yaml defaults < network module-defaults <
+  // deploy block. Keys go kebab→snake; values pass through verbatim.
+  for (const instance of instances) {
+    const { key, kind, manifest: mod, block } = instance;
+    const ictx = { ...ctx, service: key };
+
+    const moduleDefaults = expandVarsDeep(
+      mod.defaults,
+      ictx,
+      `module '${instance.ref}' defaults`,
+    );
+
+    const networkDefaults = expandVarsDeep(
+      network.moduleDefaults[instance.ref] ?? {},
+      ictx,
+      `network module-defaults for '${instance.ref}'`,
+    );
+
+    const blockParams = Object.fromEntries(
+      Object.entries(block).filter(([k]) => !RESERVED.has(k)),
+    );
+
+    hookParams[key] = { ...moduleDefaults, ...networkDefaults, ...block };
+
+    // Params are data, never Terraform expressions — escape them.
+    const params: Record<string, unknown> = tfEscapeDeep({
+      ...kebabKeysToSnake(moduleDefaults),
+      ...kebabKeysToSnake(networkDefaults),
+      ...kebabKeysToSnake(blockParams),
+    });
+
+    // Structural keys arc owns. A domain brings the network's DNS zone with
+    // it — modules do their own zone lookup.
+    if (block.domain) {
+      params.domain = block.domain;
+      params.dns_zone = network.dns.zone;
+      if (kind === "service") serviceUrls[key] = `https://${block.domain}`;
+    }
+
+    if (kind === "service") {
+      const envEntries = (block.env as string[] | undefined) ?? [];
+      serviceEnv[key] = resolveServiceEnv(envEntries, envPool, key);
+
+      if (mod.action === "container") {
+        if (!registryBase) {
+          throw new Error(
+            `Service '${key}' uses container module '${instance.ref}' but the network config has no registry: template.`,
+          );
+        }
+
+        const image = `${registryBase}/${key}:${imageTag}`;
+
+        containerBuilds.push({
+          service: key,
+          image,
+          dockerfile: (block.dockerfile as string | undefined) ?? "Dockerfile",
+        });
+
+        params.image = image;
+        containerInstances.push(instance);
+      }
+    }
+
+    tfParams.set(instance, params);
+
+    // Hooks read module outputs after apply via root outputs.
+    const hookText = [
+      ...mod.hooks["pre-apply"],
+      ...mod.hooks["post-apply"],
+    ].flatMap((hook) => [hook.run ?? "", hook.task ?? "", ...Object.values(hook.env)]);
+
+    for (const name of hookText.flatMap(collectOutputRefs)) {
+      outputs[`${instance.tfName}_${name}`] = {
+        value: `\${module.${instance.tfName}.${name}}`,
+        sensitive: true,
+      };
     }
   }
 
-  // Whitelisted pool values, overridden by committed env-values literals.
-  const rawEnv = (
-    name: string,
-    svc: ServiceDeploy,
-  ): Record<string, string> => ({
-    ...whitelistEnv(envPool, svc.env, name),
-    ...svc["env-values"],
-  });
+  // Pass 2 — env injections. A module's manifest may inject env vars into
+  // every sibling container service: bindings stay zero-config.
+  const injected: Record<string, string> = {};
 
-  const containerEnv = (
-    name: string,
-    svc: ServiceDeploy,
-  ): Record<string, string> => ({
-    ...tfEscapeMap(rawEnv(name, svc)),
-    ...injected,
-  });
+  for (const instance of instances) {
+    for (const [envKey, template] of Object.entries(instance.manifest.env)) {
+      injected[envKey] = renderRefs(
+        tfEscape(template),
+        (ns, key) => {
+          if (ns === "output") return `\${module.${instance.tfName}.${key}}`;
+          if (ns === "cred")
+            return tfEscape(
+              credValue(key, `module '${instance.ref}' env injection`),
+            );
+          if (ns === "params")
+            return tfEscape(String(hookParams[instance.key][key] ?? ""));
+          throw new Error(`unknown reference namespace '${ns}'`);
+        },
+        `module '${instance.ref}' env injection ${envKey}`,
+      );
+    }
+  }
 
-  const outputs: Record<string, { value: string; sensitive?: boolean }> = {};
-  const containerBuilds: ContainerBuild[] = [];
-  const vercelDeploys: VercelDeploy[] = [];
-  const workers: WorkerRef[] = [];
-  const serviceUrls: Record<string, string> = {};
+  for (const instance of containerInstances) {
+    const params = tfParams.get(instance)!;
+    params.env = { ...tfEscapeMap(serviceEnv[instance.key]), ...injected };
+  }
 
-  for (const [name, svc] of cloudRuns) {
-    if (!svc.domain)
-      throw new Error(`cloud-run-web service '${name}' needs a domain`);
-    const image = `${registry}/${name}:${imageTag}`;
+  // Assemble Terraform JSON.
+  const modules: Record<string, Record<string, unknown>> = {};
 
-    containerBuilds.push({
-      service: name,
-      image,
-      dockerfile:
-        (param(svc, "dockerfile") as string) ?? `apps/${name}/Dockerfile`,
+  for (const instance of instances) {
+    const dependsOn = (instance.block["depends-on"] ?? []).map((dep) => {
+      const target = byKey.get(dep);
+
+      if (!target) {
+        throw new Error(
+          `'${instance.key}' depends-on unknown deploy entry '${dep}'.`,
+        );
+      }
+
+      return `module.${target.tfName}`;
     });
 
-    modules[tfName(name)] = {
-      source: join(MODULES_DIR, "cloud-run-web"),
-      name: `${slug}-${name}`,
-      gcp_project_id: gcpProject,
-      region: network.gcp.region,
-      image,
-      port: svc.port ?? 8080,
-      env: containerEnv(name, svc),
-      domain: svc.domain,
-      zone_id: "${module.network.zone_id}",
-      min_instances: (param(svc, "min-instances") as number) ?? 0,
-      max_instances: (param(svc, "max-instances") as number) ?? 2,
-      memory: (param(svc, "memory") as string) ?? "512Mi",
-      cpu: (param(svc, "cpu") as string) ?? "1",
-      concurrency: (param(svc, "concurrency") as number) ?? 80,
-      health_path: (param(svc, "health-path") as string) ?? "/health",
-    };
-
-    serviceUrls[name] = `https://${svc.domain}`;
-  }
-
-  for (const [name, svc] of gceWorkers) {
-    const image = `${registry}/${name}:${imageTag}`;
-    const instanceName = `${slug}-${name}`;
-
-    containerBuilds.push({
-      service: name,
-      image,
-      dockerfile:
-        (param(svc, "dockerfile") as string) ?? `apps/${name}/Dockerfile`,
-    });
-
-    workers.push({ service: name, instanceName });
-
-    modules[tfName(name)] = {
-      source: join(MODULES_DIR, "gce-worker"),
-      name: instanceName,
-      region: network.gcp.region,
-      image,
-      env: containerEnv(name, svc),
-      machine_type: (param(svc, "machine-type") as string) ?? "e2-micro",
+    modules[instance.tfName] = {
+      source: instance.source,
+      ...tfParams.get(instance),
+      ...(dependsOn.length > 0 ? { depends_on: dependsOn } : {}),
     };
   }
 
-  for (const [name, svc] of vercels) {
-    if (!svc.domain)
-      throw new Error(`vercel-static service '${name}' needs a domain`);
-    const outputName = `${tfName(name)}_project_id`;
+  const requiredProviders = Object.fromEntries(
+    Object.entries(network.providers).map(([name, provider]) => [
+      name,
+      {
+        source: provider.source,
+        ...(provider.version ? { version: provider.version } : {}),
+      },
+    ]),
+  );
 
-    modules[tfName(name)] = {
-      source: join(MODULES_DIR, "vercel-static"),
-      name: (param(svc, "vercel-name") as string) ?? `${slug}-${name}-arc`,
-      domain: svc.domain,
-      zone: network.dns.zone,
-      zone_id: "${module.network.zone_id}",
-      www_redirect:
-        (param(svc, "www-redirect") as boolean) ??
-        svc.domain === network.dns.zone,
-      framework: (param(svc, "framework") as string) ?? null,
-      root_directory: (param(svc, "root-directory") as string) ?? null,
-    };
+  const providerBlocks: Record<string, unknown> = {};
 
-    outputs[outputName] = { value: `\${module.${tfName(name)}.project_id}` };
+  for (const [name, provider] of Object.entries(network.providers)) {
+    if (!provider.config) continue;
 
-    vercelDeploys.push({
-      service: name,
-      outputName,
-      deployPath: (param(svc, "deploy-path") as string) ?? `apps/${name}/dist`,
-      build: param(svc, "build") as string | undefined,
-      localConfig: param(svc, "local-config") as string | undefined,
-      remoteBuild: (param(svc, "remote-build") as boolean) ?? false,
-      env: rawEnv(name, svc),
-    });
+    const expanded = tfEscapeDeep(
+      expandVarsDeep(provider.config, ctx, `provider '${name}' config`),
+    );
 
-    serviceUrls[name] = `https://${svc.domain}`;
-  }
-
-  for (const [name] of redises) {
-    modules[tfName(name)] = {
-      source: join(MODULES_DIR, "upstash-redis"),
-      name: `${slug}-${name}-arc`,
-    };
-  }
-
-  const providers: Record<string, unknown> = {
-    google: {
-      project: gcpProject,
-      region: network.gcp.region,
-      // Stamped on every label-supporting resource — the cross-check on top
-      // of the per-project boundary.
-      default_labels: { "arc-managed": "true", "arc-project": slug },
-    },
-    cloudflare: {
-      api_token: requireCredential(
-        creds,
-        "CLOUDFLARE_API_TOKEN",
-        "DNS records",
-      ),
-    },
-    vercel: {
-      api_token: requireCredential(
-        creds,
-        "VERCEL_API_TOKEN",
-        "Vercel projects",
-      ),
-    },
-  };
-
-  const requiredProviders: Record<string, unknown> = {
-    google: { source: "hashicorp/google", version: "~> 5.0" },
-    cloudflare: { source: "cloudflare/cloudflare", version: "~> 4.0" },
-    vercel: { source: "vercel/vercel", version: "~> 1.0" },
-  };
-
-  if (redises.length > 0) {
-    providers.upstash = {
-      email: requireCredential(creds, "UPSTASH_EMAIL", "Upstash Redis"),
-      api_key: requireCredential(creds, "UPSTASH_API_KEY", "Upstash Redis"),
-    };
-
-    requiredProviders.upstash = {
-      source: "upstash/upstash",
-      version: "~> 1.0",
-    };
-  }
-
-  if (network.atlas && mongos.length > 0) {
-    providers.mongodbatlas = {
-      public_key: requireCredential(
-        creds,
-        "MONGODB_ATLAS_PUBLIC_KEY",
-        "Atlas binding",
-      ),
-      private_key: requireCredential(
-        creds,
-        "MONGODB_ATLAS_PRIVATE_KEY",
-        "Atlas binding",
-      ),
-    };
-
-    requiredProviders.mongodbatlas = {
-      source: "mongodb/mongodbatlas",
-      version: "~> 1.0",
-    };
+    providerBlocks[name] = renderRefsDeep(
+      expanded,
+      (ns, key) => {
+        if (ns === "cred")
+          return tfEscape(credValue(key, `provider '${name}'`));
+        throw new Error(`unknown reference namespace '${ns}'`);
+      },
+      `provider '${name}' config`,
+    );
   }
 
   const main = {
     terraform: {
-      required_version: ">= 1.0",
+      required_version: ">= 1.4",
       required_providers: requiredProviders,
-      backend: {
-        gcs: {
-          bucket: network.gcp["state-bucket"],
-          prefix: `terraform/state/${slug}`,
-        },
-      },
+      ...(network.backend
+        ? {
+            backend: tfEscapeDeep(
+              expandVarsDeep(network.backend, ctx, "network backend config"),
+            ),
+          }
+        : {}),
     },
-    provider: providers,
+    ...(Object.keys(providerBlocks).length > 0
+      ? { provider: providerBlocks }
+      : {}),
     module: modules,
-    output: outputs,
+    ...(Object.keys(outputs).length > 0 ? { output: outputs } : {}),
   };
 
-  const dir = mkdtempSync(join(tmpdir(), `zap-arc-${slug}-`));
+  const dir = opts.dir ?? mkdtempSync(join(tmpdir(), `zap-arc-${slug}-`));
+
   writeFileSync(join(dir, "main.tf.json"), JSON.stringify(main, null, 2), {
     mode: 0o600,
   });
@@ -378,10 +321,15 @@ export function renderDeployment(opts: RenderOptions): Deployment {
   return {
     dir,
     project: slug,
-    gcpProject,
+    instances,
     containerBuilds,
-    vercelDeploys,
-    workers,
     serviceUrls,
+    serviceEnv,
+    hookParams,
+    outputNames: Object.keys(outputs),
+    projectTargets: instances
+      .filter((instance) => instance.kind === "project")
+      .map((instance) => `module.${instance.tfName}`),
+    hasRemote: instances.some((instance) => instance.remote),
   };
 }

@@ -1,6 +1,6 @@
 # A Vercel-hosted static frontend with a custom domain + Cloudflare DNS.
-# The actual upload (vercel deploy of the built output) happens in
-# `arcnet deploy` after apply, using this module's project id output.
+# The actual upload (vercel deploy of the built output) is this module's
+# post-apply hook (see module.yaml), using the project id output.
 
 terraform {
   required_providers {
@@ -23,19 +23,17 @@ variable "domain" {
   type = string
 }
 
-variable "zone" {
-  description = "Cloudflare zone name, to detect apex domains"
-  type        = string
-}
-
-variable "zone_id" {
+# Cloudflare zone name (passed by arc alongside domain); the module does its
+# own zone lookup and apex detection.
+variable "dns_zone" {
   type = string
 }
 
 variable "www_redirect" {
-  description = "Also register www.<domain> redirecting to <domain>"
+  description = "Also register www.<domain> redirecting to <domain>; default: only for the zone apex"
   type        = bool
-  default     = false
+  default     = null
+  nullable    = true
 }
 
 variable "framework" {
@@ -50,8 +48,13 @@ variable "root_directory" {
   default     = null
 }
 
+data "cloudflare_zone" "main" {
+  name = var.dns_zone
+}
+
 locals {
-  is_apex = var.domain == var.zone
+  is_apex      = var.domain == var.dns_zone
+  www_redirect = coalesce(var.www_redirect, local.is_apex)
 }
 
 resource "vercel_project" "main" {
@@ -68,7 +71,7 @@ resource "vercel_project_domain" "main" {
 }
 
 resource "vercel_project_domain" "www" {
-  count                = var.www_redirect ? 1 : 0
+  count                = local.www_redirect ? 1 : 0
   project_id           = vercel_project.main.id
   domain               = "www.${var.domain}"
   redirect             = var.domain
@@ -79,7 +82,7 @@ resource "vercel_project_domain" "www" {
 
 # Apex domains can't CNAME; Vercel publishes a stable A record for them.
 resource "cloudflare_record" "main" {
-  zone_id = var.zone_id
+  zone_id = data.cloudflare_zone.main.id
   name    = var.domain
   content = local.is_apex ? "76.76.21.21" : "cname.vercel-dns.com"
   type    = local.is_apex ? "A" : "CNAME"
@@ -88,8 +91,8 @@ resource "cloudflare_record" "main" {
 }
 
 resource "cloudflare_record" "www" {
-  count   = var.www_redirect ? 1 : 0
-  zone_id = var.zone_id
+  count   = local.www_redirect ? 1 : 0
+  zone_id = data.cloudflare_zone.main.id
   name    = "www.${var.domain}"
   content = "cname.vercel-dns.com"
   type    = "CNAME"

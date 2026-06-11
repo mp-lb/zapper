@@ -1,0 +1,4 @@
+# project-base: per-project base resources (the Docker artifact registry
+# images push to). region belongs in the network config's module-defaults.
+defaults:
+  project-slug: "{slug}"

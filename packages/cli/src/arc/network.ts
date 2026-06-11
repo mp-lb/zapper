@@ -2,12 +2,16 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
-import { networkConfigSchema, NetworkConfig } from "./schemas";
+import {
+  networkConfigSchema,
+  NetworkConfig,
+  NETWORK_KNOWN_KEYS,
+} from "./schemas";
 import { loadOperatorConfig, DEFAULT_CONFIG_PATH, expandTilde } from "./config";
 
-// The network config is the sharing seam: which GCP projects, zone, state
-// bucket, and module library this arc network deploys with. Located via the
-// operator config (or ZAP_ARC_NETWORK_FILE).
+// The network config is the sharing seam: backend, providers, registry,
+// module defaults — the whole cloud opinion of an arc network, as data.
+// Located via the operator config (or ZAP_ARC_NETWORK_FILE).
 export function loadNetwork(): NetworkConfig {
   const path = process.env.ZAP_ARC_NETWORK_FILE
     ? expandTilde(process.env.ZAP_ARC_NETWORK_FILE)
@@ -26,28 +30,34 @@ export function loadNetwork(): NetworkConfig {
     "../../arc",
   );
 
-  const network = networkConfigSchema.parse(parse(readFileSync(path, "utf8")));
+  const raw = parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const parsed = networkConfigSchema.parse(raw);
 
-  return {
-    ...network,
-    modules: network.modules ? expandTilde(network.modules) : bundledModules,
-  };
-}
+  // Unknown top-level keys are the network's own template vocabulary —
+  // scalar strings only, available as {var} in config values.
+  const vars: Record<string, string> = {};
 
-export function projectGcpId(
-  network: NetworkConfig,
-  slug: string,
-  override?: string,
-): string {
-  if (override) return override;
+  for (const [key, value] of Object.entries(parsed)) {
+    if (NETWORK_KNOWN_KEYS.has(key)) continue;
 
-  const prefix = network.gcp["project-prefix"];
+    if (typeof value !== "string") {
+      throw new Error(
+        `Network config key '${key}' must be a string to serve as a {${key}} template variable.`,
+      );
+    }
 
-  if (!prefix) {
-    throw new Error(
-      `Project '${slug}' needs an explicit deploy.gcp-project (no project-prefix convention configured on network '${network.name}').`,
-    );
+    vars[key] = value;
   }
 
-  return `${prefix}-${slug}`;
+  return {
+    name: parsed.name,
+    dns: parsed.dns,
+    env: parsed.env,
+    backend: parsed.backend,
+    providers: parsed.providers,
+    moduleDefaults: parsed["module-defaults"],
+    registry: parsed.registry,
+    modulesDir: parsed.modules ? expandTilde(parsed.modules) : bundledModules,
+    vars,
+  };
 }

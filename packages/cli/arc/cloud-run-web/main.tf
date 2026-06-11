@@ -46,7 +46,9 @@ variable "domain" {
   type = string
 }
 
-variable "zone_id" {
+# Cloudflare zone name (passed by arc alongside domain); the module does its
+# own zone lookup.
+variable "dns_zone" {
   type = string
 }
 
@@ -80,6 +82,10 @@ variable "concurrency" {
 variable "health_path" {
   type    = string
   default = "/health"
+}
+
+data "cloudflare_zone" "main" {
+  name = var.dns_zone
 }
 
 locals {
@@ -171,7 +177,7 @@ resource "google_cloud_run_domain_mapping" "main" {
 }
 
 resource "cloudflare_record" "main" {
-  zone_id = var.zone_id
+  zone_id = data.cloudflare_zone.main.id
   name    = var.domain
   content = google_cloud_run_domain_mapping.main.status[0].resource_records[0].rrdata
   type    = google_cloud_run_domain_mapping.main.status[0].resource_records[0].type

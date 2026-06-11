@@ -4,9 +4,11 @@ import { execSync } from "node:child_process";
 import { parseDotenv } from "./creds";
 
 // The env pool: all production values available to this project, resolved at
-// deploy time. Names are whitelisted per service in the deploy block; values
-// come from the resolver (pluggable — ours decrypts secrets.json.enc) merged
-// over the public file (.env.production). ArcNet never stores values.
+// deploy time. A service's env: list draws from it — bare `KEY` whitelists a
+// pool value, `KEY=value` is a committed literal (split on the first `=`,
+// dotenv intuition). Values come from the resolver (pluggable — ours decrypts
+// secrets.json.enc) merged over the public file (.env.production). Arc never
+// stores values.
 export function resolveEnvPool(
   projectDir: string,
   resolverCmd: string,
@@ -49,17 +51,29 @@ export function parseEnvText(raw: string): Record<string, string> {
   return result;
 }
 
-export function whitelistEnv(
+// The names a service pulls from the pool (everything that isn't a literal).
+export function bareEnvKeys(entries: string[]): string[] {
+  return entries.filter((entry) => !entry.includes("="));
+}
+
+export function resolveServiceEnv(
+  entries: string[],
   pool: Record<string, string>,
-  names: string[],
   serviceName: string,
 ): Record<string, string> {
   const result: Record<string, string> = {};
   const missing: string[] = [];
 
-  for (const name of names) {
-    if (name in pool) result[name] = pool[name];
-    else missing.push(name);
+  for (const entry of entries) {
+    const eq = entry.indexOf("=");
+
+    if (eq === -1) {
+      if (entry in pool) result[entry] = pool[entry];
+      else missing.push(entry);
+      continue;
+    }
+
+    result[entry.slice(0, eq)] = entry.slice(eq + 1);
   }
 
   if (missing.length > 0) {
