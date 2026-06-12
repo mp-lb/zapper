@@ -32,6 +32,13 @@ variable "database" {
   type = string
 }
 
+# Additional databases this user may readWrite (e.g. temporarily during a
+# data migration). Remove entries when done.
+variable "extra_databases" {
+  type    = list(string)
+  default = []
+}
+
 # URL-safe so the connection string needs no encoding.
 resource "random_password" "main" {
   length  = 32
@@ -47,6 +54,14 @@ resource "mongodbatlas_database_user" "main" {
   roles {
     role_name     = "readWrite"
     database_name = var.database
+  }
+
+  dynamic "roles" {
+    for_each = toset(var.extra_databases)
+    content {
+      role_name     = "readWrite"
+      database_name = roles.value
+    }
   }
 }
 
