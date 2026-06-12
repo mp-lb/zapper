@@ -413,6 +413,24 @@ export function createArcCommand(): Command {
           ]);
         }
 
+        // The network project is the ADC quota project for every API call
+        // the providers make, so each such API must be enabled on it.
+        run("gcloud", [
+          "services",
+          "enable",
+          "cloudresourcemanager.googleapis.com",
+          "cloudbilling.googleapis.com",
+          "billingbudgets.googleapis.com",
+          "serviceusage.googleapis.com",
+          "run.googleapis.com",
+          "artifactregistry.googleapis.com",
+          "compute.googleapis.com",
+          "iam.googleapis.com",
+          "iamcredentials.googleapis.com",
+          "sts.googleapis.com",
+          `--project=${networkProject}`,
+        ]);
+
         try {
           capture(
             `gcloud storage buckets describe gs://${bucket} --format='value(name)'`,
