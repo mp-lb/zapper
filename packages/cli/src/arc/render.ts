@@ -88,8 +88,20 @@ export function renderDeployment(opts: RenderOptions): Deployment {
   // themselves reference the built-ins, e.g. gcp-project: mp-lb-{slug}).
   const baseVars = { slug, network: network.name };
 
+  const networkVars = expandVarsDeep(
+    network.vars,
+    baseVars,
+    "network config vars",
+  );
+
+  // Project-level var overrides win over the network's (exceptions only).
   const ctx: Record<string, string> = {
-    ...expandVarsDeep(network.vars, baseVars, "network config vars"),
+    ...networkVars,
+    ...expandVarsDeep(
+      manifest.deploy.vars,
+      { ...networkVars, ...baseVars },
+      "deploy block vars",
+    ),
     ...baseVars,
   };
 

@@ -35,6 +35,9 @@ export const serviceDeploySchema = moduleBlockSchema.extend({
 
 export const deployBlockSchema = z.object({
   "env-resolver": z.string().optional(),
+  // Project-level overrides of the network's {var} vocabulary — exceptions
+  // only (e.g. a project pinned to a non-convention GCP project id).
+  vars: z.record(z.string(), z.string()).default({}),
   // Project-level modules: same module mechanics as services (params,
   // module.yaml, hooks), no service semantics (no env map, no container).
   project: z.record(z.string(), moduleBlockSchema).default({}),
