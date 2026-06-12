@@ -32,6 +32,11 @@ variable "apis" {
     "compute.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "billingbudgets.googleapis.com",
+    # IAM is project infrastructure (service accounts, WIF) — enabled for
+    # every project so no module ever hits a 403 on it.
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
   ]
 }
 
