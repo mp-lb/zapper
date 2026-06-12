@@ -1,11 +1,7 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import {
-  NetworkConfig,
-  ProjectManifest,
-  RESERVED_MODULE_KEYS,
-} from "./schemas";
+import { NetworkConfig, ProjectManifest, ServiceDeploy } from "./schemas";
 import { ModuleInstance } from "./modules";
 import { resolveServiceEnv } from "./env";
 import {
@@ -77,8 +73,6 @@ interface RenderOptions {
   // Re-render into an existing dir (after remote module.yaml discovery).
   dir?: string;
 }
-
-const RESERVED = new Set<string>(RESERVED_MODULE_KEYS);
 
 export function renderDeployment(opts: RenderOptions): Deployment {
   const { manifest, network, creds, envPool, imageTag, instances } = opts;
@@ -167,11 +161,19 @@ export function renderDeployment(opts: RenderOptions): Deployment {
       `network module-defaults for '${instance.ref}'`,
     );
 
-    const blockParams = Object.fromEntries(
-      Object.entries(block).filter(([k]) => !RESERVED.has(k)),
-    );
+    const { params: blockParams = {}, ...blockStructural } = block as Record<
+      string,
+      unknown
+    > & { params?: Record<string, unknown> };
 
-    hookParams[key] = { ...moduleDefaults, ...networkDefaults, ...block };
+    // Hook templates ({{params.*}}) see module params and arc's structural
+    // keys (e.g. deploy-path) in one namespace.
+    hookParams[key] = {
+      ...moduleDefaults,
+      ...networkDefaults,
+      ...blockParams,
+      ...blockStructural,
+    };
 
     // Params are data, never Terraform expressions — escape them.
     const params: Record<string, unknown> = tfEscapeDeep({
@@ -184,12 +186,13 @@ export function renderDeployment(opts: RenderOptions): Deployment {
     // it — modules do their own zone lookup.
     if (block.domain) {
       params.domain = block.domain;
-      params.dns_zone = network.dns.zone;
+      params.dns_zone = block["dns-zone"] ?? network.dns.zone;
       if (kind === "service") serviceUrls[key] = `https://${block.domain}`;
     }
 
     if (kind === "service") {
-      const envEntries = (block.env as string[] | undefined) ?? [];
+      const service = block as ServiceDeploy;
+      const envEntries = service.env ?? [];
       serviceEnv[key] = resolveServiceEnv(envEntries, envPool, key);
 
       if (mod.action === "container") {
@@ -204,7 +207,7 @@ export function renderDeployment(opts: RenderOptions): Deployment {
         containerBuilds.push({
           service: key,
           image,
-          dockerfile: (block.dockerfile as string | undefined) ?? "Dockerfile",
+          dockerfile: service.dockerfile ?? "Dockerfile",
         });
 
         params.image = image;

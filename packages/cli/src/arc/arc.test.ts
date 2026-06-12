@@ -144,13 +144,13 @@ function testManifest(): ProjectManifest {
     slug: "proj",
     deploy: deployBlockSchema.parse({
       project: {
-        gcp: { module: "factory", "project-id": "acme-proj" },
+        gcp: { module: "factory", params: { "project-id": "acme-proj" } },
       },
       services: {
         api: {
           module: "web",
           domain: "api.example.com",
-          "min-instances": 2,
+          params: { "min-instances": 2 },
           env: ["A", "B=lit", "DB_HOST=pinned"],
         },
         db: { module: "binding" },

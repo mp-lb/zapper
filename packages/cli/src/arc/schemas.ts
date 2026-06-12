@@ -4,19 +4,6 @@ import { z } from "zod";
 // strips the key unseen. Arc keeps a small reserved structural vocabulary;
 // every other key passes through verbatim (kebab→snake) as a Terraform
 // variable, validated by the module's variables.tf at plan time.
-export const RESERVED_MODULE_KEYS = [
-  "module",
-  "domain",
-  "env",
-  "dockerfile",
-  "build",
-  "deploy-path",
-  "remote-build",
-  "local-config",
-  "vercel-name",
-  "depends-on",
-] as const;
-
 const moduleBlockSchema = z
   .object({
     module: z.string(),
@@ -24,14 +11,29 @@ const moduleBlockSchema = z
     // depending on the project-factory module), by entry key.
     "depends-on": z.array(z.string()).default([]),
     domain: z.string().optional(),
+    // Cloudflare zone override for this entry's domain (default: the
+    // network's dns.zone).
+    "dns-zone": z.string().optional(),
+    // Module parameters — passed through to the module's Terraform variables
+    // (kebab→snake) and to hook templates as {{params.*}}. Everything
+    // module-specific lives here; the keys above are arc's own vocabulary.
+    params: z.record(z.string(), z.unknown()).default({}),
   })
-  .passthrough();
+  .strict();
 
-export const serviceDeploySchema = moduleBlockSchema.extend({
-  // One env list: bare `KEY` whitelists from the resolved pool,
-  // `KEY=value` is a committed literal (split on the first `=`).
-  env: z.array(z.string()).default([]),
-});
+export const serviceDeploySchema = moduleBlockSchema
+  .extend({
+    // One env list: bare `KEY` whitelists from the resolved pool,
+    // `KEY=value` is a committed literal (split on the first `=`).
+    env: z.array(z.string()).default([]),
+    dockerfile: z.string().optional(),
+    build: z.string().optional(),
+    "deploy-path": z.string().optional(),
+    "remote-build": z.boolean().optional(),
+    "local-config": z.string().optional(),
+    "vercel-name": z.string().optional(),
+  })
+  .strict();
 
 export const deployBlockSchema = z.object({
   "env-resolver": z.string().optional(),

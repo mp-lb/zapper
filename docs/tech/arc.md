@@ -50,16 +50,21 @@ deploy:
     backend:
       module: cloud-run-web
       domain: api.example.com
-      port: 8080            # any non-reserved key passes through to Terraform
-      min-instances: 1
+      params:               # module parameters — passed through to Terraform
+        port: 8080
+        min-instances: 1
       env:
         - SOME_SECRET                     # bare KEY: whitelisted from the pool
         - PUBLIC_URL=https://example.com  # KEY=value: committed literal
 ```
 
-**Params are pure pass-through.** Every key that isn't reserved flows to the
-module's Terraform variables verbatim (kebab→snake on the key). The manifest
-*is* the module's `variables.tf`: unknown params fail at terraform plan
+**`params:` is pure pass-through.** Everything under it flows to the module's
+Terraform variables verbatim (kebab→snake on the key) and to hook templates
+as `{{params.*}}`. The manifest *is* the module's `variables.tf`: unknown
+params fail at terraform plan. The keys outside `params:` (`module`,
+`domain`, `dns-zone`, `env`, `dockerfile`, `build`, `deploy-path`,
+`remote-build`, `local-config`, `vercel-name`, `depends-on`) are arc's own
+vocabulary — anything else top-level is a validation error
 ("argument not expected"), defaults live in the module. Reserved structural
 keys are arc's: `module`, `domain`, `env`, `dockerfile`, `build`,
 `deploy-path`, `remote-build`, `local-config`, `vercel-name`, `depends-on`.
