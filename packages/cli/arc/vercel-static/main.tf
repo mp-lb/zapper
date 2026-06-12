@@ -42,6 +42,15 @@ variable "framework" {
   default     = null
 }
 
+# The service's resolved deploy env (arc passes it because module.yaml sets
+# service-env). Set on the project so server-side (request-time) code gets it;
+# the build still gets it separately via the upload hook's ARC_SERVICE_ENV.
+variable "env" {
+  type      = map(string)
+  default   = {}
+  sensitive = true
+}
+
 variable "root_directory" {
   description = "Monorepo subdirectory Vercel builds from (framework projects)"
   type        = string
@@ -63,6 +72,18 @@ resource "vercel_project" "main" {
   root_directory   = var.root_directory
   build_command    = null
   output_directory = null
+}
+
+# One resource per var keeps plans readable and diffs per-var. Keys aren't
+# secret — unwrap them for for_each (resource-level for_each can't iterate a
+# sensitive value); the values stay sensitive.
+resource "vercel_project_environment_variable" "env" {
+  for_each   = nonsensitive(toset(keys(var.env)))
+  project_id = vercel_project.main.id
+  key        = each.key
+  value      = var.env[each.key]
+  target     = ["production"]
+  sensitive  = true
 }
 
 resource "vercel_project_domain" "main" {

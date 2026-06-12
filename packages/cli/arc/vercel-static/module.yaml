@@ -7,6 +7,9 @@
 # files API).
 defaults:
   name: "{slug}-{service}-arc"
+# Receive the service's resolved deploy env as the `env` Terraform variable
+# (set as Vercel project env vars for request-time code).
+service-env: true
 credentials:
   - name: VERCEL_API_TOKEN
     why: create the Vercel project and upload deploys

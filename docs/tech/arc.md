@@ -102,7 +102,8 @@ A bare Terraform folder is a valid module; `module.yaml` is optional.
   via Cloud Run domain mapping + Cloudflare DNS.
 - `gce-worker` — always-on container worker on a small GCE VM.
 - `vercel-static` — Vercel-hosted static frontend with custom domain; upload
-  runs as a post-apply hook.
+  runs as a post-apply hook. The service's deploy env is also set on the
+  Vercel project (production, sensitive) so request-time code gets it.
 - `gcp-project` — project factory: the per-project GCP project (billing,
   APIs); destroying it deletes the GCP project.
 - `project-base` — per-project base resources (the Docker artifact registry).
@@ -143,6 +144,11 @@ hooks:
 - `action: container` — arc docker-builds (`dockerfile:`, default
   `Dockerfile`) and pushes `<registry>/<service>:<git-sha>`, passing `image`
   and the resolved `env` map as Terraform variables.
+- `service-env: true` — the service's resolved env is passed as the `env`
+  Terraform variable: the service's own entries only, no sibling injections
+  (those stay a container concept — binding credentials don't belong on
+  third-party hosts). Implied by `action: container`, which does include
+  injections.
 - `env:` values may use `{{output.NAME}}` (a Terraform reference to this
   module's output), `{{cred.NAME}}`, `{{params.key}}`.
 - Hooks run `run:` shell commands (or `task: <zap task>` — the project's own

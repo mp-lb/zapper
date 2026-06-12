@@ -113,6 +113,10 @@ function tempModuleLib(): string {
     ),
   );
 
+  mkdirSync(join(dir, "static"));
+  writeFileSync(join(dir, "static", "main.tf"), "");
+  writeFileSync(join(dir, "static", "module.yaml"), "service-env: true");
+
   mkdirSync(join(dir, "factory"));
   writeFileSync(join(dir, "factory", "main.tf"), "");
 
@@ -154,6 +158,7 @@ function testManifest(): ProjectManifest {
           env: ["A", "B=lit", "DB_HOST=pinned"],
         },
         db: { module: "binding" },
+        site: { module: "static", env: ["A", "C=lit"] },
       },
     }),
     localServiceNames: [],
@@ -209,6 +214,10 @@ describe("renderDeployment", () => {
     });
 
     expect(main.module.svc_db.env).toBeUndefined();
+  });
+
+  it("passes the resolved env to service-env modules, without injections", () => {
+    expect(main.module.svc_site.env).toEqual({ A: "a-value", C: "lit" });
   });
 
   it("renders backend and providers with vars and stages project modules", () => {

@@ -195,6 +195,14 @@ export function renderDeployment(opts: RenderOptions): Deployment {
       const envEntries = service.env ?? [];
       serviceEnv[key] = resolveServiceEnv(envEntries, envPool, key);
 
+      // service-env modules take the resolved env as the `env` Terraform
+      // variable — the service's own entries only, no sibling injections
+      // (a container-binding concept; pass 2): bindings live in our network
+      // and their credentials don't belong on third-party hosts.
+      if (mod["service-env"] && mod.action !== "container") {
+        params.env = tfEscapeMap(serviceEnv[key]);
+      }
+
       if (mod.action === "container") {
         if (!registryBase) {
           throw new Error(

@@ -116,6 +116,10 @@ export const moduleManifestSchema = z
     // The only built-in provider action: docker build + push, with the image
     // and resolved env passed as Terraform variables.
     action: z.literal("container").optional(),
+    // Service modules only: receive the service's resolved deploy env as the
+    // `env` Terraform variable (the service's own entries, no sibling
+    // injections). Implied by action: container.
+    "service-env": z.boolean().default(false),
     // Default params (kebab keys fine); values may use {var}s.
     defaults: z.record(z.string(), z.unknown()).default({}),
     // Operator credentials this module needs — checked early, injected into
