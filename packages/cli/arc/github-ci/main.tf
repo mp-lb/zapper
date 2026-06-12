@@ -35,6 +35,12 @@ variable "network_project" {
   default = ""
 }
 
+# Billing account (for refreshing/managing gcp-budget resources). Empty = skip.
+variable "billing_account" {
+  type    = string
+  default = ""
+}
+
 # Requires the IAM/WIF APIs (iam, iamcredentials, sts) — enabled at the
 # project level by the gcp-project module.
 resource "google_iam_workload_identity_pool" "github" {
@@ -89,6 +95,13 @@ resource "google_project_iam_member" "quota_project_consumer" {
   project = var.network_project
   role    = "roles/serviceusage.serviceUsageConsumer"
   member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+resource "google_billing_account_iam_member" "budgets" {
+  count              = var.billing_account != "" ? 1 : 0
+  billing_account_id = replace(var.billing_account, "billingAccounts/", "")
+  role               = "roles/billing.costsManager"
+  member             = "serviceAccount:${google_service_account.deploy.email}"
 }
 
 resource "google_service_account_iam_member" "github_impersonation" {
