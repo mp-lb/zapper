@@ -28,6 +28,13 @@ variable "state_bucket" {
   type = string
 }
 
+# Network project used as the ADC/provider quota project; the deploy SA needs
+# serviceusage consumer on it. Empty = skip.
+variable "network_project" {
+  type    = string
+  default = ""
+}
+
 # Requires the IAM/WIF APIs (iam, iamcredentials, sts) — enabled at the
 # project level by the gcp-project module.
 resource "google_iam_workload_identity_pool" "github" {
@@ -73,6 +80,13 @@ resource "google_storage_bucket_iam_member" "deploy_state" {
   bucket = var.state_bucket
   role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+resource "google_project_iam_member" "quota_project_consumer" {
+  count   = var.network_project != "" ? 1 : 0
+  project = var.network_project
+  role    = "roles/serviceusage.serviceUsageConsumer"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 
 resource "google_service_account_iam_member" "github_impersonation" {
