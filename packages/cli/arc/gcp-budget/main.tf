@@ -28,17 +28,28 @@ variable "monthly_usd" {
   default = 10
 }
 
+# Must match the billing account's currency.
+variable "currency" {
+  type    = string
+  default = "USD"
+}
+
+data "google_project" "main" {
+  project_id = var.gcp_project
+}
+
 resource "google_billing_budget" "main" {
   billing_account = var.billing_account
   display_name    = "${var.name}-monthly-budget"
 
   budget_filter {
-    projects = ["projects/${var.gcp_project}"]
+    # The Budget API requires the project *number*, not the ID.
+    projects = ["projects/${data.google_project.main.number}"]
   }
 
   amount {
     specified_amount {
-      currency_code = "USD"
+      currency_code = var.currency
       units         = tostring(var.monthly_usd)
     }
   }
