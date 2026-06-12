@@ -28,10 +28,25 @@ variable "state_bucket" {
   type = string
 }
 
+# APIs this module depends on; enabled here so CI-enabled projects are
+# self-contained (the base gcp-project list stays minimal).
+resource "google_project_service" "apis" {
+  for_each = toset([
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com",
+  ])
+  project            = var.gcp_project_id
+  service            = each.value
+  disable_on_destroy = false
+}
+
 resource "google_iam_workload_identity_pool" "github" {
   project                   = var.gcp_project_id
   workload_identity_pool_id = "github"
   display_name              = "GitHub Actions"
+
+  depends_on = [google_project_service.apis]
 }
 
 resource "google_iam_workload_identity_pool_provider" "github_actions" {
@@ -56,6 +71,8 @@ resource "google_service_account" "deploy" {
   project      = var.gcp_project_id
   account_id   = "arc-deploy"
   display_name = "Arc CI deploys"
+
+  depends_on = [google_project_service.apis]
 }
 
 # Lab-grade: editor on the project's own boundary. The GCP project *is* the
