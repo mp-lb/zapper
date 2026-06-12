@@ -78,7 +78,9 @@ resource "google_project_iam_member" "deploy_editor" {
 # Terraform state lives in the network project's bucket.
 resource "google_storage_bucket_iam_member" "deploy_state" {
   bucket = var.state_bucket
-  role   = "roles/storage.objectAdmin"
+  # storage.admin (bucket-scoped): Terraform refreshes this very grant, which
+  # needs bucket IAM read; objectAdmin can't getIamPolicy.
+  role   = "roles/storage.admin"
   member = "serviceAccount:${google_service_account.deploy.email}"
 }
 
