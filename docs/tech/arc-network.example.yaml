@@ -52,6 +52,8 @@ providers:
       default_labels:
         arc-managed: "true"
         arc-project: "{slug}"
+      user_project_override: true
+      billing_project: "{gcp-project}"
   cloudflare:
     source: cloudflare/cloudflare
     version: "~> 4.0"
