@@ -1,0 +1,64 @@
+{
+  "name": "@mp-lb/zapper-react",
+  "version": "0.20.0",
+  "description": "React hooks and client boundaries for local Zapper projects",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run --environment happy-dom",
+    "test:watch": "vitest --environment happy-dom",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "zapper",
+    "react",
+    "hooks"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mp-lb/zapper"
+  },
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "@mp-lb/zapper-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "happy-dom": "^20.0.11",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "typescript": "6.0.3",
+    "vitest": "4.1.5"
+  }
+}

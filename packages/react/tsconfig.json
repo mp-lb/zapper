@@ -1,0 +1,12 @@
+{
+  "extends": "../../etc/tsconfig.frontend.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "noEmit": false,
+    "types": ["node", "vitest/globals"]
+  },
+  "include": ["src"]
+}

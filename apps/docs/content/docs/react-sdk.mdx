@@ -1,0 +1,70 @@
+---
+title: React SDK
+description: Use Zapper from React hooks with an explicit client boundary.
+---
+
+# React SDK
+
+`@mp-lb/zapper-react` provides hooks for local project widgets without making browser code run Zapper directly.
+
+Install it with the core SDK:
+
+```sh
+pnpm add @mp-lb/zapper-react @mp-lb/zapper-sdk
+```
+
+## Client Boundary
+
+Browser-only React apps need a backend endpoint. Create a client for that endpoint and pass it through `ZapperProvider`:
+
+```tsx
+import {
+  ZapperProvider,
+  createZapperFetchClient,
+  useZapperProject,
+} from "@mp-lb/zapper-react";
+
+const client = createZapperFetchClient({ endpoint: "/api/zapper" });
+
+export function ProjectCard() {
+  return (
+    <ZapperProvider client={client}>
+      <ProjectControls dir="~/Code/my-app" />
+    </ZapperProvider>
+  );
+}
+
+function ProjectControls({ dir }: { dir: string }) {
+  const zapper = useZapperProject({ dir });
+
+  if (zapper.loading) return <span>Loading</span>;
+  if (zapper.error) return <button onClick={zapper.refresh}>Retry</button>;
+
+  return (
+    <section>
+      <a href={zapper.homepage}>{zapper.data?.projectName}</a>
+      <span>{zapper.counts?.up}/{zapper.counts?.total} up</span>
+      <button disabled={zapper.settling} onClick={zapper.up}>Up</button>
+      <button disabled={zapper.settling} onClick={zapper.restart}>
+        Restart
+      </button>
+      <button disabled={zapper.settling} onClick={zapper.down}>Down</button>
+    </section>
+  );
+}
+```
+
+The endpoint should implement the `ZapperProjectClient` methods. Local admin apps can back that with tRPC, fetch, or any other app-owned RPC layer.
+
+## Node Client
+
+In a Node-capable React environment, use the SDK-backed client:
+
+```tsx
+import { ZapperProvider } from "@mp-lb/zapper-react";
+import { createZapperNodeClient } from "@mp-lb/zapper-react/node";
+
+const client = createZapperNodeClient();
+```
+
+The Node client calls `@mp-lb/zapper-sdk` directly. It does not invoke the `zap` CLI.
