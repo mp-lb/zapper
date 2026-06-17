@@ -26,7 +26,7 @@ export function listLiveParentMap(): Map<number, number> {
 }
 
 /**
- * True when the PID, or any of its ancestors, is in the given set. PM2
+ * True when the PID, or any of its ancestors, is in the given set. The supervisor
  * membership must be judged by ancestry, not direct PID match: a managed
  * wrapper forks helper subshells that share its command line (e.g. the
  * stderr colorizer), and they are managed via their parent.

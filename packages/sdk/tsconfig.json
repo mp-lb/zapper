@@ -1,0 +1,11 @@
+{
+  "extends": "../../etc/tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src", "scripts"]
+}

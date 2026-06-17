@@ -1,12 +1,13 @@
 import { Command } from "commander";
-import { Command as ZapCommand } from "../types/index";
-import { Zapper } from "../core/Zapper";
-import { logger, LogLevel } from "../utils/logger";
-import { renderer } from "../ui/renderer";
-import { renderCommandResult } from "../ui/commandResultRenderer";
 import { createArcCommand } from "../arc/command";
 import { captureCommandRun } from "../analytics";
 import {
+  type Command as ZapCommand,
+  Zapper,
+  logger,
+  LogLevel,
+  renderer,
+  renderCommandResult,
   UpCommand,
   DownCommand,
   KillCommand,
@@ -43,8 +44,8 @@ import {
   CommandContext,
   CommandHandler,
   TaskParams,
-} from "../commands";
-import { VERSION } from "../version";
+  VERSION,
+} from "@mp-lb/zapper-sdk";
 
 function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
   const named: Record<string, string> = {};
@@ -195,7 +196,7 @@ export class CommanderCli {
     this.program
       .command("kill")
       .description(
-        "Kill all PM2 processes and Docker containers across all instances for a project",
+        "Kill all native processes and Docker containers across all instances for a project",
       )
       .argument(
         "[project]",
@@ -233,7 +234,7 @@ export class CommanderCli {
       .command("status")
       .alias("ps")
       .description(
-        "Show status (PM2 + Docker), optionally for specific services",
+        "Show status (native processes + Docker), optionally for specific services",
       )
       .argument("[services...]", "Services to show status for")
       .option("-a, --all", "Include processes from all projects")
@@ -694,7 +695,7 @@ export class CommanderCli {
 
     globalCmd
       .command("kill")
-      .description("Kill all PM2 + Docker resources for a project")
+      .description("Kill all native process + Docker resources for a project")
       .argument("[project]", "Project name to kill")
       .option("-a, --all", "Kill all projects")
       .option("-y, --force", "Force the operation")
@@ -824,7 +825,7 @@ export class CommanderCli {
 
     resourcesCmd
       .command("audit")
-      .description("Audit orphaned PM2 processes and Docker containers")
+      .description("Audit orphaned native processes and Docker containers")
       .option("-j, --json", "Output command result as minified JSON")
       .action(async (_options, command) => {
         await this.executeCommand("system", ["resources", "audit"], command);

@@ -18,6 +18,5 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Command Output](output.md) for the JSON/result contract.
 
 `zap logs` delegates to the underlying runtime log command for running services.
-Native service logs use PM2's raw mode so output is not prefixed with PM2
-process metadata. If a native PM2 service is stopped, Zapper can still show the
-saved last-run log.
+Native service logs are shown without supervisor metadata prefixes. If a native
+service is stopped, Zapper can still show the saved last-run log.

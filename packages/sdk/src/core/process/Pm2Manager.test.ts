@@ -25,8 +25,8 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
 
     mkdirSync(zapDir, { recursive: true });
 
-    const runPm2Spy = vi.spyOn(Pm2Manager as any, "runPm2Command");
-    runPm2Spy.mockResolvedValue("");
+    vi.spyOn(Pm2Manager as any, "pm2Action").mockResolvedValue([]);
+    vi.spyOn(Pm2Manager as any, "startPm2Process").mockResolvedValue([]);
 
     const listProcessesSpy = vi.spyOn(Pm2Manager as any, "listProcesses");
     listProcessesSpy.mockResolvedValue([]);
@@ -93,20 +93,17 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     expect(wrapperScripts.length).toBeGreaterThan(0);
   });
 
-  it("configures PM2 to merge stdout and stderr into one managed log file", async () => {
+  it("configures the supervisor to merge stdout and stderr into one managed log file", async () => {
     const processConfig: Process = {
       name: "test-service",
       cmd: "node server.js",
     };
 
-    let ecosystemJson: string | undefined;
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
-      async (args: string[]) => {
-        if (args[0] === "start") {
-          ecosystemJson = readFileSync(args[1], "utf8");
-        }
-
-        return "";
+    let appConfig: Record<string, unknown> | undefined;
+    vi.spyOn(Pm2Manager as any, "startPm2Process").mockImplementation(
+      async (...rawArgs: unknown[]) => {
+        appConfig = rawArgs[0] as Record<string, unknown>;
+        return [];
       },
     );
 
@@ -116,28 +113,24 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       testDir,
     );
 
-    expect(ecosystemJson).toBeDefined();
+    expect(appConfig).toBeDefined();
 
-    const ecosystem = JSON.parse(ecosystemJson!) as {
-      apps: Array<Record<string, unknown>>;
-    };
-
-    // PM2 7 ignores the `log` attribute, so the managed log file must be
-    // configured through out_file/error_file pointing at the same path.
+    // Keep the legacy out_file/error_file aliases pointed at the same managed
+    // log path for callers that still inspect the generated config.
     const managedLog = path.join(
       zapDir,
       "logs",
       "test-project.test-service.log",
     );
 
-    expect(ecosystem.apps[0]).toMatchObject({
+    expect(appConfig).toMatchObject({
       name: "zap.test-project.test-service",
       out_file: managedLog,
       error_file: managedLog,
       merge_logs: true,
     });
 
-    expect(ecosystem.apps[0]).not.toHaveProperty("log");
+    expect(appConfig).not.toHaveProperty("log");
   });
 
   it("namespaces the managed log file by instance ID", async () => {
@@ -146,14 +139,11 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       cmd: "node server.js",
     };
 
-    let ecosystemJson: string | undefined;
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
-      async (args: string[]) => {
-        if (args[0] === "start") {
-          ecosystemJson = readFileSync(args[1], "utf8");
-        }
-
-        return "";
+    let appConfig: Record<string, unknown> | undefined;
+    vi.spyOn(Pm2Manager as any, "startPm2Process").mockImplementation(
+      async (...rawArgs: unknown[]) => {
+        appConfig = rawArgs[0] as Record<string, unknown>;
+        return [];
       },
     );
 
@@ -164,17 +154,13 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
       "abc123",
     );
 
-    const ecosystem = JSON.parse(ecosystemJson!) as {
-      apps: Array<Record<string, unknown>>;
-    };
-
     const managedLog = path.join(
       zapDir,
       "logs",
       "test-project.abc123.test-service.log",
     );
 
-    expect(ecosystem.apps[0]).toMatchObject({
+    expect(appConfig).toMatchObject({
       name: "zap.test-project.abc123.test-service",
       out_file: managedLog,
       error_file: managedLog,
@@ -190,7 +176,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     writeFileSync(ownLog, "own\n");
     writeFileSync(otherLog, "other\n");
 
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockResolvedValue("[]");
+    vi.spyOn(Pm2Manager as any, "pm2Action").mockResolvedValue([]);
 
     await Pm2Manager.deleteProcess(
       "test-service",
@@ -469,7 +455,7 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     expect(scriptsAfterDelete[0]).toContain("service-two");
   });
 
-  it("shows the last saved log when the PM2 process is gone", async () => {
+  it("shows the last saved log when the supervised process is gone", async () => {
     const logsDir = path.join(zapDir, "logs");
     const logPath = path.join(logsDir, "test-project.test-service.log");
     const mtime = new Date(2026, 5, 7, 14, 32, 10);
@@ -493,68 +479,38 @@ describe("Pm2Manager - Wrapper Script Lifecycle", () => {
     expect(showLogsFromFileSpy).toHaveBeenCalledWith(logPath, false);
   });
 
-  it("uses PM2 logs directly for running services without following by default", async () => {
+  it("reads the managed log file for running services without following by default", async () => {
     vi.spyOn(Pm2Manager as any, "getProcessInfo").mockResolvedValue({
       name: "zap.test-project.test-service",
     });
 
-    const showLogsWithPm2Spy = vi
-      .spyOn(Pm2Manager as any, "showLogsWithPm2")
+    const showLogsFromFileSpy = vi
+      .spyOn(Pm2Manager as any, "showLogsFromFile")
       .mockResolvedValue(undefined);
 
     await Pm2Manager.showLogs("test-service", "test-project", false, testDir);
 
-    expect(showLogsWithPm2Spy).toHaveBeenCalledWith(
-      "zap.test-project.test-service",
+    expect(showLogsFromFileSpy).toHaveBeenCalledWith(
+      path.join(zapDir, "logs", "test-project.test-service.log"),
       false,
     );
   });
 
-  it("uses PM2 logs directly for running services with follow enabled", async () => {
+  it("tails the managed log file for running services with follow enabled", async () => {
     vi.spyOn(Pm2Manager as any, "getProcessInfo").mockResolvedValue({
       name: "zap.test-project.test-service",
     });
 
-    const showLogsWithPm2Spy = vi
-      .spyOn(Pm2Manager as any, "showLogsWithPm2")
+    const showLogsFromFileSpy = vi
+      .spyOn(Pm2Manager as any, "showLogsFromFile")
       .mockResolvedValue(undefined);
 
     await Pm2Manager.showLogs("test-service", "test-project", true, testDir);
 
-    expect(showLogsWithPm2Spy).toHaveBeenCalledWith(
-      "zap.test-project.test-service",
+    expect(showLogsFromFileSpy).toHaveBeenCalledWith(
+      path.join(zapDir, "logs", "test-project.test-service.log"),
       true,
     );
-  });
-
-  it("uses raw PM2 logs and passes --nostream only for non-follow logs", async () => {
-    const resolvePm2CommandSpy = vi
-      .spyOn(Pm2Manager as any, "resolvePm2Command")
-      .mockImplementation((args: string[]) => ({
-        command: globalThis.process.execPath,
-        argsPrefix: ["-e", ""],
-        label: `pm2 ${args.join(" ")}`,
-      }));
-
-    await (Pm2Manager as any).showLogsWithPm2("zap.test-project.api", false);
-    await (Pm2Manager as any).showLogsWithPm2("zap.test-project.api", true);
-
-    expect(resolvePm2CommandSpy).toHaveBeenNthCalledWith(1, [
-      "logs",
-      "zap.test-project.api",
-      "--lines",
-      "50",
-      "--raw",
-      "--nostream",
-    ]);
-
-    expect(resolvePm2CommandSpy).toHaveBeenNthCalledWith(2, [
-      "logs",
-      "zap.test-project.api",
-      "--lines",
-      "50",
-      "--raw",
-    ]);
   });
 
   it("warns clearly when no last-run log exists", async () => {
@@ -606,13 +562,12 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
   }
 
   it("throttles late-onset crash loops with exponential backoff in the ecosystem", async () => {
-    let ecosystemJson: string | undefined;
+    let appConfig: Record<string, unknown> | undefined;
 
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
-      async (...callArgs: unknown[]) => {
-        const args = callArgs[0] as string[];
-        if (args[0] === "start") ecosystemJson = readFileSync(args[1], "utf8");
-        return "";
+    vi.spyOn(Pm2Manager as any, "startPm2Process").mockImplementation(
+      async (...rawArgs: unknown[]) => {
+        appConfig = rawArgs[0] as Record<string, unknown>;
+        return [];
       },
     );
 
@@ -624,16 +579,11 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
       testDir,
     );
 
-    const ecosystem = JSON.parse(ecosystemJson!) as {
-      apps: Array<Record<string, unknown>>;
-    };
-
-    // PM2 only counts unstable restarts shortly after created_at, so
-    // max_restarts alone cannot stop an app that starts crashing later in
-    // life. Backoff is the safety net that throttles such loops.
-    expect(ecosystem.apps[0].exp_backoff_restart_delay).toBe(100);
-    expect(ecosystem.apps[0].max_restarts).toBe(2);
-    expect(ecosystem.apps[0].min_uptime).toBe(4000);
+    // Backoff is the safety net that throttles services that start crashing
+    // after they have already been up for a while.
+    expect(appConfig?.exp_backoff_restart_delay).toBe(100);
+    expect(appConfig?.max_restarts).toBe(2);
+    expect(appConfig?.min_uptime).toBe(4000);
   });
 
   it("identifies registrations whose wrapper script is missing", () => {
@@ -659,9 +609,9 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
   });
 
   it("deregisters instead of restarting when the wrapper script is gone", async () => {
-    const runPm2Spy = vi
-      .spyOn(Pm2Manager as any, "runPm2Command")
-      .mockResolvedValue("");
+    const pm2ActionSpy = vi
+      .spyOn(Pm2Manager as any, "pm2Action")
+      .mockResolvedValue([]);
 
     vi.spyOn(Pm2Manager, "getProcessInfo").mockResolvedValue(
       processInfo({
@@ -674,21 +624,21 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
       Pm2Manager.restartProcess("api", "proj", "abc123"),
     ).rejects.toThrow(/wrapper script no longer exists/);
 
-    expect(runPm2Spy).toHaveBeenCalledWith(["delete", "zap.proj.abc123.api"]);
+    expect(pm2ActionSpy).toHaveBeenCalledWith("delete", "zap.proj.abc123.api");
 
-    expect(runPm2Spy).not.toHaveBeenCalledWith([
+    expect(pm2ActionSpy).not.toHaveBeenCalledWith(
       "restart",
       "zap.proj.abc123.api",
-    ]);
+    );
   });
 
   it("restarts normally when the wrapper script exists", async () => {
     const liveScript = path.join(zapDir, "proj.api.444.sh");
     writeFileSync(liveScript, "#!/bin/bash\n");
 
-    const runPm2Spy = vi
-      .spyOn(Pm2Manager as any, "runPm2Command")
-      .mockResolvedValue("");
+    const pm2ActionSpy = vi
+      .spyOn(Pm2Manager as any, "pm2Action")
+      .mockResolvedValue([]);
 
     vi.spyOn(Pm2Manager, "getProcessInfo").mockResolvedValue(
       processInfo({ script: liveScript, pid: 0 }) as any,
@@ -696,16 +646,16 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
 
     await Pm2Manager.restartProcess("api", "proj", "abc123");
 
-    expect(runPm2Spy).toHaveBeenCalledWith(["restart", "zap.proj.abc123.api"]);
+    expect(pm2ActionSpy).toHaveBeenCalledWith("restart", "zap.proj.abc123.api");
   });
 
   it("deregisters all apps whose wrapper scripts are missing", async () => {
     const liveScript = path.join(zapDir, "proj.live.555.sh");
     writeFileSync(liveScript, "#!/bin/bash\n");
 
-    const runPm2Spy = vi
-      .spyOn(Pm2Manager as any, "runPm2Command")
-      .mockResolvedValue("");
+    const pm2ActionSpy = vi
+      .spyOn(Pm2Manager as any, "pm2Action")
+      .mockResolvedValue([]);
 
     vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
       processInfo({ name: "zap.proj.abc123.live", script: liveScript }),
@@ -722,13 +672,15 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
     const removed = await Pm2Manager.deregisterMissingScriptApps();
 
     expect(removed).toEqual(["zap.gone.def456.api"]);
-    expect(runPm2Spy).toHaveBeenCalledWith(
-      ["delete", "zap.gone.def456.api"],
+    expect(pm2ActionSpy).toHaveBeenCalledWith(
+      "delete",
+      "zap.gone.def456.api",
       1,
     );
 
-    expect(runPm2Spy).not.toHaveBeenCalledWith(
-      ["delete", "zap.proj.abc123.live"],
+    expect(pm2ActionSpy).not.toHaveBeenCalledWith(
+      "delete",
+      "zap.proj.abc123.live",
       expect.anything(),
     );
   });
@@ -737,9 +689,9 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
     const insideScript = path.join(zapDir, "proj.api.777.sh");
     writeFileSync(insideScript, "#!/bin/bash\n");
 
-    const runPm2Spy = vi
-      .spyOn(Pm2Manager as any, "runPm2Command")
-      .mockResolvedValue("");
+    const pm2ActionSpy = vi
+      .spyOn(Pm2Manager as any, "pm2Action")
+      .mockResolvedValue([]);
 
     vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
       processInfo({ name: "zap.proj.abc123.api", script: insideScript }),
@@ -754,21 +706,22 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
     const removed = await Pm2Manager.deregisterAppsUnderZapDir(zapDir);
 
     expect(removed).toEqual(["zap.proj.abc123.api"]);
-    expect(runPm2Spy).toHaveBeenCalledWith(["delete", "zap.proj.abc123.api"]);
-    expect(runPm2Spy).not.toHaveBeenCalledWith([
+    expect(pm2ActionSpy).toHaveBeenCalledWith("delete", "zap.proj.abc123.api");
+
+    expect(pm2ActionSpy).not.toHaveBeenCalledWith(
       "delete",
       "zap.other.xyz789.api",
-    ]);
+    );
   });
 
-  it("recovers the daemon by snapshot, kill, survivor sweep, resurrect, and stale-app sweep", async () => {
-    const calls: string[][] = [];
+  it("recovers the daemon by restart, survivor sweep, and stale-app sweep", async () => {
+    const calls: string[] = [];
 
-    const runPm2Spy = vi
-      .spyOn(Pm2Manager as any, "runPm2Command")
+    const pm2ActionSpy = vi
+      .spyOn(Pm2Manager as any, "pm2Action")
       .mockImplementation(async (...callArgs: unknown[]) => {
-        calls.push(callArgs[0] as string[]);
-        return "";
+        calls.push(callArgs[0] as string);
+        return [];
       });
 
     vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
@@ -787,47 +740,42 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
 
     await (Pm2Manager as any).recoverPm2Daemon();
 
-    expect(calls).toEqual([["save"], ["kill"], ["resurrect"]]);
+    expect(calls).toEqual(["killDaemon"]);
     expect(scannerSpy).toHaveBeenCalled();
     expect(sweepSpy).toHaveBeenCalled();
-    expect(runPm2Spy).toHaveBeenCalledWith(["kill"], 1);
+    expect(pm2ActionSpy).toHaveBeenCalledWith("killDaemon", undefined, 1);
   });
 
-  it("skips resurrect when the pre-kill snapshot failed", async () => {
-    const calls: string[][] = [];
+  it("skips stale-app sweep when the table was empty before daemon restart", async () => {
+    const calls: string[] = [];
 
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
+    vi.spyOn(Pm2Manager as any, "pm2Action").mockImplementation(
       async (...callArgs: unknown[]) => {
-        const args = callArgs[0] as string[];
-        calls.push(args);
-        if (args[0] === "save") throw new Error("save failed");
-        return "";
+        calls.push(callArgs[0] as string);
+        return [];
       },
     );
 
-    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
-      processInfo({}),
-    ] as any);
+    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([]);
 
     const { OrphanScanner } = await import("../../system/OrphanScanner");
     vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
-    vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
 
     const sweepSpy = vi.spyOn(Pm2Manager, "deregisterMissingScriptApps");
 
     await (Pm2Manager as any).recoverPm2Daemon();
 
-    expect(calls).toEqual([["save"], ["kill"]]);
+    expect(calls).toEqual(["killDaemon"]);
     expect(sweepSpy).not.toHaveBeenCalled();
   });
 
   it("never resurrects a stale dump when the table was empty before the kill", async () => {
-    const calls: string[][] = [];
+    const calls: string[] = [];
 
-    vi.spyOn(Pm2Manager as any, "runPm2Command").mockImplementation(
+    vi.spyOn(Pm2Manager as any, "pm2Action").mockImplementation(
       async (...callArgs: unknown[]) => {
-        calls.push(callArgs[0] as string[]);
-        return "";
+        calls.push(callArgs[0] as string);
+        return [];
       },
     );
 
@@ -838,6 +786,6 @@ describe("Pm2Manager - Crash-loop and daemon-kill recovery", () => {
 
     await (Pm2Manager as any).recoverPm2Daemon();
 
-    expect(calls).toEqual([["kill"]]);
+    expect(calls).toEqual(["killDaemon"]);
   });
 });

@@ -1,0 +1,59 @@
+{
+  "name": "@mp-lb/zapper-sdk",
+  "version": "0.20.0",
+  "description": "Programmatic SDK for managing local Zapper projects",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs",
+    "typecheck": "tsc --project tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepublishOnly": "pnpm build"
+  },
+  "keywords": [
+    "zapper",
+    "sdk",
+    "pm2"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mp-lb/zapper"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/dotenv": "^8.2.3",
+    "@types/mustache": "^4.2.5",
+    "tsx": "4.20.6",
+    "typescript": "6.0.3",
+    "vitest": "4.1.5"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "dotenv-expand": "^12.0.3",
+    "enquirer": "^2.4.1",
+    "mustache": "^4.2.0",
+    "pm2": "^7.0.1",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.5"
+  }
+}

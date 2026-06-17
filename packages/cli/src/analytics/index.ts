@@ -5,9 +5,9 @@ import { request as httpsRequest } from "https";
 import { homedir, platform, release } from "os";
 import { join } from "path";
 import { URL } from "url";
-import { VERSION } from "../version";
+import { VERSION } from "@mp-lb/zapper-sdk";
 import { bundledPostHogHost, bundledPostHogKey } from "./buildConfig";
-import type { Command as ZapCommand } from "../types/index";
+import type { Command as ZapCommand } from "@mp-lb/zapper-sdk";
 
 type SourceEnv = "development" | "staging" | "production";
 

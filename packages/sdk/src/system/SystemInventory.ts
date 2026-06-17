@@ -367,9 +367,9 @@ function classifyVolumeResource(
   return null;
 }
 
-// A PM2 entry whose recorded working directory is gone belongs to a deleted
-// checkout/instance dir. PM2 keeps running (or endlessly restarting) it, so it
-// must be pruned regardless of what the registry says about its name.
+// A supervisor entry whose recorded working directory is gone belongs to a
+// deleted checkout/instance dir. It must be pruned regardless of what the
+// registry says about its name.
 function classifyMissingCwdProcess(process: {
   name: string;
   cwd?: string;
@@ -390,10 +390,8 @@ function classifyMissingCwdProcess(process: {
   };
 }
 
-// A PM2 entry whose wrapper script is gone (its checkout/instance dir was
-// deleted while the registration remained) can only crash-loop: bash exits
-// 127 instantly and PM2 restarts it forever — PM2's restart cap does not
-// apply to apps that start failing later in life.
+// A supervisor entry whose wrapper script is gone (its checkout/instance dir
+// was deleted while the registration remained) can only crash-loop.
 function classifyMissingScriptProcess(process: {
   name: string;
   script?: string;
@@ -414,9 +412,10 @@ function classifyMissingScriptProcess(process: {
   };
 }
 
-// Survivors of a PM2 daemon crash: OS processes still running a Zapper wrapper
-// script that no longer exists on disk (its checkout/instance dir was deleted).
-// PM2 does not know about them, so they are found by scanning OS processes.
+// Survivors of a supervisor daemon crash: OS processes still running a Zapper
+// wrapper script that no longer exists on disk (its checkout/instance dir was
+// deleted). The supervisor does not know about them, so they are found by
+// scanning OS processes.
 function classifyOrphanWrapperProcesses(
   pm2Processes: Array<{ pid: number }>,
 ): SystemResourceAuditEntry[] {
@@ -436,10 +435,11 @@ function classifyOrphanWrapperProcesses(
     }));
 }
 
-// Survivors of a PM2 daemon kill that exec'd past their wrapper: processes
-// still listening on a zap-assigned port while PM2 knows nothing about them.
+// Survivors of a supervisor daemon restart that exec'd past their wrapper:
+// processes still listening on a zap-assigned port while the supervisor knows
+// nothing about them.
 // They block every later start of the owning service with "port already in
-// use" while PM2 shows it as errored.
+// use" while the supervisor shows it as errored.
 function classifyOrphanPortListeners(
   pm2Processes: Array<{ pid: number }>,
   wrapperOrphans: SystemResourceAuditEntry[],
@@ -462,7 +462,7 @@ function classifyOrphanPortListeners(
       instanceId: orphan.instanceId || undefined,
       classification: "dangling" as const,
       location: `${orphan.project} port ${orphan.port} ($${orphan.portName})`,
-      reason: `Listening on zap-assigned port ${orphan.port} but unknown to PM2 (survivor of a PM2 daemon kill)`,
+      reason: `Listening on zap-assigned port ${orphan.port} but unknown to the supervisor (survivor of a daemon restart)`,
       pid: orphan.pid,
     }),
   );
@@ -517,9 +517,9 @@ export async function cleanupSystemResources(options: {
     (resource) => options.includeVolumes || resource.type !== "volume",
   );
 
-  // PM2 restarts change wrapper PIDs between the audit's PM2 and OS scans,
+  // Restarts change wrapper PIDs between the audit's supervisor and OS scans,
   // so a PID flagged as an orphan may since have become (or always been) part
-  // of a managed tree. Re-check against a fresh PM2 table before killing.
+  // of a managed tree. Re-check against a fresh supervisor table before killing.
   const hasProcessOrphans = resources.some(
     (resource) => resource.type === "process" && resource.pid,
   );

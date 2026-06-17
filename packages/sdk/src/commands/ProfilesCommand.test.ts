@@ -142,7 +142,7 @@ describe("ProfilesCommand", () => {
 
     const before = createMockContext({
       profiles: ["default", "dev"],
-      processes: [{ name: "api", command: "pnpm dev" }],
+      processes: [{ name: "api", cmd: "pnpm dev" }],
       profile: {
         name: "default",
         envFiles: [],
@@ -154,8 +154,8 @@ describe("ProfilesCommand", () => {
     const after = createMockContext({
       profiles: ["default", "dev"],
       processes: [
-        { name: "api", command: "pnpm dev" },
-        { name: "worker", command: "pnpm worker" },
+        { name: "api", cmd: "pnpm dev" },
+        { name: "worker", cmd: "pnpm worker" },
       ],
       profile: {
         name: "dev",
@@ -218,8 +218,8 @@ describe("ProfilesCommand", () => {
     const before = createMockContext({
       profiles: ["default", "dev"],
       processes: [
-        { name: "api", command: "pnpm dev" },
-        { name: "worker", command: "pnpm worker" },
+        { name: "api", cmd: "pnpm dev" },
+        { name: "worker", cmd: "pnpm worker" },
       ],
       profile: {
         name: "dev",
@@ -231,7 +231,7 @@ describe("ProfilesCommand", () => {
 
     const after = createMockContext({
       profiles: ["default", "dev"],
-      processes: [{ name: "api", command: "pnpm dev" }],
+      processes: [{ name: "api", cmd: "pnpm dev" }],
       profile: {
         name: "default",
         envFiles: [],
@@ -292,8 +292,8 @@ describe("ProfilesCommand", () => {
     const before = createMockContext({
       profiles: ["default", "dev"],
       processes: [
-        { name: "api", command: "pnpm dev" },
-        { name: "worker", command: "pnpm worker" },
+        { name: "api", cmd: "pnpm dev" },
+        { name: "worker", cmd: "pnpm worker" },
       ],
       profile: {
         name: "dev",
@@ -305,7 +305,7 @@ describe("ProfilesCommand", () => {
 
     const after = createMockContext({
       profiles: ["default", "dev"],
-      processes: [{ name: "api", command: "pnpm dev" }],
+      processes: [{ name: "api", cmd: "pnpm dev" }],
       profile: {
         name: "default",
         envFiles: [],

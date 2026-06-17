@@ -131,7 +131,7 @@ async function runZapTask(
   projectDir: string,
   env: Record<string, string>,
 ): Promise<void> {
-  const { Zapper } = await import("../core/Zapper");
+  const { Zapper } = await import("@mp-lb/zapper-sdk");
   const zapper = new Zapper();
   await zapper.loadConfig();
   const context = zapper.getContext();
@@ -150,7 +150,7 @@ async function runZapTask(
     context.tasks.map((task) => [task.name, { ...task, resolvedEnv: env }]),
   );
 
-  const { TaskRunner } = await import("../core/tasks/TaskRunner");
+  const { TaskRunner } = await import("@mp-lb/zapper-sdk");
 
   await TaskRunner.runTask(tasks, projectDir, resolved, {
     delimiters: context.taskDelimiters,

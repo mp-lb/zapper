@@ -26,7 +26,7 @@ interface PortListener {
 
 // Container runtimes publish container ports through their own proxy
 // processes (Docker Desktop, OrbStack, Colima, Podman), which legitimately
-// listen on zap-assigned ports without being PM2-managed.
+// listen on zap-assigned ports without being supervisor-managed.
 const DOCKER_COMMAND_PATTERN = /docker|vpnkit|orbstack|colima|podman|gvproxy/i;
 
 export function parseLsofListeners(output: string): PortListener[] {
@@ -116,11 +116,11 @@ function listTcpListeners(): PortListener[] {
 export const PortOrphanScanner = {
   /**
    * Find processes listening on a zap-assigned port that do not belong to
-   * any PM2-managed process tree — survivors of a PM2 daemon kill. They hold
+   * any supervisor-managed process tree — survivors of a daemon kill. They hold
    * the port, so every later start of the owning service fails with "port
    * already in use" while PM2 shows nothing running.
    *
-   * `managedPids` are PM2's current process PIDs; `ignorePids` are roots of
+   * `managedPids` are the supervisor's current process PIDs; `ignorePids` are roots of
    * trees already reported by another scan (to avoid double-reporting).
    */
   findOrphanPortListeners(

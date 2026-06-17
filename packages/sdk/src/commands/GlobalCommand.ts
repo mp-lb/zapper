@@ -91,7 +91,7 @@ export class GlobalCommand extends CommandHandler {
    * Processes still doing Zapper work that PM2 knows nothing about —
    * survivors of a PM2 daemon kill. Found two ways: OS processes running a
    * .zap wrapper script, and listeners on zap-assigned ports outside any
-   * PM2-managed process tree.
+   * supervisor-managed process tree.
    */
   private async findOrphanProcesses(): Promise<
     Array<{ name: string; pid: number; location: string; reason: string }>

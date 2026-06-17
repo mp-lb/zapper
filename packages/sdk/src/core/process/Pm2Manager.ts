@@ -1,4 +1,3 @@
-import { spawn, execSync } from "child_process";
 import {
   mkdirSync,
   writeFileSync,
@@ -6,18 +5,15 @@ import {
   existsSync,
   readdirSync,
   statSync,
+  readFileSync,
 } from "fs";
 import path from "path";
+import * as pm2Module from "pm2";
 import { Process } from "../../config/schemas";
 import { ProcessInfo } from "../../types/index";
 import { renderer } from "../../ui/renderer";
 import { buildServiceName } from "../../utils/nameBuilder";
-import {
-  resolvePm2Runtime,
-  resolveBashRuntime,
-  resolveTailRuntime,
-  RuntimeCommand,
-} from "../../runtime";
+import { resolveBashRuntime, resolveTailRuntime } from "../../runtime";
 import { OrphanScanner } from "../../system/OrphanScanner";
 import { captureShellEnv } from "./shellEnvCapture";
 
@@ -25,6 +21,63 @@ interface ShellCapture {
   shell: string;
   env: Record<string, string>;
 }
+
+interface Pm2Callback<T = unknown> {
+  (error: Error | null, result?: T): void;
+}
+
+interface Pm2ApiProcess {
+  name?: string;
+  pid?: number;
+  monit?: {
+    memory?: number;
+    cpu?: number;
+  };
+  pm2_env?: {
+    status?: string;
+    pm_uptime?: number;
+    restart_time?: number;
+    pm_cwd?: string;
+    pm_exec_path?: string;
+  };
+}
+
+interface Pm2StartOptions {
+  name: string;
+  script: string;
+  interpreter: string;
+  cwd: string;
+  env: Record<string, string | number | boolean>;
+  out_file: string;
+  error_file: string;
+  logFile?: string;
+  merge_logs: boolean;
+  autorestart: boolean;
+  max_restarts: number;
+  maxRestarts: number;
+  min_uptime: number;
+  minUptime: number;
+  exp_backoff_restart_delay: number;
+  restartBackoffMs: number;
+}
+
+interface Pm2Api {
+  connect(callback: Pm2Callback<void>): void;
+  disconnect(): void;
+  start(arg: Pm2StartOptions | string, callback: Pm2Callback): void;
+  stop(name: string, callback: Pm2Callback): void;
+  restart(name: string, callback: Pm2Callback): void;
+  delete(name: string, callback: Pm2Callback): void;
+  list(callback: Pm2Callback<Pm2ApiProcess[]>): void;
+  dump(callback: Pm2Callback): void;
+  resurrect(callback: Pm2Callback): void;
+  killDaemon(callback: Pm2Callback): void;
+}
+
+const pm2 = ((pm2Module as { default?: unknown }).default ??
+  pm2Module) as Pm2Api;
+
+const PM2_API_TIMEOUT_MS = 15_000;
 
 export class Pm2Manager {
   static async startProcess(
@@ -73,7 +126,7 @@ export class Pm2Manager {
 
     const shellCapture = await this.resolveShellCapture(processConfig);
 
-    // Create a minimal wrapper script for PM2 to execute
+    // Create a minimal wrapper script for PM2 to execute.
     const wrapperScript = this.createWrapperScript(
       projectName,
       processConfig,
@@ -87,102 +140,245 @@ export class Pm2Manager {
       { data: processConfig.env },
     );
 
-    renderer.log.debug(`Final env for PM2 ecosystem:`, {
+    renderer.log.debug(`Final env for PM2 process:`, {
       data: processConfig.resolvedEnv,
     });
 
-    const ecosystem = {
-      apps: [
-        {
-          name: buildServiceName(
-            projectName,
-            processConfig.name as string,
-            instanceId,
-          ),
-          script: wrapperScript,
-          interpreter: resolveBashRuntime([]).command,
-          cwd: (() => {
-            if (!processConfig.cwd) return configDir;
-
-            const resolved = path.isAbsolute(processConfig.cwd)
-              ? processConfig.cwd
-              : path.join(configDir, processConfig.cwd);
-
-            if (!existsSync(resolved)) {
-              renderer.log.warn(
-                `cwd path does not exist for ${processConfig.name as string}: ${resolved} (skipping)`,
-              );
-
-              return configDir;
-            }
-
-            return resolved;
-          })(),
-          env: processConfig.resolvedEnv || {},
-          // PM2 7 ignores the `log` attribute; out_file/error_file are the
-          // supported way to get a combined managed log file.
-          out_file: this.managedLogFilePath(
-            projectName,
-            processConfig.name as string,
-            configDir,
-            instanceId,
-          ),
-          error_file: this.managedLogFilePath(
-            projectName,
-            processConfig.name as string,
-            configDir,
-            instanceId,
-          ),
-          merge_logs: true,
-          // Limit restarts for faster feedback in local development
-          // Instead of infinite retries, fail fast after 2 attempts
-          autorestart: true,
-          max_restarts: 2,
-          min_uptime: 4000, // Must stay up 4s to count as successful start
-          // PM2 only counts "unstable" restarts within min_uptime*max_restarts
-          // of created_at, and created_at is never reset by restarts. An app
-          // that starts crashing later in life (e.g. its wrapper script was
-          // deleted) therefore bypasses max_restarts entirely and loops
-          // unbounded. Exponential backoff (capped at 15s by PM2) throttles
-          // any such loop; it resets once the app runs stably again.
-          exp_backoff_restart_delay: 100,
-        },
-      ],
-    } as Record<string, unknown>;
-
-    const tempFile = path.join(
-      zapDir,
-      `${projectName}.${processConfig.name as string}.${Date.now()}.ecosystem.json`,
+    const appConfig = this.createPm2StartOptions(
+      projectName,
+      processConfig,
+      configDir,
+      wrapperScript,
+      instanceId,
     );
 
-    const ecosystemJson = JSON.stringify(ecosystem, null, 2);
+    const ecosystemJson = JSON.stringify({ apps: [appConfig] }, null, 2);
     renderer.log.debug(`Ecosystem JSON for ${processConfig.name as string}:`);
     renderer.log.debug("─".repeat(50));
     renderer.log.debug(ecosystemJson);
     renderer.log.debug("─".repeat(50));
 
-    writeFileSync(tempFile, ecosystemJson);
-
-    try {
-      await this.runPm2Command(["start", tempFile]);
-    } finally {
-      try {
-        unlinkSync(tempFile);
-      } catch (e) {
-        void e;
-      }
-    }
+    await this.startPm2Process(appConfig);
   }
 
   static async startProcessFromEcosystem(ecosystemPath: string): Promise<void> {
-    const args = ["start", ecosystemPath];
-    await this.runPm2Command(args);
+    const ecosystem = JSON.parse(readFileSync(ecosystemPath, "utf8")) as {
+      apps?: Pm2StartOptions[];
+    };
+
+    const app = ecosystem.apps?.[0];
+    if (!app) throw new Error(`No app found in ecosystem: ${ecosystemPath}`);
+    await this.startPm2Process(app);
+  }
+
+  private static createPm2StartOptions(
+    projectName: string,
+    processConfig: Process,
+    configDir: string,
+    wrapperScript: string,
+    instanceId?: string | null,
+  ): Pm2StartOptions {
+    return {
+      name: buildServiceName(
+        projectName,
+        processConfig.name as string,
+        instanceId,
+      ),
+      script: wrapperScript,
+      interpreter: resolveBashRuntime([]).command,
+      cwd: this.resolveProcessCwd(processConfig, configDir),
+      env: processConfig.resolvedEnv || {},
+      // PM2 7 ignores the `log` attribute; out_file/error_file are the
+      // supported way to get a combined managed log file.
+      out_file: this.managedLogFilePath(
+        projectName,
+        processConfig.name as string,
+        configDir,
+        instanceId,
+      ),
+      error_file: this.managedLogFilePath(
+        projectName,
+        processConfig.name as string,
+        configDir,
+        instanceId,
+      ),
+      logFile: this.managedLogFilePath(
+        projectName,
+        processConfig.name as string,
+        configDir,
+        instanceId,
+      ),
+      merge_logs: true,
+      // Limit restarts for faster feedback in local development
+      // Instead of infinite retries, fail fast after 2 attempts.
+      autorestart: true,
+      max_restarts: 2,
+      maxRestarts: 2,
+      min_uptime: 4000,
+      minUptime: 4000,
+      // Backoff throttles late-onset crash loops; it resets once the app runs
+      // stably again.
+      exp_backoff_restart_delay: 100,
+      restartBackoffMs: 100,
+    };
+  }
+
+  private static resolveProcessCwd(
+    processConfig: Process,
+    configDir: string,
+  ): string {
+    if (!processConfig.cwd) return configDir;
+
+    const resolved = path.isAbsolute(processConfig.cwd)
+      ? processConfig.cwd
+      : path.join(configDir, processConfig.cwd);
+
+    if (!existsSync(resolved)) {
+      renderer.log.warn(
+        `cwd path does not exist for ${processConfig.name as string}: ${resolved} (skipping)`,
+      );
+
+      return configDir;
+    }
+
+    return resolved;
+  }
+
+  private static startPm2Process(appConfig: Pm2StartOptions): Promise<void> {
+    return this.pm2Action("start", appConfig);
+  }
+
+  private static async pm2Action(
+    method: string,
+    arg?: Pm2StartOptions | string,
+    retryCount = 0,
+  ): Promise<any> {
+    renderer.log.debug(`Running PM2 API action: ${method}`);
+
+    try {
+      await this.pm2Connect();
+
+      return await this.pm2ActionResult(method, arg);
+    } catch (error) {
+      const message = String(error);
+
+      const isStateCorruption =
+        message.includes("Process") &&
+        message.includes("not found") &&
+        message.includes("Cannot read properties of undefined");
+
+      const isVersionMismatch = message.includes(
+        "In-memory PM2 is out-of-date",
+      );
+
+      if ((isStateCorruption || isVersionMismatch) && retryCount === 0) {
+        renderer.log.warn(
+          isVersionMismatch
+            ? `PM2 daemon/API version mismatch detected, restarting the PM2 daemon...`
+            : `PM2 state corruption detected, restarting the PM2 daemon...`,
+        );
+
+        try {
+          await this.recoverPm2Daemon();
+          return await this.pm2Action(method, arg, 1);
+        } catch (resetError) {
+          renderer.log.warn(`PM2 recovery failed: ${resetError}`);
+        }
+      }
+
+      throw error;
+    } finally {
+      this.pm2Disconnect();
+    }
+  }
+
+  private static pm2Connect(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      pm2.connect((error) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+  }
+
+  private static pm2Disconnect(): void {
+    try {
+      pm2.disconnect();
+    } catch {
+      // Preserve the action's real result; disconnect failures are cleanup.
+    }
+  }
+
+  private static pm2ActionResult(
+    method: string,
+    arg?: Pm2StartOptions | string,
+  ): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(
+          new Error(
+            `PM2 API action timed out after ${PM2_API_TIMEOUT_MS}ms: ${method}`,
+          ),
+        );
+      }, PM2_API_TIMEOUT_MS);
+
+      const callback: Pm2Callback = (error, result) => {
+        clearTimeout(timeout);
+
+        if (error) reject(error);
+        else resolve(result ?? []);
+      };
+
+      switch (method) {
+        case "start":
+          pm2.start(arg as Pm2StartOptions | string, callback);
+          break;
+        case "stop":
+          pm2.stop(String(arg), callback);
+          break;
+        case "restart":
+          pm2.restart(String(arg), callback);
+          break;
+        case "delete":
+          pm2.delete(String(arg), callback);
+          break;
+        case "list":
+          pm2.list(callback as Pm2Callback<Pm2ApiProcess[]>);
+          break;
+        case "dump":
+          pm2.dump(callback);
+          break;
+        case "resurrect":
+          pm2.resurrect(callback);
+          break;
+        case "killDaemon":
+          pm2.killDaemon(callback);
+          break;
+        default:
+          clearTimeout(timeout);
+          reject(new Error(`Unsupported PM2 API action: ${method}`));
+      }
+    });
+  }
+
+  private static toProcessInfo(proc: Pm2ApiProcess): ProcessInfo {
+    return {
+      name: proc.name || "",
+      pid: proc.pid || 0,
+      status: proc.pm2_env?.status || "unknown",
+      uptime: proc.pm2_env?.pm_uptime || 0,
+      memory: proc.monit?.memory || 0,
+      cpu: proc.monit?.cpu || 0,
+      restarts: proc.pm2_env?.restart_time || 0,
+      cwd: proc.pm2_env?.pm_cwd,
+      script: proc.pm2_env?.pm_exec_path,
+    };
   }
 
   /**
    * Kill an entire process tree rooted at the given PID.
-   * Uses `kill -TERM -<pgid>` to signal the process group first,
-   * then falls back to killing individual child PIDs via `pgrep -P`.
+   * Uses `kill -TERM -<pgid>` to signal the process group first because
+   * Zapper-supervised wrappers are started as detached process-group leaders.
    */
   private static killProcessTree(pid: number): void {
     if (!pid || pid <= 1) return;
@@ -200,21 +396,6 @@ export class Pm2Manager {
         );
       }
 
-      // Also explicitly find and kill all descendant processes
-      try {
-        const childPids = execSync(`pgrep -P ${pid}`, { encoding: "utf-8" })
-          .trim()
-          .split("\n")
-          .filter(Boolean)
-          .map(Number);
-
-        for (const childPid of childPids) {
-          this.killProcessTree(childPid);
-        }
-      } catch {
-        // pgrep returns non-zero when no children found – that's fine
-      }
-
       // Finally kill the root process itself
       try {
         globalThis.process.kill(pid, "SIGTERM");
@@ -228,36 +409,10 @@ export class Pm2Manager {
 
   /**
    * Kill the process tree of an orphan Zapper wrapper that PM2 no longer
-   * manages (e.g. survivors of a PM2 daemon crash found by the system audit).
+   * manages.
    */
   static killDetachedProcessTree(pid: number): void {
     this.killProcessTree(pid);
-  }
-
-  /**
-   * Get the PID of a PM2-managed process and kill its entire tree
-   * before removing it from PM2.
-   */
-  private static async killManagedProcessTree(
-    prefixedName: string,
-  ): Promise<void> {
-    try {
-      const info = await this.getProcessInfo(prefixedName);
-
-      if (info?.pid && info.pid > 0) {
-        renderer.log.debug(
-          `Killing process tree for ${prefixedName} (PID ${info.pid})`,
-        );
-
-        this.killProcessTree(info.pid);
-        // Give processes a moment to exit cleanly
-        await new Promise((r) => setTimeout(r, 300));
-      }
-    } catch (error) {
-      renderer.log.debug(
-        `Could not kill process tree for ${prefixedName}: ${error}`,
-      );
-    }
   }
 
   static async stopProcess(
@@ -270,8 +425,7 @@ export class Pm2Manager {
       ? buildServiceName(projectName, name, instanceId)
       : name;
 
-    await this.killManagedProcessTree(prefixedName);
-    await this.runPm2Command(["stop", prefixedName]);
+    await this.pm2Action("stop", prefixedName);
 
     if (projectName) {
       await this.cleanupLogs(projectName, name, configDir, instanceId);
@@ -291,8 +445,7 @@ export class Pm2Manager {
     const info = await this.getProcessInfo(prefixedName);
 
     if (info && this.hasMissingWrapperScript(info)) {
-      await this.killManagedProcessTree(prefixedName);
-      await this.runPm2Command(["delete", prefixedName]);
+      await this.pm2Action("delete", prefixedName);
 
       throw new Error(
         `Cannot restart ${prefixedName}: its wrapper script no longer exists (${info.script}). ` +
@@ -300,15 +453,12 @@ export class Pm2Manager {
       );
     }
 
-    await this.killManagedProcessTree(prefixedName);
-    await this.runPm2Command(["restart", prefixedName]);
+    await this.pm2Action("restart", prefixedName);
   }
 
   /**
-   * A registration whose .zap wrapper script is gone can only crash-loop
-   * (bash exits 127 instantly, PM2 restarts it forever — its max_restarts cap
-   * does not apply to apps that start failing later in life). Such an app
-   * must be deregistered, never started or restarted.
+   * A registration whose .zap wrapper script is gone can only crash-loop.
+   * Such an app must be deregistered, never started or restarted.
    */
   static hasMissingWrapperScript(info: Pick<ProcessInfo, "script">): boolean {
     return Boolean(
@@ -319,8 +469,8 @@ export class Pm2Manager {
   }
 
   /**
-   * Deregister every PM2 app whose Zapper wrapper script no longer exists on
-   * disk. Returns the names that were removed.
+   * Deregister every supervised app whose Zapper wrapper script no longer
+   * exists on disk. Returns the names that were removed.
    */
   static async deregisterMissingScriptApps(): Promise<string[]> {
     const processes = await this.listProcesses();
@@ -333,10 +483,8 @@ export class Pm2Manager {
         `Deregistering ${proc.name}: wrapper script no longer exists (${proc.script})`,
       );
 
-      await this.killManagedProcessTree(proc.name);
-
       try {
-        await this.runPm2Command(["delete", proc.name], 1);
+        await this.pm2Action("delete", proc.name, 1);
         removed.push(proc.name);
       } catch (error) {
         renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
@@ -347,7 +495,7 @@ export class Pm2Manager {
   }
 
   /**
-   * Stop and deregister every PM2 app whose wrapper script lives under the
+   * Stop and deregister every supervised app whose wrapper script lives under the
    * given .zap directory — all stacks and instances of that local copy, not
    * just the current one. Must run before the directory is deleted, so no
    * registration is left pointing at a missing script (which would
@@ -363,10 +511,8 @@ export class Pm2Manager {
         continue;
       }
 
-      await this.killManagedProcessTree(proc.name);
-
       try {
-        await this.runPm2Command(["delete", proc.name]);
+        await this.pm2Action("delete", proc.name);
         removed.push(proc.name);
       } catch (error) {
         renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
@@ -386,8 +532,7 @@ export class Pm2Manager {
       ? buildServiceName(projectName, name, instanceId)
       : name;
 
-    await this.killManagedProcessTree(prefixedName);
-    await this.runPm2Command(["delete", prefixedName]);
+    await this.pm2Action("delete", prefixedName);
 
     if (projectName) {
       await this.cleanupLogs(projectName, name, configDir, instanceId);
@@ -422,8 +567,7 @@ export class Pm2Manager {
       );
 
       for (const proc of matchingProcesses) {
-        await this.killManagedProcessTree(proc.name);
-        await this.runPm2Command(["delete", proc.name]);
+        await this.pm2Action("delete", proc.name);
       }
 
       if (projectName) {
@@ -510,17 +654,6 @@ export class Pm2Manager {
     }
   }
 
-  private static sanitizeJsonOutput(output: string): string {
-    // PM2 occasionally prepends warnings to stdout; strip until first JSON token
-    const firstArray = output.indexOf("[");
-    const firstObject = output.indexOf("{");
-    let idx = -1;
-    if (firstArray !== -1 && firstObject !== -1)
-      idx = Math.min(firstArray, firstObject);
-    else idx = Math.max(firstArray, firstObject);
-    return idx > 0 ? output.slice(idx) : output;
-  }
-
   static async showLogs(
     name: string,
     projectName?: string,
@@ -557,21 +690,28 @@ export class Pm2Manager {
         return;
       }
 
-      throw new Error(`PM2 process not running: ${name} (${prefixedName})`);
+      throw new Error(`Process not running: ${name} (${prefixedName})`);
     }
 
     renderer.log.debug(
       `Showing logs for ${prefixedName}${follow ? " (following)" : ""}`,
     );
 
-    await this.showLogsWithPm2(prefixedName, follow);
+    if (projectName) {
+      await this.showLogsFromFile(
+        this.managedLogFilePath(projectName, name, configDir, instanceId),
+        follow,
+      );
+
+      return;
+    }
+
+    throw new Error(`Process log path unavailable: ${prefixedName}`);
   }
 
   static async getProcessInfo(name: string): Promise<ProcessInfo | null> {
     try {
-      const output = await this.runPm2Command(["jlist", "--silent"]);
-      const sanitized = this.sanitizeJsonOutput(output);
-      const processes = JSON.parse(sanitized) as ProcessInfo[];
+      const processes = await this.listProcesses();
 
       const process = processes.find((p) => p.name === name);
 
@@ -583,31 +723,8 @@ export class Pm2Manager {
 
   static async listProcesses(): Promise<ProcessInfo[]> {
     try {
-      const output = await this.runPm2Command(["jlist", "--silent"]);
-
-      const rawList = JSON.parse(this.sanitizeJsonOutput(output)) as Array<
-        Record<string, unknown>
-      >;
-
-      const processes: ProcessInfo[] = rawList.map((proc) => ({
-        name: String(proc["name"]),
-        pid: Number(proc["pid"]),
-        status: String((proc["pm2_env"] as Record<string, unknown>)["status"]),
-        uptime:
-          Date.now() -
-          Number((proc["pm2_env"] as Record<string, unknown>)["pm_uptime"]),
-        memory: Number((proc["monit"] as Record<string, unknown>)["memory"]),
-        cpu: Number((proc["monit"] as Record<string, unknown>)["cpu"]),
-        restarts: Number(
-          (proc["pm2_env"] as Record<string, unknown>)["restart_time"],
-        ),
-        cwd: String(
-          (proc["pm2_env"] as Record<string, unknown>)["pm_cwd"] || "",
-        ),
-        script: String(
-          (proc["pm2_env"] as Record<string, unknown>)["pm_exec_path"] || "",
-        ),
-      }));
+      const rawList = (await this.pm2Action("list")) as Pm2ApiProcess[];
+      const processes = rawList.map((proc) => this.toProcessInfo(proc));
 
       return processes;
     } catch {
@@ -704,32 +821,6 @@ export class Pm2Manager {
     }
   }
 
-  private static async showLogsWithPm2(
-    processName: string,
-    follow: boolean,
-  ): Promise<void> {
-    const args = ["logs", processName, "--lines", "50", "--raw"];
-    if (!follow) args.push("--nostream");
-
-    return new Promise((resolve, reject) => {
-      const pm2 = this.resolvePm2Command(args);
-      renderer.log.debug(`Running: ${pm2.label}`);
-
-      const child = spawn(pm2.command, pm2.argsPrefix, {
-        stdio: "inherit",
-      });
-
-      child.on("close", (code) => {
-        if (code === 0) resolve();
-        else reject(new Error(`PM2 logs failed with code ${code}`));
-      });
-
-      child.on("error", (err) => {
-        reject(new Error(`Failed to run PM2 logs: ${err.message}`));
-      });
-    });
-  }
-
   private static async runCommand(
     command: string,
     args: string[],
@@ -757,121 +848,18 @@ export class Pm2Manager {
     });
   }
 
-  private static runPm2Command(
-    args: string[],
-    retryCount = 0,
-  ): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const pm2 = this.resolvePm2Command(args);
-      renderer.log.debug(`Running: ${pm2.label}`);
-
-      const child = spawn(pm2.command, pm2.argsPrefix, {
-        stdio: ["pipe", "pipe", "pipe"],
-      });
-
-      let output = "";
-      let error = "";
-
-      child.stdout.on("data", (data) => {
-        output += data.toString();
-      });
-
-      child.stderr.on("data", (data) => {
-        error += data.toString();
-      });
-
-      child.on("close", async (code) => {
-        if (code === 0) {
-          resolve(output.trim());
-        } else {
-          // Check if this is a PM2 state corruption issue
-          const isStateCorruption =
-            error.includes("Process") &&
-            error.includes("not found") &&
-            error.includes("Cannot read properties of undefined");
-
-          const isVersionMismatch =
-            output.includes("In-memory PM2 is out-of-date") ||
-            error.includes("In-memory PM2 is out-of-date");
-
-          // Only retry once on state corruption or version mismatch
-          if ((isStateCorruption || isVersionMismatch) && retryCount === 0) {
-            renderer.log.warn(
-              isVersionMismatch
-                ? `PM2 daemon/CLI version mismatch detected, restarting the PM2 daemon...`
-                : `PM2 state corruption detected, restarting the PM2 daemon...`,
-            );
-
-            try {
-              await this.recoverPm2Daemon();
-              // Retry the original command
-              const result = await this.runPm2Command(args, 1);
-              resolve(result);
-              return;
-            } catch (resetError) {
-              renderer.log.warn(`PM2 recovery failed: ${resetError}`);
-              // Fall through to original error
-            }
-          }
-
-          reject(
-            new Error(
-              `PM2 command failed (args: ${args.join(" ")}, code: ${code})\nstdout: ${output}\nstderr: ${error}`,
-            ),
-          );
-        }
-      });
-
-      child.on("error", (err) => {
-        reject(new Error(`Failed to run PM2 command: ${err.message}`));
-      });
-    });
-  }
-
   /**
-   * Restart the PM2 daemon without losing anyone's processes.
-   *
-   * A bare `pm2 kill` takes down every project's apps at once, so a daemon
-   * restart must restore what was running: snapshot the process table first,
-   * kill the daemon, terminate any process trees that survived the kill
-   * (they would otherwise linger as orphans holding their ports, blocking
-   * every later start of that service), resurrect the snapshot, and drop any
-   * registration whose wrapper script is gone so a stale app cannot come
-   * back crash-looping.
+   * Restart the PM2 daemon and sweep wrapper processes that survived.
    */
-  private static async recoverPm2Daemon(): Promise<void> {
-    // Snapshot only when there is something to restore: with an empty table
-    // `pm2 save` leaves the previous dump file untouched (pm2 7's CLI drops
-    // the --force flag), and resurrecting that stale dump would start
-    // processes that were not running.
+  static async recoverPm2Daemon(): Promise<void> {
     const hadProcesses = (await this.listProcesses()).length > 0;
-    let saved = false;
 
-    if (hadProcesses) {
-      try {
-        await this.runPm2Command(["save"], 1);
-        saved = true;
-      } catch (error) {
-        renderer.log.warn(
-          `Could not snapshot the PM2 process table; processes will not be auto-restored after the daemon restart: ${error}`,
-        );
-      }
-    }
-
-    await this.runPm2Command(["kill"], 1);
+    await this.pm2Action("killDaemon", undefined, 1);
     await new Promise((r) => setTimeout(r, 500));
 
     await this.killWrapperSurvivors();
 
-    if (saved) {
-      try {
-        await this.runPm2Command(["resurrect"], 1);
-      } catch (error) {
-        renderer.log.warn(
-          `PM2 resurrect failed after daemon restart: ${error}`,
-        );
-      }
-
+    if (hadProcesses) {
       await this.deregisterMissingScriptApps();
     }
   }
@@ -887,7 +875,7 @@ export class Pm2Manager {
 
     for (const survivor of survivors) {
       renderer.log.warn(
-        `Killing process tree that survived the PM2 daemon kill (PID ${survivor.pid}, ${survivor.scriptPath})`,
+        `Killing process tree that survived the PM2 daemon restart (PID ${survivor.pid}, ${survivor.scriptPath})`,
       );
 
       this.killProcessTree(survivor.pid);
@@ -914,15 +902,11 @@ export class Pm2Manager {
 
     if (remaining.length > 0) {
       renderer.log.warn(
-        `Processes survived the PM2 daemon kill and could not be terminated (PIDs ${remaining
+        `Processes survived the PM2 daemon restart and could not be terminated (PIDs ${remaining
           .map((p) => p.pid)
           .join(", ")}); they may still hold their ports`,
       );
     }
-  }
-
-  private static resolvePm2Command(args: string[]): RuntimeCommand {
-    return resolvePm2Runtime(args);
   }
 
   private static shellQuote(value: string): string {

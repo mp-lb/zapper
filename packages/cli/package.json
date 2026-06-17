@@ -49,17 +49,14 @@
     "@types/commander": "^2.12.5",
     "@types/dotenv": "^8.2.3",
     "@types/mustache": "^4.2.5",
+    "dotenv": "^17.2.1",
     "tsx": "4.20.6",
     "typescript": "6.0.3",
     "vitest": "4.1.5"
   },
   "dependencies": {
+    "@mp-lb/zapper-sdk": "workspace:*",
     "commander": "^14.0.0",
-    "dotenv": "^17.2.1",
-    "dotenv-expand": "^12.0.3",
-    "enquirer": "^2.4.1",
-    "mustache": "^4.2.0",
-    "pm2": "^7.0.1",
     "yaml": "^2.8.1",
     "zod": "^4.1.5"
   }

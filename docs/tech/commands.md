@@ -18,9 +18,8 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Command Output](output.md) for the JSON/result contract.
 
 `zap logs` delegates to the underlying runtime log command for running services.
-Native service logs use PM2's raw mode so output is not prefixed with PM2
-process metadata. If a native PM2 service is stopped, Zapper can still show the
-saved last-run log.
+Native service logs are shown without supervisor metadata prefixes. If a native
+service is stopped, Zapper can still show the saved last-run log.
 
 ## Global Options
 
@@ -92,7 +91,7 @@ Stop all processes or specific processes
 
 ## `zap kill [project]`
 
-Kill all PM2 processes and Docker containers across all instances for a project
+Kill all native processes and Docker containers across all instances for a project
 
 | Option | Description |
 | --- | --- |
@@ -120,7 +119,7 @@ Watch Docker service paths and restart or rebuild on changes
 
 **Aliases:** `ps`
 
-Show status (PM2 + Docker), optionally for specific services
+Show status (native processes + Docker), optionally for specific services
 
 | Option | Description |
 | --- | --- |
@@ -484,7 +483,7 @@ Prune stale registry entries and orphaned resources
 
 ### `zap global kill [project]`
 
-Kill all PM2 + Docker resources for a project
+Kill all native process + Docker resources for a project
 
 | Option | Description |
 | --- | --- |
@@ -547,7 +546,7 @@ Audit and clean up orphaned system resources
 
 #### `zap system resources audit`
 
-Audit orphaned PM2 processes and Docker containers
+Audit orphaned native processes and Docker containers
 
 | Option | Description |
 | --- | --- |

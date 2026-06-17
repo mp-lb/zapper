@@ -197,7 +197,7 @@ export type CommandResult =
         pm2: string[];
         containers: string[];
       }>;
-      // Processes running Zapper work but unknown to PM2 (daemon-kill
+      // Processes running Zapper work but unknown to the supervisor (daemon-kill
       // survivors): wrapper processes or listeners on zap-assigned ports.
       orphans: Array<{
         name: string;

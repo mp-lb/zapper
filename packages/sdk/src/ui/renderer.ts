@@ -555,11 +555,11 @@ export const renderer = {
       containerCount: number;
     }): string {
       return [
-        `This will permanently delete all PM2 processes and Docker containers across ALL instances for project "${data.projectName}".`,
+        `This will permanently delete all native processes and Docker containers across ALL instances for project "${data.projectName}".`,
         "",
         keyValueLines([
           ["Prefix", `${data.prefix}.`],
-          ["PM2 processes", data.pm2Count],
+          ["Native processes", data.pm2Count],
           ["Containers", data.containerCount],
         ]),
       ].join("\n");
@@ -572,13 +572,13 @@ export const renderer = {
       containerCount: number;
     }): string {
       return [
-        "This will permanently delete ALL PM2 processes and Docker containers for ALL zap projects.",
+        "This will permanently delete ALL native processes and Docker containers for ALL zap projects.",
         "",
         `Projects (${data.projectCount}):`,
         ...data.projectNames.map((name) => `  - ${name}`),
         "",
         keyValueLines([
-          ["PM2 processes", data.pm2Count],
+          ["Native processes", data.pm2Count],
           ["Containers", data.containerCount],
         ]),
       ].join("\n");
@@ -595,7 +595,7 @@ export const renderer = {
     },
 
     killNoResourcesText(projectName: string, prefix: string): string {
-      return `No PM2 processes or Docker containers found across any instance for project ${projectName} (${prefix}.).`;
+      return `No native processes or Docker containers found across any instance for project ${projectName} (${prefix}.).`;
     },
 
     killCompletedText(data: {
@@ -604,7 +604,7 @@ export const renderer = {
       pm2Count: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} PM2 process(es) and ${data.containerCount} container(s) across all instances for project ${data.projectName} (${data.prefix}.).`;
+      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) across all instances for project ${data.projectName} (${data.prefix}.).`;
     },
 
     noProjectsFoundText(): string {
@@ -638,7 +638,7 @@ export const renderer = {
         }
 
         for (const process of project.pm2) {
-          rows.push(["PM2", process]);
+          rows.push(["Native", process]);
         }
 
         for (const container of project.containers) {
@@ -699,7 +699,7 @@ export const renderer = {
       pm2Count: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} PM2 process(es) and ${data.containerCount} container(s) across ${data.projectCount} project(s).`;
+      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) across ${data.projectCount} project(s).`;
     },
 
     globalKillProjectCompletedText(data: {
@@ -708,7 +708,7 @@ export const renderer = {
       pm2Count: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} PM2 process(es) and ${data.containerCount} container(s) for project ${data.projectName} (${data.prefix}.).`;
+      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) for project ${data.projectName} (${data.prefix}.).`;
     },
 
     globalPrunePlanText(data: {

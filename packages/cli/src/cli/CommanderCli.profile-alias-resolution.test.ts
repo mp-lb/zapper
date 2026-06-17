@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CommanderCli } from "./CommanderCli";
-import { Zapper } from "../core/Zapper";
-import { Context } from "../types/index";
+import { type Context, Zapper } from "@mp-lb/zapper-sdk";
 
 describe("CommanderCli - Profile Alias Resolution", () => {
   let cli: CommanderCli;

@@ -6,10 +6,10 @@ export interface WrapperOsProcess {
   scriptPath: string;
 }
 
-// Matches a Zapper PM2 wrapper invocation: `<...>/bash <configDir>/.zap/<project>.<service>.<timestamp>.sh`.
+// Matches a Zapper wrapper invocation: `<...>/bash <configDir>/.zap/<project>.<service>.<timestamp>.sh`.
 // The wrapper script path is the only reliable marker that an OS process was
-// started by Zapper, which lets us find survivors that PM2 no longer manages
-// (a PM2 daemon crash orphans every managed tree without killing it).
+// started by Zapper, which lets us find survivors that the supervisor no longer
+// manages (a daemon crash can orphan managed trees without killing them).
 const WRAPPER_LINE_PATTERN =
   /^\s*(\d+)\s+\S*bash\s+(\S+\/\.zap\/[^\s/]+\.sh)(?:\s|$)/;
 
@@ -28,7 +28,7 @@ export function parseWrapperProcesses(psOutput: string): WrapperOsProcess[] {
 export const OrphanScanner = {
   /**
    * List OS processes that are running a Zapper `.zap/*.sh` wrapper script,
-   * whether or not PM2 still manages them.
+   * whether or not the supervisor still manages them.
    */
   listWrapperProcesses(): WrapperOsProcess[] {
     try {
@@ -44,10 +44,10 @@ export const OrphanScanner = {
   },
 
   /**
-   * Wrapper processes outside every PM2-managed process tree, reduced to
+   * Wrapper processes outside every supervisor-managed process tree, reduced to
    * tree roots. Ancestry matters twice here: a managed wrapper forks helper
    * subshells that share its command line (so direct PID comparison against
-   * PM2's table flags healthy services), and an orphaned tree's subshells
+   * the supervisor table flags healthy services), and an orphaned tree's subshells
    * must be reported once via their root, not per process.
    */
   findUnmanagedWrapperRoots(managedPids: Set<number>): WrapperOsProcess[] {

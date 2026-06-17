@@ -50,7 +50,7 @@ Stop all processes or specific processes
 
 ## `zap kill [project]`
 
-Kill all PM2 processes and Docker containers across all instances for a project
+Kill all native processes and Docker containers across all instances for a project
 
 | Option | Description |
 | --- | --- |
@@ -78,7 +78,7 @@ Watch Docker service paths and restart or rebuild on changes
 
 **Aliases:** `ps`
 
-Show status (PM2 + Docker), optionally for specific services
+Show status (native processes + Docker), optionally for specific services
 
 | Option | Description |
 | --- | --- |
@@ -432,7 +432,7 @@ Prune stale registry entries and orphaned resources
 
 ### `zap global kill [project]`
 
-Kill all PM2 + Docker resources for a project
+Kill all native process + Docker resources for a project
 
 | Option | Description |
 | --- | --- |
@@ -495,7 +495,7 @@ Audit and clean up orphaned system resources
 
 #### `zap system resources audit`
 
-Audit orphaned PM2 processes and Docker containers
+Audit orphaned native processes and Docker containers
 
 | Option | Description |
 | --- | --- |
@@ -547,4 +547,3 @@ On macOS, the system registry defaults to
 `$XDG_STATE_HOME/zapper/registry.json`, or `~/.local/state/zapper/registry.json`
 when `XDG_STATE_HOME` is unset. Set `ZAPPER_SYSTEM_STATE_HOME` to override the
 directory, or `ZAPPER_DISABLE_SYSTEM_REGISTRY=1` to disable registry writes.
-

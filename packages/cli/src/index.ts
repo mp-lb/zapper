@@ -1,9 +1,12 @@
 #!/usr/bin/env node
 
 import { CommanderCli } from "./cli";
-import { logger, LogLevel } from "./utils/logger";
-import { renderer } from "./ui/renderer";
-import { isPromptCancelledError } from "./errors";
+import {
+  isPromptCancelledError,
+  logger,
+  LogLevel,
+  renderer,
+} from "@mp-lb/zapper-sdk";
 
 declare const process: {
   argv: string[];
