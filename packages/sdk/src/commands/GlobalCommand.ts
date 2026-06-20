@@ -195,7 +195,10 @@ export class GlobalCommand extends CommandHandler {
         };
       }
 
-      const totalNativeProcesses = projects.reduce((sum, p) => sum + p.nativeProcesses.length, 0);
+      const totalNativeProcesses = projects.reduce(
+        (sum, p) => sum + p.nativeProcesses.length,
+        0,
+      );
 
       const totalContainers = projects.reduce(
         (sum, p) => sum + p.containers.length,
@@ -348,7 +351,12 @@ export class GlobalCommand extends CommandHandler {
   }
 
   private async getAllProjects(): Promise<
-    Array<{ name: string; prefix: string; nativeProcesses: string[]; containers: string[] }>
+    Array<{
+      name: string;
+      prefix: string;
+      nativeProcesses: string[];
+      containers: string[];
+    }>
   > {
     const [allNativeProcesses, allContainers] = await Promise.all([
       NativeProcessManager.listProcesses(),
@@ -357,7 +365,12 @@ export class GlobalCommand extends CommandHandler {
 
     const projectMap = new Map<
       string,
-      { name: string; prefix: string; nativeProcesses: string[]; containers: string[] }
+      {
+        name: string;
+        prefix: string;
+        nativeProcesses: string[];
+        containers: string[];
+      }
     >();
 
     // Process native supervisor entries
@@ -398,7 +411,10 @@ export class GlobalCommand extends CommandHandler {
 
     // Sort and dedupe arrays
     for (const project of projectMap.values()) {
-      project.nativeProcesses = Array.from(new Set(project.nativeProcesses)).sort();
+      project.nativeProcesses = Array.from(
+        new Set(project.nativeProcesses),
+      ).sort();
+
       project.containers = Array.from(new Set(project.containers)).sort();
     }
 

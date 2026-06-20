@@ -120,9 +120,17 @@ describe("Wave Execution", () => {
 
       // All three stops should have been called
       expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledTimes(3);
-      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("admin-app");
-      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("scribe");
-      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("mongo");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith(
+        "admin-app",
+      );
+
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith(
+        "scribe",
+      );
+
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith(
+        "mongo",
+      );
 
       // Verify they executed concurrently by checking timestamps are close together
       const ts1 = executionTimestamps.get("stop:admin-app")!;
@@ -150,10 +158,17 @@ describe("Wave Execution", () => {
         },
       );
 
-      mockNativeProcessExecutor.stopProcess.mockImplementation(async (name: string) => {
-        waveTimings.push({ wave: 2, action: `stop:${name}`, time: Date.now() });
-        await new Promise((r) => setTimeout(r, 20));
-      });
+      mockNativeProcessExecutor.stopProcess.mockImplementation(
+        async (name: string) => {
+          waveTimings.push({
+            wave: 2,
+            action: `stop:${name}`,
+            time: Date.now(),
+          });
+
+          await new Promise((r) => setTimeout(r, 20));
+        },
+      );
 
       const plan: ActionPlan = {
         waves: [

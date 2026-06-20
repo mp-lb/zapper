@@ -213,7 +213,9 @@ export class NativeProcessManager {
     return resolved;
   }
 
-  private static startNativeProcess(appConfig: NativeProcessStartOptions): Promise<void> {
+  private static startNativeProcess(
+    appConfig: NativeProcessStartOptions,
+  ): Promise<void> {
     return this.supervisorAction("start", appConfig);
   }
 
@@ -616,6 +618,7 @@ export class NativeProcessManager {
       const rawList = (await this.supervisorAction(
         "list",
       )) as SupervisorProcessRecord[];
+
       const processes = rawList.map((proc) => this.toProcessInfo(proc));
 
       return processes;

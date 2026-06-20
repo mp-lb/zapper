@@ -119,6 +119,7 @@ export class ZapperSupervisorClient {
     mkdirSync(supervisorHome(), { recursive: true });
 
     const logFd = openSync(supervisorLogPath(), "a");
+
     const child = spawn(process.execPath, [daemonEntryPoint()], {
       detached: true,
       env: process.env,

@@ -189,7 +189,10 @@ async function getResourceInventory(
   const alien: ResourceInventoryEntry[] = [];
   const dangling: ResourceInventoryEntry[] = [];
 
-  const classifyServiceResource = (type: "nativeProcess" | "container", name: string) => {
+  const classifyServiceResource = (
+    type: "nativeProcess" | "container",
+    name: string,
+  ) => {
     const parsed = parseServiceName(name);
     if (!parsed || parsed.project !== context.projectName) return;
 

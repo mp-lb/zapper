@@ -25,10 +25,20 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
     mkdirSync(zapDir, { recursive: true });
 
-    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockResolvedValue([]);
-    vi.spyOn(NativeProcessManager as any, "startNativeProcess").mockResolvedValue([]);
+    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockResolvedValue(
+      [],
+    );
 
-    const listProcessesSpy = vi.spyOn(NativeProcessManager as any, "listProcesses");
+    vi.spyOn(
+      NativeProcessManager as any,
+      "startNativeProcess",
+    ).mockResolvedValue([]);
+
+    const listProcessesSpy = vi.spyOn(
+      NativeProcessManager as any,
+      "listProcesses",
+    );
+
     listProcessesSpy.mockResolvedValue([]);
   });
 
@@ -128,12 +138,13 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     };
 
     let appConfig: Record<string, unknown> | undefined;
-    vi.spyOn(NativeProcessManager as any, "startNativeProcess").mockImplementation(
-      async (...rawArgs: unknown[]) => {
-        appConfig = rawArgs[0] as Record<string, unknown>;
-        return [];
-      },
-    );
+    vi.spyOn(
+      NativeProcessManager as any,
+      "startNativeProcess",
+    ).mockImplementation(async (...rawArgs: unknown[]) => {
+      appConfig = rawArgs[0] as Record<string, unknown>;
+      return [];
+    });
 
     await NativeProcessManager.startProcessWithTempEcosystem(
       "test-project",
@@ -168,12 +179,13 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     };
 
     let appConfig: Record<string, unknown> | undefined;
-    vi.spyOn(NativeProcessManager as any, "startNativeProcess").mockImplementation(
-      async (...rawArgs: unknown[]) => {
-        appConfig = rawArgs[0] as Record<string, unknown>;
-        return [];
-      },
-    );
+    vi.spyOn(
+      NativeProcessManager as any,
+      "startNativeProcess",
+    ).mockImplementation(async (...rawArgs: unknown[]) => {
+      appConfig = rawArgs[0] as Record<string, unknown>;
+      return [];
+    });
 
     await NativeProcessManager.startProcessWithTempEcosystem(
       "test-project",
@@ -204,7 +216,9 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     writeFileSync(ownLog, "own\n");
     writeFileSync(otherLog, "other\n");
 
-    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockResolvedValue([]);
+    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockResolvedValue(
+      [],
+    );
 
     await NativeProcessManager.deleteProcess(
       "test-service",
@@ -498,7 +512,12 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
     const warnSpy = vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
 
-    await NativeProcessManager.showLogs("test-service", "test-project", true, testDir);
+    await NativeProcessManager.showLogs(
+      "test-service",
+      "test-project",
+      true,
+      testDir,
+    );
 
     expect(warnSpy).toHaveBeenCalledWith(
       "test-service is not currently running. Showing logs for the last run from 2026-06-07 14:32:10.",
@@ -516,7 +535,12 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       .spyOn(NativeProcessManager as any, "showLogsFromFile")
       .mockResolvedValue(undefined);
 
-    await NativeProcessManager.showLogs("test-service", "test-project", false, testDir);
+    await NativeProcessManager.showLogs(
+      "test-service",
+      "test-project",
+      false,
+      testDir,
+    );
 
     expect(showLogsFromFileSpy).toHaveBeenCalledWith(
       path.join(zapDir, "logs", "test-project.test-service.log"),
@@ -533,7 +557,12 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       .spyOn(NativeProcessManager as any, "showLogsFromFile")
       .mockResolvedValue(undefined);
 
-    await NativeProcessManager.showLogs("test-service", "test-project", true, testDir);
+    await NativeProcessManager.showLogs(
+      "test-service",
+      "test-project",
+      true,
+      testDir,
+    );
 
     expect(showLogsFromFileSpy).toHaveBeenCalledWith(
       path.join(zapDir, "logs", "test-project.test-service.log"),
@@ -542,11 +571,19 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
   });
 
   it("warns clearly when no last-run log exists", async () => {
-    const showLogsFromFileSpy = vi.spyOn(NativeProcessManager as any, "showLogsFromFile");
+    const showLogsFromFileSpy = vi.spyOn(
+      NativeProcessManager as any,
+      "showLogsFromFile",
+    );
 
     const warnSpy = vi.spyOn(renderer.log, "warn").mockImplementation(() => {});
 
-    await NativeProcessManager.showLogs("test-service", "test-project", true, testDir);
+    await NativeProcessManager.showLogs(
+      "test-service",
+      "test-project",
+      true,
+      testDir,
+    );
 
     expect(warnSpy).toHaveBeenCalledWith(
       "No log file found for test-service. The service may never have started.",
@@ -592,12 +629,13 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
   it("throttles late-onset crash loops with exponential backoff in the ecosystem", async () => {
     let appConfig: Record<string, unknown> | undefined;
 
-    vi.spyOn(NativeProcessManager as any, "startNativeProcess").mockImplementation(
-      async (...rawArgs: unknown[]) => {
-        appConfig = rawArgs[0] as Record<string, unknown>;
-        return [];
-      },
-    );
+    vi.spyOn(
+      NativeProcessManager as any,
+      "startNativeProcess",
+    ).mockImplementation(async (...rawArgs: unknown[]) => {
+      appConfig = rawArgs[0] as Record<string, unknown>;
+      return [];
+    });
 
     vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([]);
 
@@ -618,9 +656,9 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
     const liveScript = path.join(zapDir, "proj.svc.111.sh");
     writeFileSync(liveScript, "#!/bin/bash\n");
 
-    expect(NativeProcessManager.hasMissingWrapperScript({ script: liveScript })).toBe(
-      false,
-    );
+    expect(
+      NativeProcessManager.hasMissingWrapperScript({ script: liveScript }),
+    ).toBe(false);
 
     expect(
       NativeProcessManager.hasMissingWrapperScript({
@@ -630,10 +668,14 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
 
     // Non-Zapper scripts are never treated as wrapper registrations
     expect(
-      NativeProcessManager.hasMissingWrapperScript({ script: "/gone/dir/app.js" }),
+      NativeProcessManager.hasMissingWrapperScript({
+        script: "/gone/dir/app.js",
+      }),
     ).toBe(false);
 
-    expect(NativeProcessManager.hasMissingWrapperScript({ script: "" })).toBe(false);
+    expect(NativeProcessManager.hasMissingWrapperScript({ script: "" })).toBe(
+      false,
+    );
   });
 
   it("deregisters instead of restarting when the wrapper script is gone", async () => {
@@ -652,7 +694,10 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
       NativeProcessManager.restartProcess("api", "proj", "abc123"),
     ).rejects.toThrow(/wrapper script no longer exists/);
 
-    expect(supervisorActionSpy).toHaveBeenCalledWith("delete", "zap.proj.abc123.api");
+    expect(supervisorActionSpy).toHaveBeenCalledWith(
+      "delete",
+      "zap.proj.abc123.api",
+    );
 
     expect(supervisorActionSpy).not.toHaveBeenCalledWith(
       "restart",
@@ -674,7 +719,10 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
 
     await NativeProcessManager.restartProcess("api", "proj", "abc123");
 
-    expect(supervisorActionSpy).toHaveBeenCalledWith("restart", "zap.proj.abc123.api");
+    expect(supervisorActionSpy).toHaveBeenCalledWith(
+      "restart",
+      "zap.proj.abc123.api",
+    );
   });
 
   it("deregisters all apps whose wrapper scripts are missing", async () => {
@@ -731,10 +779,14 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
 
     vi.spyOn(NativeProcessManager, "getProcessInfo").mockResolvedValue(null);
 
-    const removed = await NativeProcessManager.deregisterAppsUnderZapDir(zapDir);
+    const removed =
+      await NativeProcessManager.deregisterAppsUnderZapDir(zapDir);
 
     expect(removed).toEqual(["zap.proj.abc123.api"]);
-    expect(supervisorActionSpy).toHaveBeenCalledWith("delete", "zap.proj.abc123.api");
+    expect(supervisorActionSpy).toHaveBeenCalledWith(
+      "delete",
+      "zap.proj.abc123.api",
+    );
 
     expect(supervisorActionSpy).not.toHaveBeenCalledWith(
       "delete",
@@ -771,25 +823,33 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
     expect(calls).toEqual(["killDaemon"]);
     expect(scannerSpy).toHaveBeenCalled();
     expect(sweepSpy).toHaveBeenCalled();
-    expect(supervisorActionSpy).toHaveBeenCalledWith("killDaemon", undefined, 1);
+    expect(supervisorActionSpy).toHaveBeenCalledWith(
+      "killDaemon",
+      undefined,
+      1,
+    );
   });
 
   it("skips stale-app sweep when the table was empty before daemon restart", async () => {
     const calls: string[] = [];
 
-    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockImplementation(
-      async (...callArgs: unknown[]) => {
-        calls.push(callArgs[0] as string);
-        return [];
-      },
-    );
+    vi.spyOn(
+      NativeProcessManager as any,
+      "supervisorAction",
+    ).mockImplementation(async (...callArgs: unknown[]) => {
+      calls.push(callArgs[0] as string);
+      return [];
+    });
 
     vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([]);
 
     const { OrphanScanner } = await import("../../system/OrphanScanner");
     vi.spyOn(OrphanScanner, "listWrapperProcesses").mockReturnValue([]);
 
-    const sweepSpy = vi.spyOn(NativeProcessManager, "deregisterMissingScriptApps");
+    const sweepSpy = vi.spyOn(
+      NativeProcessManager,
+      "deregisterMissingScriptApps",
+    );
 
     await (NativeProcessManager as any).recoverSupervisorDaemon();
 
@@ -800,12 +860,13 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
   it("never resurrects a stale dump when the table was empty before the kill", async () => {
     const calls: string[] = [];
 
-    vi.spyOn(NativeProcessManager as any, "supervisorAction").mockImplementation(
-      async (...callArgs: unknown[]) => {
-        calls.push(callArgs[0] as string);
-        return [];
-      },
-    );
+    vi.spyOn(
+      NativeProcessManager as any,
+      "supervisorAction",
+    ).mockImplementation(async (...callArgs: unknown[]) => {
+      calls.push(callArgs[0] as string);
+      return [];
+    });
 
     vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([]);
 

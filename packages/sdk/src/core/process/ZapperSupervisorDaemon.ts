@@ -98,6 +98,7 @@ class ZapperSupervisorDaemon {
 
     socket.on("data", (chunk) => {
       body += chunk.toString();
+
       if (body.includes("\n")) {
         body = body.slice(0, body.indexOf("\n"));
         void handleBody();

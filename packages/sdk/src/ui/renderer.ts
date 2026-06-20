@@ -626,7 +626,9 @@ export const renderer = {
         const rows: Array<[string, string]> = [];
 
         if (allProjects) {
-          const totalResources = project.nativeProcesses.length + project.containers.length;
+          const totalResources =
+            project.nativeProcesses.length + project.containers.length;
+
           projectSections.push(
             renderer.heading.text(
               project.name,
@@ -645,7 +647,10 @@ export const renderer = {
           rows.push(["DOCKER", container]);
         }
 
-        if (project.nativeProcesses.length === 0 && project.containers.length === 0) {
+        if (
+          project.nativeProcesses.length === 0 &&
+          project.containers.length === 0
+        ) {
           projectSections.push("");
           projectSections.push(dim("No resources found"));
         } else {

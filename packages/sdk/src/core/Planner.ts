@@ -173,7 +173,9 @@ export class Planner {
     }
 
     const nativeProcessList =
-      selectedProcesses.length > 0 ? await NativeProcessManager.listProcesses() : [];
+      selectedProcesses.length > 0
+        ? await NativeProcessManager.listProcesses()
+        : [];
 
     const onlineNativeProcesses = new Set(
       nativeProcessList
@@ -181,16 +183,22 @@ export class Planner {
         .map((p) => p.name as string),
     );
 
-    const existingNativeProcesses = new Set(nativeProcessList.map((p) => p.name as string));
+    const existingNativeProcesses = new Set(
+      nativeProcessList.map((p) => p.name as string),
+    );
 
     const instanceId = (this.config as ZapperConfig & { instanceId?: string })
       .instanceId;
 
     const isNativeProcessOnline = (name: string) =>
-      onlineNativeProcesses.has(buildServiceName(projectName, name, instanceId));
+      onlineNativeProcesses.has(
+        buildServiceName(projectName, name, instanceId),
+      );
 
     const hasNativeProcess = (name: string) =>
-      existingNativeProcesses.has(buildServiceName(projectName, name, instanceId));
+      existingNativeProcesses.has(
+        buildServiceName(projectName, name, instanceId),
+      );
 
     const shouldListContainers =
       selectedContainers.length > 0 && !(op === "start" && forceStart);
@@ -240,7 +248,8 @@ export class Planner {
     const servicesToStop = new Set<string>();
 
     for (const p of selectedProcesses) {
-      if (hasNativeProcess(p.name as string)) servicesToStop.add(p.name as string);
+      if (hasNativeProcess(p.name as string))
+        servicesToStop.add(p.name as string);
     }
 
     for (const [name] of selectedContainers) {

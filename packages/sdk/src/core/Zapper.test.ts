@@ -653,7 +653,9 @@ native:
 
     it("discovers native processes and containers by project prefix", async () => {
       (
-        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<
+          typeof vi.fn
+        >
       ).mockResolvedValue([
         {
           name: "zap.test-project.api",
@@ -710,7 +712,10 @@ native:
       expect(targets).toEqual({
         projectName: "test-project",
         prefix: "zap.test-project",
-        nativeProcesses: ["zap.test-project.api", "zap.test-project.dev.worker"],
+        nativeProcesses: [
+          "zap.test-project.api",
+          "zap.test-project.dev.worker",
+        ],
         containers: ["zap.test-project.redis"],
       });
     });
@@ -756,7 +761,9 @@ native:
       const unloadedZapper = new Zapper();
 
       (
-        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<
+          typeof vi.fn
+        >
       ).mockResolvedValue([
         {
           name: "zap.legacy.api",
@@ -821,7 +828,9 @@ native:
         .mockResolvedValue(undefined);
 
       (
-        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<
+          typeof vi.fn
+        >
       ).mockResolvedValue([
         {
           name: "zap.legacy.api",

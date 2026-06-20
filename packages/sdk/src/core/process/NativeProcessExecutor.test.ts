@@ -10,8 +10,16 @@ describe("NativeProcessExecutor", () => {
 
   beforeEach(() => {
     // Mock all NativeProcessManager static methods
-    vi.spyOn(NativeProcessManager, "startProcessWithTempEcosystem").mockResolvedValue();
-    vi.spyOn(NativeProcessManager, "deleteAllMatchingProcesses").mockResolvedValue();
+    vi.spyOn(
+      NativeProcessManager,
+      "startProcessWithTempEcosystem",
+    ).mockResolvedValue();
+
+    vi.spyOn(
+      NativeProcessManager,
+      "deleteAllMatchingProcesses",
+    ).mockResolvedValue();
+
     vi.spyOn(NativeProcessManager, "restartProcess").mockResolvedValue();
     vi.spyOn(NativeProcessManager, "showLogs").mockResolvedValue();
   });
@@ -57,14 +65,18 @@ describe("NativeProcessExecutor", () => {
 
       await executor.startProcess(mockProcess, projectName);
 
-      expect(NativeProcessManager.startProcessWithTempEcosystem).toHaveBeenCalledWith(
+      expect(
+        NativeProcessManager.startProcessWithTempEcosystem,
+      ).toHaveBeenCalledWith(
         projectName,
         mockProcess,
         testConfigDir,
         undefined,
       );
 
-      expect(NativeProcessManager.startProcessWithTempEcosystem).toHaveBeenCalledTimes(1);
+      expect(
+        NativeProcessManager.startProcessWithTempEcosystem,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it("should pass undefined configDir when executor was created without it", async () => {
@@ -79,12 +91,9 @@ describe("NativeProcessExecutor", () => {
 
       await executor.startProcess(mockProcess, projectName);
 
-      expect(NativeProcessManager.startProcessWithTempEcosystem).toHaveBeenCalledWith(
-        projectName,
-        mockProcess,
-        undefined,
-        undefined,
-      );
+      expect(
+        NativeProcessManager.startProcessWithTempEcosystem,
+      ).toHaveBeenCalledWith(projectName, mockProcess, undefined, undefined);
     });
   });
 
@@ -98,14 +107,18 @@ describe("NativeProcessExecutor", () => {
 
       await executor.stopProcess(processName);
 
-      expect(NativeProcessManager.deleteAllMatchingProcesses).toHaveBeenCalledWith(
+      expect(
+        NativeProcessManager.deleteAllMatchingProcesses,
+      ).toHaveBeenCalledWith(
         processName,
         testProjectName,
         testConfigDir,
         undefined,
       );
 
-      expect(NativeProcessManager.deleteAllMatchingProcesses).toHaveBeenCalledTimes(1);
+      expect(
+        NativeProcessManager.deleteAllMatchingProcesses,
+      ).toHaveBeenCalledTimes(1);
     });
 
     it("should pass undefined projectName and configDir when executor was created without them", async () => {
@@ -114,12 +127,9 @@ describe("NativeProcessExecutor", () => {
 
       await executor.stopProcess(processName);
 
-      expect(NativeProcessManager.deleteAllMatchingProcesses).toHaveBeenCalledWith(
-        processName,
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(
+        NativeProcessManager.deleteAllMatchingProcesses,
+      ).toHaveBeenCalledWith(processName, undefined, undefined, undefined);
     });
   });
 

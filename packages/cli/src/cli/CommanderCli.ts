@@ -101,6 +101,7 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
         if (reservedTaskOptions.has(key)) continue;
 
         const nextArg = namedArgs[index + 1];
+
         if (nextArg !== undefined && !nextArg.startsWith("--")) {
           named[key] = nextArg;
           index += 1;

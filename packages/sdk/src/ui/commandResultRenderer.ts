@@ -376,7 +376,10 @@ export function renderCommandResult(
         return;
       }
 
-      if (result.nativeProcesses.length === 0 && result.containers.length === 0) {
+      if (
+        result.nativeProcesses.length === 0 &&
+        result.containers.length === 0
+      ) {
         renderer.log.info(
           renderer.command.killNoResourcesText(
             result.projectName,

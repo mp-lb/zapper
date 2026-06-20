@@ -137,7 +137,10 @@ export async function getStatus(
       context.instanceId,
     );
 
-    const runningProcess = nativeProcessList.find((p) => p.name === expectedNativeProcessName);
+    const runningProcess = nativeProcessList.find(
+      (p) => p.name === expectedNativeProcessName,
+    );
+
     const healthcheck = proc.healthcheck;
 
     let status: Status = "down";

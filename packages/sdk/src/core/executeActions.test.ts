@@ -199,7 +199,9 @@ describe("executeActions", () => {
       await executeActions(mockConfig, "test-project", "/config/dir", plan);
 
       expect(findProcess).toHaveBeenCalledWith(mockConfig, "worker");
-      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("worker");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith(
+        "worker",
+      );
     });
 
     it("should throw error when bare metal process not found", async () => {

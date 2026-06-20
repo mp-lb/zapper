@@ -366,7 +366,12 @@ export async function executeActions(
   const instanceId = (config as ZapperConfig & { instanceId?: string })
     .instanceId;
 
-  const nativeProcesses = new NativeProcessExecutor(projectName, configDir || undefined, instanceId);
+  const nativeProcesses = new NativeProcessExecutor(
+    projectName,
+    configDir || undefined,
+    instanceId,
+  );
+
   const report = emptyServiceExecutionReport();
 
   const emit = (event: ServiceActionEvent) => {

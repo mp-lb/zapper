@@ -183,7 +183,10 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: [
+            "zap.zapper-playground.api",
+            "zap.zapper-playground.worker",
+          ],
           containers: ["zap.zapper-playground.postgres"],
         },
         {
@@ -216,7 +219,10 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: [
+            "zap.zapper-playground.api",
+            "zap.zapper-playground.worker",
+          ],
           containers: ["zap.zapper-playground.postgres"],
         },
         {
@@ -255,7 +261,10 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: [
+            "zap.zapper-playground.api",
+            "zap.zapper-playground.worker",
+          ],
           containers: ["zap.zapper-playground.postgres"],
         },
         {

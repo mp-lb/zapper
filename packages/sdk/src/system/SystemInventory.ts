@@ -31,7 +31,11 @@ export interface SystemProjectStatus {
   error?: string;
 }
 
-export type SystemResourceType = "nativeProcess" | "container" | "volume" | "process";
+export type SystemResourceType =
+  | "nativeProcess"
+  | "container"
+  | "volume"
+  | "process";
 export type SystemResourceClassification =
   | "dangling"
   | "legacy"
@@ -491,7 +495,9 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
 
   const wrapperOrphans = classifyOrphanWrapperProcesses(nativeProcesses);
   resources.push(...wrapperOrphans);
-  resources.push(...classifyOrphanPortListeners(nativeProcesses, wrapperOrphans));
+  resources.push(
+    ...classifyOrphanPortListeners(nativeProcesses, wrapperOrphans),
+  );
 
   for (const container of dockerContainers) {
     const entry = classifyServiceResource("container", container.name, index);
