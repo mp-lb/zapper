@@ -2,7 +2,7 @@ import fs from "fs";
 import { Zapper } from "../core/Zapper";
 import { getServiceList, ServiceListResult } from "../core/getServiceList";
 import { DockerManager } from "../core/docker/DockerManager";
-import { Pm2Manager } from "../core/process/Pm2Manager";
+import { NativeProcessManager } from "../core/process/NativeProcessManager";
 import { parseServiceName } from "../utils/nameBuilder";
 import { loadSystemRegistry, SystemRegistryProject } from "./SystemRegistry";
 import { OrphanScanner } from "./OrphanScanner";
@@ -31,7 +31,7 @@ export interface SystemProjectStatus {
   error?: string;
 }
 
-export type SystemResourceType = "pm2" | "container" | "volume" | "process";
+export type SystemResourceType = "nativeProcess" | "container" | "volume" | "process";
 export type SystemResourceClassification =
   | "dangling"
   | "legacy"
@@ -47,7 +47,7 @@ export interface SystemResourceAuditEntry {
   classification: SystemResourceClassification;
   location: string;
   reason: string;
-  // OS process ID, set for "process" entries (orphans PM2 no longer manages).
+  // OS process ID, set for "process" entries (orphans native process no longer manages).
   pid?: number;
 }
 
@@ -253,7 +253,7 @@ function registryInstanceLocation(
 }
 
 function classifyServiceResource(
-  type: "pm2" | "container",
+  type: "nativeProcess" | "container",
   name: string,
   index: ReturnType<typeof buildRegistryIndex>,
 ): SystemResourceAuditEntry | null {
@@ -379,7 +379,7 @@ function classifyMissingCwdProcess(process: {
   if (!parsed) return null;
 
   return {
-    type: "pm2",
+    type: "nativeProcess",
     name: process.name,
     project: parsed.project,
     instanceId: parsed.instanceId,
@@ -396,11 +396,11 @@ function classifyMissingScriptProcess(process: {
   name: string;
   script?: string;
 }): SystemResourceAuditEntry | null {
-  if (!Pm2Manager.hasMissingWrapperScript(process)) return null;
+  if (!NativeProcessManager.hasMissingWrapperScript(process)) return null;
   const parsed = parseServiceName(process.name);
 
   return {
-    type: "pm2",
+    type: "nativeProcess",
     name: process.name,
     project: parsed?.project,
     instanceId: parsed?.instanceId,
@@ -417,10 +417,10 @@ function classifyMissingScriptProcess(process: {
 // deleted). The supervisor does not know about them, so they are found by
 // scanning OS processes.
 function classifyOrphanWrapperProcesses(
-  pm2Processes: Array<{ pid: number }>,
+  nativeProcesses: Array<{ pid: number }>,
 ): SystemResourceAuditEntry[] {
   const managedPids = new Set(
-    pm2Processes.map((process) => process.pid).filter(Boolean),
+    nativeProcesses.map((process) => process.pid).filter(Boolean),
   );
 
   return OrphanScanner.findUnmanagedWrapperRoots(managedPids)
@@ -441,11 +441,11 @@ function classifyOrphanWrapperProcesses(
 // They block every later start of the owning service with "port already in
 // use" while the supervisor shows it as errored.
 function classifyOrphanPortListeners(
-  pm2Processes: Array<{ pid: number }>,
+  nativeProcesses: Array<{ pid: number }>,
   wrapperOrphans: SystemResourceAuditEntry[],
 ): SystemResourceAuditEntry[] {
   const managedPids = new Set(
-    pm2Processes.map((process) => process.pid).filter(Boolean),
+    nativeProcesses.map((process) => process.pid).filter(Boolean),
   );
 
   const ignorePids = new Set(
@@ -469,10 +469,10 @@ function classifyOrphanPortListeners(
 }
 
 export async function auditSystemResources(): Promise<SystemResourceAuditResult> {
-  const [projects, pm2Processes, dockerContainers, dockerVolumes] =
+  const [projects, nativeProcesses, dockerContainers, dockerVolumes] =
     await Promise.all([
       getSystemProjects(),
-      Pm2Manager.listProcesses(),
+      NativeProcessManager.listProcesses(),
       DockerManager.listContainers(),
       DockerManager.listVolumes(),
     ]);
@@ -480,18 +480,18 @@ export async function auditSystemResources(): Promise<SystemResourceAuditResult>
   const index = buildRegistryIndex(projects);
   const resources: SystemResourceAuditEntry[] = [];
 
-  for (const process of pm2Processes) {
+  for (const process of nativeProcesses) {
     const entry =
       classifyMissingCwdProcess(process) ??
       classifyMissingScriptProcess(process) ??
-      classifyServiceResource("pm2", process.name, index);
+      classifyServiceResource("nativeProcess", process.name, index);
 
     if (entry) resources.push(entry);
   }
 
-  const wrapperOrphans = classifyOrphanWrapperProcesses(pm2Processes);
+  const wrapperOrphans = classifyOrphanWrapperProcesses(nativeProcesses);
   resources.push(...wrapperOrphans);
-  resources.push(...classifyOrphanPortListeners(pm2Processes, wrapperOrphans));
+  resources.push(...classifyOrphanPortListeners(nativeProcesses, wrapperOrphans));
 
   for (const container of dockerContainers) {
     const entry = classifyServiceResource("container", container.name, index);
@@ -526,7 +526,7 @@ export async function cleanupSystemResources(options: {
 
   const freshManagedPids = hasProcessOrphans
     ? new Set(
-        (await Pm2Manager.listProcesses())
+        (await NativeProcessManager.listProcesses())
           .map((process) => process.pid)
           .filter(Boolean),
       )
@@ -535,15 +535,15 @@ export async function cleanupSystemResources(options: {
   const parents = hasProcessOrphans ? listLiveParentMap() : new Map();
 
   for (const resource of resources) {
-    if (resource.type === "pm2") {
-      await Pm2Manager.deleteProcess(resource.name);
+    if (resource.type === "nativeProcess") {
+      await NativeProcessManager.deleteProcess(resource.name);
     } else if (resource.type === "container") {
       await DockerManager.removeContainer(resource.name);
     } else if (resource.type === "volume") {
       await DockerManager.removeVolume(resource.name);
     } else if (resource.type === "process" && resource.pid) {
       if (pidBelongsToTree(resource.pid, freshManagedPids, parents)) continue;
-      Pm2Manager.killDetachedProcessTree(resource.pid);
+      NativeProcessManager.killDetachedProcessTree(resource.pid);
     }
   }
 

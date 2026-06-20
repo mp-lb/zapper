@@ -28,8 +28,8 @@ The CLI is published as the npm package `@mp-lb/zapper`. Its executable is a
 JavaScript entrypoint with a `#!/usr/bin/env node` shebang.
 
 The macOS app is a native Swift/AppKit menu bar app. Release builds now include
-a bundled Node runtime, the built Zapper CLI, production CLI dependencies, and
-PM2. The app prefers that bundled runtime for system reads and actions:
+a bundled Node runtime, the built Zapper CLI, and production CLI dependencies.
+The app prefers that bundled runtime for system reads and actions:
 
 - `zap system projects --json`
 - `zap home --json`
@@ -59,9 +59,7 @@ The macOS release should include:
 
 - a known-good Node runtime;
 - the built Zapper CLI JavaScript;
-- production dependencies needed by the CLI;
-- PM2 or a PM2 invocation path that does not depend on a global `pm2`
-  executable.
+- production dependencies needed by the CLI.
 
 The Swift app invokes a bundled `zap` wrapper, which runs:
 
@@ -93,52 +91,35 @@ then `pnpm dev` should still run in the user's project environment. Zapper
 should preserve or reconstruct a useful shell environment for those commands.
 That is separate from the runtime used to execute Zapper itself.
 
-In practice, the CLI should capture the launch environment used for `zap up`
-and write PM2 wrapper scripts with the relevant `PATH` and process environment.
-The desktop app can provide a bundled Zapper runtime while still asking the CLI
-to run project commands through a login-shell-derived environment when needed.
+In practice, the CLI captures the launch environment used for `zap up` and
+writes supervisor wrapper scripts with the relevant `PATH` and process
+environment. The desktop app can provide a bundled Zapper runtime while still
+asking the CLI to run project commands through a login-shell-derived environment
+when needed.
 
-## PM2 Reliability
+## Native Supervisor
 
-PM2 was another global executable dependency. It is now a CLI production
-dependency for bundled desktop builds, and the macOS app passes `ZAPPER_NODE`
-and `ZAPPER_PM2_JS` so the CLI can invoke PM2 through the bundled Node runtime
-instead of `spawn("pm2")`.
+Native services are managed by Zapper's own local supervisor daemon. The
+supervisor starts wrapper scripts as detached process groups, records state under
+`~/.zapper/supervisor`, writes combined logs under each project's `.zap/logs`,
+and exposes the process list back to the CLI.
+
+The native supervisor supports macOS, Linux, and WSL2. Native Windows process
+supervision is intentionally unsupported; run Zapper from WSL2 on Windows.
+
+The supervisor preserves the behavior Zapper needs for local development:
+
+- detached services keep running after the invoking terminal exits;
+- `zap logs` can read the last saved log even after a service stops;
+- stop, restart, delete, and global cleanup kill the supervised process group;
+- fast crash loops are capped, and later crash loops are throttled with
+  exponential backoff;
+- missing `.zap` wrapper registrations are removed instead of restarted.
 
 Runtime executable lookup is centralized behind platform adapters in the CLI.
-PM2, Docker, shell wrappers, log tailing, and URL opening are resolved through
-the same boundary instead of scattering `process.platform` checks across command
-implementations. The adapters keep the default behavior simple:
-
-- macOS uses the bundled PM2 runtime when `ZAPPER_NODE` and `ZAPPER_PM2_JS` are
-  present, otherwise falls back to `pm2`;
-- Linux uses the same PM2 environment override and otherwise falls back to
-  `pm2`;
-- WSL is treated as Linux. Linux paths are preferred. If a user-provided
-  `ZAPPER_NODE` or `ZAPPER_PM2_JS` value looks like a Windows absolute path, the
-  adapter converts it with `wslpath -u` when available and falls back to the
-  equivalent `/mnt/<drive>/...` path;
-- Docker startup checks verify both the Docker CLI and daemon. Under WSL, a
-  daemon failure points users at Docker Desktop WSL integration for the current
-  distro;
-- WSL path normalization is shared across runtime, env-file, Docker build,
-  Docker secret, and Docker bind-mount paths so Windows-looking absolute paths
-  are converted before Linux path resolution runs;
-- native Windows falls back to `pm2.cmd` when no bundled PM2 runtime is
-  configured.
-
-Remaining options if PM2 continues to be a source of local-machine
-compatibility issues:
-
-- include `pm2` in the CLI's production dependencies and run its JavaScript
-  entrypoint with the same Node runtime that runs Zapper;
-- install or vendor a PM2 binary/script into the macOS app bundle;
-- replace PM2 long term with a native process supervisor if PM2 becomes the
-  main remaining reliability risk.
-
-The current implementation follows the first option because it preserves PM2
-behavior while removing the global `pm2` lookup for desktop-launched Zapper
-commands.
+Docker, shell wrappers, log tailing, and URL opening are resolved through the
+same boundary instead of scattering `process.platform` checks across command
+implementations.
 
 ## System Registry Role
 
@@ -150,7 +131,6 @@ Good uses for the registry:
 - last known working CLI runtime path;
 - last known working Node path;
 - last shell-derived `PATH`;
-- last PM2 invocation strategy;
 - diagnostic status from the CLI;
 - project and instance metadata for desktop display.
 
@@ -190,7 +170,7 @@ Cons:
 
 - larger app bundle;
 - still depends on Node internally;
-- still needs a deliberate PM2 strategy;
+- native service supervision now uses Zapper's local supervisor daemon;
 - project commands can still fail if the user's project environment is broken.
 
 ### Build the CLI as a JavaScript Binary
@@ -208,7 +188,7 @@ Cons:
 
 - native modules and dynamic imports can complicate packaging;
 - TypeScript/Node ecosystem packaging can be brittle;
-- PM2 still needs attention;
+- native service supervision is handled by Zapper's local supervisor daemon;
 - debugging can be harder than with bundled JavaScript plus Node.
 
 This remains a reasonable follow-up if bundling Node and dependencies is not
@@ -229,7 +209,7 @@ Cons:
 - large rewrite cost;
 - risks slowing product iteration;
 - does not remove the need to run project commands in user environments;
-- PM2 replacement or interop still needs a design.
+- native service supervision is handled by Zapper's local supervisor daemon.
 
 Consider this only if the Node-based CLI runtime remains a recurring source of
 distribution problems after the bundled-runtime phase.
@@ -275,18 +255,16 @@ This improves the current release but does not fully solve runtime reliability.
 
 Status: implemented for macOS release builds.
 
-### Phase 3: PM2 Runtime Strategy
+### Phase 3: Native Process Supervisor
 
-- Make PM2 a runtime dependency rather than a required global executable.
-- Invoke PM2 through the same bundled Node runtime where possible.
-- Keep PM2 state compatible with CLI usage from the terminal.
+- Use Zapper's local supervisor daemon for native services.
+- Keep detached logs, status, restart, and cleanup behavior for native services.
 - Add diagnostics that distinguish "Zapper runtime failed" from "project
   command failed".
 
-Status: partially implemented. PM2 is bundled and invoked through `ZAPPER_NODE`
-and `ZAPPER_PM2_JS` for desktop-launched CLI commands, with runtime adapter
-functions keeping platform-specific path and command resolution out of command
-implementations. Better diagnostics are still pending.
+Status: implemented for the SDK process manager. Follow-up work should finish
+renaming remaining legacy internal resource keys and update E2E assertions that
+still inspect legacy runtime state directly.
 
 ### Phase 4: Install and Repair UX
 
@@ -301,8 +279,7 @@ implementations. Better diagnostics are still pending.
 If the bundled Node approach remains fragile or too heavy, revisit:
 
 - JavaScript binary packaging;
-- a Go or Rust rewrite;
-- replacing PM2 with a native supervisor.
+- a Go or Rust rewrite.
 
 The decision should be based on concrete failures from the bundled-runtime
 phase, not on the existence of Node alone.

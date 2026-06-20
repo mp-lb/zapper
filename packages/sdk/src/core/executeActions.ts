@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "fs";
 import path from "path";
 import { ZapperConfig, Container } from "../utils";
 import { DockerManager } from "./docker";
-import { Pm2Executor } from "./process/Pm2Executor";
+import { NativeProcessExecutor } from "./process/NativeProcessExecutor";
 import {
   Action,
   ActionPlan,
@@ -254,7 +254,7 @@ async function executeAction(
   action: Action,
   config: ZapperConfig,
   projectName: string,
-  pm2: Pm2Executor,
+  nativeProcesses: NativeProcessExecutor,
   configDir?: string | null,
 ): Promise<void> {
   if (action.serviceType === "native") {
@@ -262,9 +262,9 @@ async function executeAction(
     if (!proc) throw new Error(`Process not found: ${action.name}`);
 
     if (action.type === "start") {
-      await pm2.startProcess(proc, projectName);
+      await nativeProcesses.startProcess(proc, projectName);
     } else {
-      await pm2.stopProcess(proc.name as string);
+      await nativeProcesses.stopProcess(proc.name as string);
     }
   } else {
     const pair = findContainer(config, action.name);
@@ -366,7 +366,7 @@ export async function executeActions(
   const instanceId = (config as ZapperConfig & { instanceId?: string })
     .instanceId;
 
-  const pm2 = new Pm2Executor(projectName, configDir || undefined, instanceId);
+  const nativeProcesses = new NativeProcessExecutor(projectName, configDir || undefined, instanceId);
   const report = emptyServiceExecutionReport();
 
   const emit = (event: ServiceActionEvent) => {
@@ -380,7 +380,7 @@ export async function executeActions(
     // Execute all actions in the wave in parallel
     await Promise.all(
       wave.actions.map((action) =>
-        executeAction(action, config, projectName, pm2, configDir),
+        executeAction(action, config, projectName, nativeProcesses, configDir),
       ),
     );
 

@@ -125,6 +125,7 @@ Show status (native processes + Docker), optionally for specific services
 | --- | --- |
 | `-a, --all` | Include processes from all projects |
 | `-j, --json` | Output status as minified JSON |
+| `--watch` | Keep running and refresh status until stopped |
 
 ## `zap ls [services...]`
 

@@ -214,6 +214,36 @@ describe("TaskRunner", () => {
       );
     });
 
+    it("exposes resolved named params as process environment variables", async () => {
+      const tasks: TaskRegistry = {
+        deploy: {
+          cmds: ["node deploy.mjs"],
+          params: [
+            { name: "secret", default: "" },
+            { name: "allow-dirty", default: "false" },
+          ],
+        },
+      };
+
+      const params: TaskParams = {
+        named: { secret: "recipient-key", "allow-dirty": "true" },
+        rest: [],
+      };
+
+      const runner = new TaskRunner(tasks, "/project", { params });
+      await runner.run("deploy");
+
+      expect(childProcess.spawn).toHaveBeenCalledWith(
+        "node deploy.mjs",
+        expect.objectContaining({
+          env: expect.objectContaining({
+            ZAP_TASK_PARAM_SECRET: "recipient-key",
+            ZAP_TASK_PARAM_ALLOW_DIRTY: "true",
+          }),
+        }),
+      );
+    });
+
     it("leaves REST empty when no args provided", async () => {
       const tasks: TaskRegistry = {
         test: {

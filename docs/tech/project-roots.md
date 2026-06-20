@@ -92,8 +92,8 @@ This is intentional:
 - A checkout can move on disk.
 
 The `project` field in `zap.yaml` remains the runtime resource namespace used in
-PM2/Docker names. It is not globally unique and should not be treated as the
-system registry identity by itself.
+native process and Docker names. It is not globally unique and should not be
+treated as the system registry identity by itself.
 
 ## Practical Rule
 

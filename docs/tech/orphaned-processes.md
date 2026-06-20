@@ -10,21 +10,16 @@ Run these to check for problems:
 # 1. Count zombie zap status polling processes (should be 0 or very few)
 ps aux | grep "zapper/packages/cli/dist/index.js status --json" | grep -v grep | wc -l
 
-# 2. Check for orphaned processes from projects not in PM2
-pm2 jlist 2>/dev/null | python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-managed = {p['name'] for p in data}
-print('PM2-managed processes:', managed)
-"
+# 2. Check Zapper's supervisor-backed view of live services
+zap global list
 
-# 3. Look for orphaned zap wrapper shells (these should only exist for running PM2 processes)
+# 3. Look for orphaned zap wrapper shells
 ps aux | grep ".zap/.*\.sh" | grep -v grep
 
 # 4. Count total node processes (baseline: ~10-20 is normal, 50+ is suspicious)
 ps aux | grep "node " | grep -v grep | wc -l
 
-# 5. Check for orphaned project processes not managed by PM2
+# 5. Check for orphaned project processes not managed by the supervisor
 # Replace PROJECT with project names like orb0, heidi, lexiquest, hyperdoc
 for PROJECT in orb0 heidi lexiquest hyperdoc; do
   COUNT=$(ps aux | grep "$PROJECT" | grep -v grep | grep -v ".cursor" | wc -l | tr -d ' ')
@@ -50,78 +45,63 @@ done
 
 ### Orphaned child processes after `zap down`
 
-**Symptom**: Processes from a project (tsx watch, vite, next-server, esbuild, pnpm) still running even though the project has no PM2 entries. Often manifests as multiple "generations" of the same process.
+**Symptom**: Processes from a project (tsx watch, vite, next-server, esbuild, pnpm) still running even though the project has no supervisor entries. Often manifests as multiple "generations" of the same process.
 
-**Root cause**: When `Pm2Manager.deleteProcess()` runs `pm2 delete <name>`, PM2 kills the direct child (the bash wrapper script at `.zap/*.sh`), but grandchildren (pnpm -> tsx -> node, or pnpm -> vite -> esbuild) become orphans because signals don't propagate down the tree.
+**Root cause**: Older process-manager-backed deletion killed the direct child
+(the bash wrapper script at `.zap/*.sh`), but grandchildren (pnpm -> tsx ->
+node, or pnpm -> vite -> esbuild) could become orphans because signals did not
+propagate down the tree.
 
-**Fix applied**: `Pm2Manager` now has `killProcessTree()` and `killManagedProcessTree()` methods that kill the entire process tree (using process group signals and `pgrep -P` traversal) before running `pm2 delete/stop`.
+**Fix applied**: Zapper's native supervisor starts wrappers as detached process groups and kills the supervised process group on stop, restart, delete, and cleanup.
 
-**Key file**: `~/Code/zapper/packages/cli/src/core/process/Pm2Manager.ts`
+**Key file**: `~/Code/zapper/packages/sdk/src/core/process/NativeProcessManager.ts`
 
 ### Orphans from deleted checkouts / instance dirs
 
 **Symptom**: Processes running from a directory that no longer exists (e.g. a
 removed worktree under `~/Code/__instances__/`), sometimes holding ports.
 
-**Root cause**: Deleting a checkout does not stop its PM2-managed processes —
-PM2 is a user-global daemon. The leftover PM2 entry then restarts the missing
-wrapper script forever, error-spamming `~/.pm2/pm2.log`. In June 2026 this
-grew the log to 20GB, filled the disk, and crashed the PM2 daemon (ENOSPC). A
-daemon crash empties PM2's process table without killing anything: every
-managed process becomes an unmanaged orphan, and `zap ps` reports services
-DOWN while they still run and hold ports.
+**Root cause**: Deleting a checkout does not stop processes that were started
+from that checkout. Older process-manager-backed versions could also leave registrations
+that restarted missing wrapper scripts forever.
 
-**Fix applied**: `zap gprune` now detects and kills both PM2 entries whose
+**Fix applied**: `zap gprune` detects and kills supervisor entries whose
 working directory no longer exists and unmanaged wrapper survivors whose
 `.zap/*.sh` script is gone. Dash stops a checkout's zapper stacks (`zap down`
 per stack) before removing an instance.
 
 ### Crash loops from stale registrations (the cap that didn't apply)
 
-**Symptom**: A PM2 app whose `.zap` wrapper script was deleted restarts
-unbounded (~270/sec observed), even though Zapper registers apps with
-`max_restarts: 2`.
+**Symptom**: A supervised app whose `.zap` wrapper script was deleted restarts
+repeatedly.
 
-**Root cause**: PM2 only counts "unstable" restarts within
-`min_uptime * max_restarts` of `created_at`, and `created_at` is never reset
-by restarts (pm2 7.0.1, `God.js handleExit`). An app that starts instant-
-exiting *later in life* — its script deleted long after registration — never
-trips the cap. Fresh registrations crash inside the window and stop normally,
-which is why the cap appears to work in testing.
+**Root cause**: The wrapper script is gone, so bash exits immediately.
 
-**Fix applied**: three layers. Registrations whose wrapper script is gone are
-deregistered instead of restarted (`zap restart`, the system audit/`gprune`,
-and the post-recovery sweep). Ecosystems set `exp_backoff_restart_delay: 100`,
-which throttles any remaining loop to one restart per 15s and resets once the
-app runs stably. `zap reset` deregisters every PM2 app under `.zap` (all
-stacks/instances) before deleting the directory.
+**Fix applied**: Registrations whose wrapper script is gone are deregistered
+instead of restarted (`zap restart`, the system audit/`gprune`, and the
+post-recovery sweep). The supervisor caps fresh crash loops and throttles later
+crash loops with exponential backoff.
 
-### PM2 daemon kills taking down every project
+### Supervisor daemon restarts leaving orphaned processes
 
-**Root cause**: Zapper's PM2 corruption/version-mismatch recovery ran a bare
-`pm2 kill`, which stops every project's apps at once. Worse, a kill can fail
-to terminate a process tree (observed with the mgr terminal-daemon): the tree
-survives reparented to launchd, holds its port, and every later start of that
-service fails with "port already in use" while PM2 shows it errored.
+**Root cause**: If the supervisor daemon exits without terminating a process
+tree, the tree can survive reparented to launchd, hold its port, and block later
+starts of that service.
 
-**Fix applied**: recovery now snapshots the process table (`pm2 save
---force`), kills the daemon, terminates surviving wrapper trees (SIGTERM then
-SIGKILL), resurrects the snapshot so other projects come back, and sweeps
-registrations whose scripts are missing. Survivors that exec'd past their
-wrapper are detected by port: `zap global list` reports processes listening on
-zap-assigned ports that belong to no PM2-managed tree, and `gprune` kills
-them.
+**Fix applied**: recovery terminates surviving wrapper trees (SIGTERM then
+SIGKILL) and sweeps registrations whose scripts are missing. Survivors that
+exec'd past their wrapper are detected by port: `zap global list` reports
+processes listening on zap-assigned ports that belong to no supervisor-managed
+tree, and `gprune` kills them.
 
 ### Misleading "No log file found ... may never have started"
 
-**Root cause**: PM2 7 ignores the ecosystem `log` attribute, so the managed
-log file in `.zap/logs/` was never written; once a PM2 entry disappeared
-(daemon crash, delete), `zap logs` claimed the service never started. The log
-path was also shared between stacks, so an isolated profile's cleanup deleted
-the default stack's log.
+**Root cause**: Older process-manager-backed versions did not always write the expected
+managed log file. The log path was also shared between stacks, so an isolated
+profile's cleanup deleted the default stack's log.
 
-**Fix applied**: ecosystems use `out_file`/`error_file`, and managed log files
-are stack-namespaced: `.zap/logs/<project>.<stackId>.<service>.log`.
+**Fix applied**: Managed log files are written by the supervisor and
+stack-namespaced: `.zap/logs/<project>.<stackId>.<service>.log`.
 
 ## Cleanup Commands
 
@@ -143,15 +123,15 @@ pkill -f "orb0.*vite"
 # Nuclear option: kill all orphaned zap wrapper shells
 pkill -f ".zap/.*\.sh"
 
-# Verify PM2 is still healthy after cleanup
-pm2 list
+# Verify Zapper's supervisor-backed view after cleanup
+zap global list
 ```
 
 ## Architecture Notes
 
-- Zapper uses PM2 to manage processes. Each process is wrapped in a bash script at `.zap/<project>.<process>.<timestamp>.sh`
+- Zapper uses its native supervisor to manage processes. Each process is wrapped in a bash script at `.zap/<project>.<process>.<timestamp>.sh`
 - The wrapper script sets PATH, redirects stderr with coloring, and `exec`s the actual command
-- Zapper configures PM2 with `autorestart: true`, `max_restarts: 2` for fast feedback on fresh registrations, and `exp_backoff_restart_delay: 100` to throttle late-onset crash loops the cap cannot stop (see above)
-- The process tree typically looks like: PM2 -> bash wrapper -> pnpm -> tsx/vite/next -> node/esbuild
-- When PM2 kills a process, only the bash wrapper receives the signal. Children must be killed explicitly.
+- Zapper configures the supervisor with `autorestart: true`, `maxRestarts: 2` for fast feedback on fresh registrations, and `restartBackoffMs: 100` to throttle late-onset crash loops.
+- The process tree typically looks like: supervisor -> bash wrapper -> pnpm -> tsx/vite/next -> node/esbuild
+- The supervisor starts wrappers as detached process groups so cleanup can signal the process group.
 - The VS Code extension spawns 5 commands per project per poll cycle: `status --json`, `task --json`, `profile list --json`, `state`, `config --pretty`

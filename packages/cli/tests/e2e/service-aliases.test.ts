@@ -2,6 +2,10 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from "vitest";
 import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
+import {
+  cleanupNativeProcesses as cleanupProjectNativeProcesses,
+  listNativeProcesses,
+} from "./helpers/nativeProcesses";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -40,17 +44,9 @@ function generateTestProjectName(): string {
   return `e2e-test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-// Utility function to clean up PM2 processes
-async function cleanupPm2Processes(projectName: string) {
-  try {
-    // Delete all processes matching the project pattern
-    execSync(`pm2 delete "zap.${projectName}.*" 2>/dev/null || true`, {
-      stdio: "ignore",
-      timeout: 5000,
-    });
-  } catch (error) {
-    // Ignore cleanup errors - processes might not exist
-  }
+// Utility function to clean up native processes
+async function cleanupNativeProcesses(projectName: string) {
+  cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 describe("E2E: Service Aliases", () => {
@@ -69,8 +65,8 @@ describe("E2E: Service Aliases", () => {
 
   afterEach(async () => {
     if (testProjectName) {
-      // Clean up PM2 processes
-      await cleanupPm2Processes(testProjectName);
+      // Clean up native processes
+      await cleanupNativeProcesses(testProjectName);
 
       // Remove temp config if it exists
       if (tempConfigPath && fs.existsSync(tempConfigPath)) {
@@ -85,22 +81,11 @@ describe("E2E: Service Aliases", () => {
 
   afterAll(async () => {
     // Cleanup any remaining test processes (only zap.e2e-test-* patterns)
-    try {
-      const output = execSync("pm2 jlist --silent", {
-        encoding: "utf8",
-        timeout: 5000,
-      });
-      const processes = JSON.parse(output);
-      for (const proc of processes) {
-        if (proc.name?.startsWith("zap.e2e-test-")) {
-          execSync(`pm2 delete "${proc.name}" 2>/dev/null || true`, {
-            stdio: "ignore",
-            timeout: 5000,
-          });
-        }
+    for (const proc of listNativeProcesses(CLI_PATH, FIXTURES_DIR)) {
+      const match = /^zap\.(e2e-test-[^.]+)\./.exec(proc.name);
+      if (match) {
+        cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, match[1]);
       }
-    } catch (error) {
-      // Ignore cleanup errors
     }
   });
 

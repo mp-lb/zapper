@@ -482,7 +482,7 @@ A resolved profile contains:
 }
 ```
 
-Runtime names, PM2 names, Docker names, and name parsing are core Zapper
+Runtime names, native process names, Docker names, and name parsing are core Zapper
 mechanics and stay outside the profile migration except where existing runtime
 code consumes the selected profile.
 
@@ -513,4 +513,3 @@ code consumes the selected profile.
 - Use `isolate: true` for E2E, CI, PR, and destructive test profiles.
 - Keep instance terminology out of the happy-path docs. Prefer local copy,
   profile, stack, and stackId.
-

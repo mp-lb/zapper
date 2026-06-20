@@ -390,7 +390,7 @@ private struct MissingStackSectionView: View {
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
-                        Text("This will remove missing stack registry entries and delete matching PM2 processes, Docker containers, and generated Docker volumes.")
+                        Text("This will remove missing stack registry entries and delete matching native processes, Docker containers, and generated Docker volumes.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)

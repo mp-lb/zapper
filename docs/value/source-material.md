@@ -29,7 +29,7 @@ inputs:
 ## Evidence
 
 - User request: build a value-analysis library in `docs/value`.
-- Repo summary in `AGENTS.md`: Zapper is a lightweight dev environment runner that defines local dev setup in one `zap.yaml` and delegates to PM2 for processes and Docker for containers.
+- Repo summary in `AGENTS.md`: Zapper is a lightweight dev environment runner that defines local dev setup in one `zap.yaml` and uses Zapper's native supervisor for processes and Docker for containers.
 - The landing page in `apps/landing-page/app/page.tsx` frames Zapper as "The process manager for agents" and repeats three core properties: stateful, detached, and isolated per worktree.
 - The landing page also makes the main user promise explicit: one agent can start a stack, another can inspect it later, without long-lived terminals, PID handoff, or port clashes.
 - Product docs in `docs/index.md`, `docs/commands.md`, `docs/configuration.md`, `docs/services.md`, and `docs/tasks.md` describe the current CLI model, config surface, and workflow.
@@ -42,7 +42,7 @@ inputs:
 - `docs/cli-development.md` reinforces that the macOS app shells out to the CLI and does not parse `zap.yaml` or `.zap` state directly.
 - `docs/x-posts.md` captures the repo’s informal product language: less shell history archaeology, less local folklore, and one file that humans, desktop tooling, and agents can all read.
 - `docs/compose-study.md` and `docs/taskfile-study.md` explicitly compare Zapper against Docker Compose and Task, which helps identify likely alternatives and category boundaries.
-- `packages/cli/package.json` shows the published CLI package name `@mp-lb/zapper` and confirms PM2 is a runtime dependency.
+- `packages/cli/package.json` shows the published CLI package name `@mp-lb/zapper`.
 
 ## Inferences
 

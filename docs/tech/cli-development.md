@@ -110,9 +110,9 @@ For the short local rebuild/restart loop, see
 [macOS Development](macos-development.md).
 
 The build script uses `swiftc` and writes `apps/macos/build/Zapper.app`. By
-default it also packages a local Node runtime, the built CLI, production CLI
-dependencies, and PM2 under `Contents/Resources/ZapperRuntime`. Run
-`pnpm --filter @mp-lb/zapper build` before `apps/macos/bin/build`. Set
+default it also packages a local Node runtime, the built CLI, the built SDK,
+and production runtime dependencies under `Contents/Resources/ZapperRuntime`.
+Run `pnpm build` before `apps/macos/bin/build`. Set
 `PACKAGE_ZAPPER_RUNTIME=0` to skip runtime packaging for local Swift-only
 development.
 

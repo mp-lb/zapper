@@ -21,7 +21,7 @@ export class KillCommand extends CommandHandler {
         [
           {
             name: targets.projectName,
-            pm2: targets.pm2,
+            nativeProcesses: targets.nativeProcesses,
             containers: targets.containers,
           },
         ],
@@ -33,7 +33,7 @@ export class KillCommand extends CommandHandler {
       renderer.confirm.killProjectPromptText({
         projectName: targets.projectName,
         prefix: targets.prefix,
-        pm2Count: targets.pm2.length,
+        nativeProcessCount: targets.nativeProcesses.length,
         containerCount: targets.containers.length,
       }),
     );
@@ -49,7 +49,7 @@ export class KillCommand extends CommandHandler {
         status: "aborted",
         projectName: targets.projectName,
         prefix: targets.prefix,
-        pm2: targets.pm2,
+        nativeProcesses: targets.nativeProcesses,
         containers: targets.containers,
       };
     }
@@ -60,7 +60,7 @@ export class KillCommand extends CommandHandler {
       status: "completed",
       projectName: killed.projectName,
       prefix: killed.prefix,
-      pm2: killed.pm2,
+      nativeProcesses: killed.nativeProcesses,
       containers: killed.containers,
     };
   }

@@ -33,7 +33,7 @@ explains what happened, and `zap down` cleans it up.
 Docker Compose solved a huge part of this problem for containers. Zapper extends
 the same idea to the way local development actually works: native processes and
 containers as peers. A frontend can run with `pnpm dev`, a worker can run
-through PM2, Postgres can run in Docker, and the whole thing still behaves like
+through Zapper's native supervisor, Postgres can run in Docker, and the whole thing still behaves like
 one stack.
 
 The wedge is worktree-safe local infrastructure.
@@ -73,4 +73,3 @@ This system is a local runtime orchestrator for modern development. It manages n
 Unlike Docker Compose or traditional process managers, the focus is not just starting services — it is managing local application topology. Native processes and containers can interoperate seamlessly, with dynamic ports and automatic dependency wiring handled by the runtime itself.
 
 The system complements tools like Nix, mise, and Docker rather than replacing them. Those tools solve dependency installation and reproducibility; this system solves orchestration, isolation, and multi-instance local development, which becomes increasingly important in AI-native workflows.
-

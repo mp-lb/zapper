@@ -31,8 +31,7 @@
   },
   "keywords": [
     "zapper",
-    "sdk",
-    "pm2"
+    "sdk"
   ],
   "repository": {
     "type": "git",
@@ -52,7 +51,6 @@
     "dotenv-expand": "^12.0.3",
     "enquirer": "^2.4.1",
     "mustache": "^4.2.0",
-    "pm2": "^7.0.1",
     "yaml": "^2.8.1",
     "zod": "^4.1.5"
   }

@@ -47,6 +47,10 @@ import {
   VERSION,
 } from "@mp-lb/zapper-sdk";
 
+const STATUS_WATCH_IDLE_INTERVAL_MS = 10_000;
+const STATUS_WATCH_ACTIVE_INTERVAL_MS = 1_000;
+const STATUS_WATCH_ACTIVE_WINDOW_MS = 10_000;
+
 function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
   const named: Record<string, string> = {};
   const rest: string[] = [];
@@ -81,7 +85,9 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
     "list-params",
   ]);
 
-  for (const arg of namedArgs) {
+  for (let index = 0; index < namedArgs.length; index += 1) {
+    const arg = namedArgs[index];
+
     if (arg.startsWith("--")) {
       const eqIdx = arg.indexOf("=");
 
@@ -93,7 +99,14 @@ function parseTaskArgs(rawArgv: string[], taskName: string): TaskParams {
       } else {
         const key = arg.slice(2);
         if (reservedTaskOptions.has(key)) continue;
-        named[key] = "true";
+
+        const nextArg = namedArgs[index + 1];
+        if (nextArg !== undefined && !nextArg.startsWith("--")) {
+          named[key] = nextArg;
+          index += 1;
+        } else {
+          named[key] = "true";
+        }
       }
     }
   }
@@ -239,6 +252,7 @@ export class CommanderCli {
       .argument("[services...]", "Services to show status for")
       .option("-a, --all", "Include processes from all projects")
       .option("-j, --json", "Output status as minified JSON")
+      .option("--watch", "Keep running and refresh status until stopped")
       .action(async (services, _options, command) => {
         await this.executeCommand("status", services, command);
       });
@@ -924,6 +938,15 @@ export class CommanderCli {
         taskParams,
       };
 
+      if (command === "status" && allOptions.watch) {
+        if (jsonMode || jsonlMode) {
+          throw new Error("Cannot combine --watch with --json or --jsonl");
+        }
+
+        await this.watchStatus(handler, context);
+        return;
+      }
+
       const result = await handler.execute(context);
 
       if (result) {
@@ -938,6 +961,92 @@ export class CommanderCli {
       }
     } finally {
       renderer.output.setJsonMode(false);
+    }
+  }
+
+  private async watchStatus(
+    handler: CommandHandler,
+    context: CommandContext,
+  ): Promise<void> {
+    let stopped = false;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
+    let resolveWait: (() => void) | undefined;
+    let previousSnapshot: string | undefined;
+    let lastUpdateAt = 0;
+
+    const stop = () => {
+      stopped = true;
+      if (timeout) clearTimeout(timeout);
+      resolveWait?.();
+    };
+
+    const wait = (delayMs: number) =>
+      new Promise<void>((resolve) => {
+        resolveWait = resolve;
+        timeout = setTimeout(() => {
+          resolveWait = undefined;
+          resolve();
+        }, delayMs);
+      });
+
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+
+    try {
+      while (!stopped) {
+        const result = await handler.execute(context);
+
+        if (stopped) break;
+
+        const snapshot =
+          result?.kind === "status"
+            ? JSON.stringify(result.statusResult)
+            : undefined;
+
+        if (
+          previousSnapshot !== undefined &&
+          snapshot !== undefined &&
+          snapshot !== previousSnapshot
+        ) {
+          lastUpdateAt = Date.now();
+        }
+
+        previousSnapshot = snapshot;
+
+        process.stdout.write("\x1B[2J\x1B[3J\x1B[H");
+
+        if (result) {
+          renderCommandResult(result, {
+            json: false,
+            jsonl: false,
+          });
+        }
+
+        const timeSinceLastUpdate =
+          lastUpdateAt === 0
+            ? Number.POSITIVE_INFINITY
+            : Date.now() - lastUpdateAt;
+
+        const nextRefreshMs =
+          timeSinceLastUpdate < STATUS_WATCH_ACTIVE_WINDOW_MS
+            ? STATUS_WATCH_ACTIVE_INTERVAL_MS
+            : STATUS_WATCH_IDLE_INTERVAL_MS;
+
+        process.stdout.write(
+          `\nWatching status. Next refresh in ${
+            nextRefreshMs / 1000
+          }s. Press Ctrl-C to stop.\n`,
+        );
+
+        if (!stopped) {
+          await wait(nextRefreshMs);
+        }
+      }
+    } finally {
+      if (timeout) clearTimeout(timeout);
+      process.off("SIGINT", stop);
+      process.off("SIGTERM", stop);
+      process.stdout.write("\n");
     }
   }
 

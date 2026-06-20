@@ -84,7 +84,7 @@ function toJsonPayload(result: CommandResult): unknown {
         action: "kill",
         projectName: result.projectName,
         prefix: result.prefix,
-        pm2: result.pm2,
+        nativeProcesses: result.nativeProcesses,
         containers: result.containers,
       };
     case "launch.opened":
@@ -376,7 +376,7 @@ export function renderCommandResult(
         return;
       }
 
-      if (result.pm2.length === 0 && result.containers.length === 0) {
+      if (result.nativeProcesses.length === 0 && result.containers.length === 0) {
         renderer.log.info(
           renderer.command.killNoResourcesText(
             result.projectName,
@@ -391,7 +391,7 @@ export function renderCommandResult(
         renderer.command.killCompletedText({
           projectName: result.projectName,
           prefix: result.prefix,
-          pm2Count: result.pm2.length,
+          nativeProcessCount: result.nativeProcesses.length,
           containerCount: result.containers.length,
         }),
       );
@@ -431,8 +431,8 @@ export function renderCommandResult(
         return;
       }
 
-      const totalPm2 = result.projects.reduce(
-        (sum, p) => sum + p.pm2.length,
+      const totalNativeProcesses = result.projects.reduce(
+        (sum, p) => sum + p.nativeProcesses.length,
         0,
       );
 
@@ -445,7 +445,7 @@ export function renderCommandResult(
         renderer.log.info(
           renderer.command.globalKillAllCompletedText({
             projectCount: result.projects.length,
-            pm2Count: totalPm2,
+            nativeProcessCount: totalNativeProcesses,
             containerCount: totalContainers,
           }),
         );
@@ -455,7 +455,7 @@ export function renderCommandResult(
           renderer.command.globalKillProjectCompletedText({
             projectName: project.name,
             prefix: project.prefix,
-            pm2Count: project.pm2.length,
+            nativeProcessCount: project.nativeProcesses.length,
             containerCount: project.containers.length,
           }),
         );

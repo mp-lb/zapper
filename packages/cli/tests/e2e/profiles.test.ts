@@ -3,6 +3,10 @@ import { execSync } from "child_process";
 import path from "path";
 import fs from "fs";
 import os from "os";
+import {
+  cleanupNativeProcesses as cleanupProjectNativeProcesses,
+  listNativeProcesses,
+} from "./helpers/nativeProcesses";
 
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
@@ -47,32 +51,14 @@ function generateTestProjectName(): string {
   return `e2e-profiles-test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-async function cleanupPm2Processes(projectName: string) {
-  try {
-    execSync(`pm2 delete "zap.${projectName}.*" 2>/dev/null || true`, {
-      stdio: "ignore",
-      timeout: 5000,
-    });
-  } catch (error) {
-    // Ignore cleanup errors
-  }
+async function cleanupNativeProcesses(projectName: string) {
+  cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 function getRunningServices(projectName: string): string[] {
-  try {
-    const pm2ListOutput = execSync("pm2 jlist --silent", { encoding: "utf8" });
-    const pm2Processes = JSON.parse(pm2ListOutput);
-
-    return pm2Processes
-      .filter(
-        (proc: { name: string; pm2_env?: { status?: string } }) =>
-          proc.name?.startsWith(`zap.${projectName}.`) &&
-          proc.pm2_env?.status === "online",
-      )
-      .map((proc: { name: string }) => proc.name.split(".").pop());
-  } catch (error) {
-    return [];
-  }
+  return listNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName).map(
+    (proc) => proc.name.split(".").pop() || proc.name,
+  );
 }
 
 describe("E2E: Profiles Command", () => {
@@ -91,28 +77,17 @@ describe("E2E: Profiles Command", () => {
   });
 
   afterAll(() => {
-    try {
-      const output = execSync("pm2 jlist --silent", {
-        encoding: "utf8",
-        timeout: 5000,
-      });
-      const processes = JSON.parse(output);
-      for (const proc of processes) {
-        if (proc.name?.startsWith("zap.e2e-profiles-test-")) {
-          execSync(`pm2 delete "${proc.name}" 2>/dev/null || true`, {
-            stdio: "ignore",
-            timeout: 5000,
-          });
-        }
+    for (const proc of listNativeProcesses(CLI_PATH, FIXTURES_DIR)) {
+      const match = /^zap\.(e2e-profiles-test-[^.]+)\./.exec(proc.name);
+      if (match) {
+        cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, match[1]);
       }
-    } catch (error) {
-      // Ignore cleanup errors
     }
   });
 
   afterEach(async () => {
     if (testProjectName) {
-      await cleanupPm2Processes(testProjectName);
+      await cleanupNativeProcesses(testProjectName);
     }
     if (tempConfigPath && fs.existsSync(tempConfigPath)) {
       fs.unlinkSync(tempConfigPath);
@@ -184,7 +159,7 @@ describe("E2E: Profiles Command", () => {
       expect(frontendStatusWithDev?.enabled).toBe(true);
 
       const resetOutput = runZapCommand(
-        "profile reset",
+        "profile reset --force",
         testDir,
         tempConfigPath,
         { timeout: 45000 },

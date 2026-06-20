@@ -21,7 +21,7 @@ inputs:
 ## Missing Customer Evidence
 
 - What exact customer language do teams use when describing the current pain?
-- Which alternative is most common in the field: Docker Compose, PM2 plus scripts, Taskfile, Procfile-style tools, or manual terminals?
+- Which alternative is most common in the field: Docker Compose, process-manager scripts, Taskfile, Procfile-style tools, or manual terminals?
 - Who usually champions adoption: individual developers, tech leads, or a formal developer-experience/platform owner?
 - What failure mode is expensive enough to trigger adoption: onboarding drag, stack collisions, stale local state, or environment inconsistency?
 - Do agent users actually discover Zapper through the "process manager for agents" framing, or do they adopt it first as a better local stack runner?

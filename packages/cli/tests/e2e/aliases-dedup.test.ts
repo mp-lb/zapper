@@ -6,6 +6,10 @@ import {
   hasProjectServiceProcess,
   isProjectProcessName,
 } from "./helpers/processNames";
+import {
+  cleanupNativeProcesses as cleanupProjectNativeProcesses,
+  listNativeProcesses,
+} from "./helpers/nativeProcesses";
 
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
 const FIXTURES_DIR = path.join(__dirname, "fixtures");
@@ -40,27 +44,13 @@ function generateTestProjectName(): string {
   return `e2e-alias-dedup-test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-async function cleanupPm2Processes(projectName: string) {
+async function cleanupNativeProcesses(projectName: string) {
   if (!projectName) return;
-  try {
-    execSync(`pm2 delete "zap.${projectName}.*" 2>/dev/null || true`, {
-      stdio: "ignore",
-      timeout: 5000,
-    });
-  } catch {
-    // Ignore cleanup errors; processes might already be gone.
-  }
+  cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 function getProjectProcesses(projectName: string): Array<{ name: string }> {
-  const output = execSync("pm2 jlist --silent", {
-    encoding: "utf8",
-    timeout: 5000,
-  });
-  const processes = JSON.parse(output);
-  return processes.filter((proc: { name: string }) =>
-    isProjectProcessName(proc.name, projectName),
-  );
+  return listNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 describe("E2E: Alias Deduplication", () => {
@@ -77,7 +67,7 @@ describe("E2E: Alias Deduplication", () => {
   });
 
   afterEach(async () => {
-    await cleanupPm2Processes(testProjectName);
+    await cleanupNativeProcesses(testProjectName);
     if (tempConfigPath && fs.existsSync(tempConfigPath)) {
       fs.unlinkSync(tempConfigPath);
     }

@@ -38,8 +38,12 @@ if [ "${PACKAGE_ZAPPER_RUNTIME}" = "1" ]; then
     echo "packages/cli/dist/index.js is missing; run pnpm --filter @mp-lb/zapper build first" >&2
     exit 1
   fi
+  if [ ! -f "${REPO_ROOT}/packages/sdk/dist/index.js" ]; then
+    echo "packages/sdk/dist/index.js is missing; run pnpm --filter @mp-lb/zapper-sdk build first" >&2
+    exit 1
+  fi
 
-  mkdir -p "${RUNTIME_DIR}/node/bin" "${RUNTIME_DIR}/cli"
+  mkdir -p "${RUNTIME_DIR}/node/bin" "${RUNTIME_DIR}/cli/vendor/zapper-sdk"
   cp "${NODE_PATH}" "${RUNTIME_DIR}/node/bin/node"
   RUNTIME_PACKAGE_JSON="${RUNTIME_DIR}/cli/package.json" \
   SOURCE_PACKAGE_JSON="${REPO_ROOT}/packages/cli/package.json" \
@@ -59,10 +63,34 @@ const runtime = {
   dependencies: source.dependencies || {},
   engines: source.engines || {},
 };
+runtime.dependencies["@mp-lb/zapper-sdk"] = "file:./vendor/zapper-sdk";
 
 fs.writeFileSync(runtimePath, `${JSON.stringify(runtime, null, 2)}\n`);
 NODE
   cp -R "${REPO_ROOT}/packages/cli/dist" "${RUNTIME_DIR}/cli/dist"
+  RUNTIME_PACKAGE_JSON="${RUNTIME_DIR}/cli/vendor/zapper-sdk/package.json" \
+  SOURCE_PACKAGE_JSON="${REPO_ROOT}/packages/sdk/package.json" \
+  node <<'NODE'
+const fs = require("node:fs");
+
+const sourcePath = process.env.SOURCE_PACKAGE_JSON;
+const runtimePath = process.env.RUNTIME_PACKAGE_JSON;
+const source = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
+const runtime = {
+  name: source.name,
+  version: source.version,
+  private: true,
+  type: source.type,
+  main: source.main,
+  types: source.types,
+  exports: source.exports,
+  dependencies: source.dependencies || {},
+  engines: source.engines || {},
+};
+
+fs.writeFileSync(runtimePath, `${JSON.stringify(runtime, null, 2)}\n`);
+NODE
+  cp -R "${REPO_ROOT}/packages/sdk/dist" "${RUNTIME_DIR}/cli/vendor/zapper-sdk/dist"
 
   (
     cd "${RUNTIME_DIR}/cli"
@@ -82,10 +110,8 @@ RESOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNTIME_DIR="${RESOURCE_DIR}/ZapperRuntime"
 NODE_BIN="${RUNTIME_DIR}/node/bin/node"
 CLI_ENTRY="${RUNTIME_DIR}/cli/dist/index.js"
-PM2_ENTRY="${RUNTIME_DIR}/cli/node_modules/pm2/bin/pm2"
 
 export ZAPPER_NODE="${NODE_BIN}"
-export ZAPPER_PM2_JS="${PM2_ENTRY}"
 export PATH="${PATH:-/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin}:${RUNTIME_DIR}/cli/node_modules/.bin:${RUNTIME_DIR}/node/bin"
 
 exec "${NODE_BIN}" "${CLI_ENTRY}" "$@"

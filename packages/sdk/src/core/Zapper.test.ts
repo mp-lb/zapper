@@ -3,7 +3,7 @@ import { ProjectKillTargets, Zapper } from "./Zapper";
 import { Planner } from "./Planner";
 import { ActionPlan } from "../types";
 import { executeActions } from "./executeActions";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 import {
   createInstance,
@@ -24,7 +24,7 @@ import { renderer } from "../ui/renderer";
 // Mock external dependencies
 vi.mock("./Planner");
 vi.mock("./executeActions");
-vi.mock("./process/Pm2Manager");
+vi.mock("./process/NativeProcessManager");
 vi.mock("./docker");
 vi.mock("./instanceResolver", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./instanceResolver")>();
@@ -651,9 +651,9 @@ native:
       await zapper.loadConfig(configPath);
     });
 
-    it("discovers PM2 processes and containers by project prefix", async () => {
+    it("discovers native processes and containers by project prefix", async () => {
       (
-        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
       ).mockResolvedValue([
         {
           name: "zap.test-project.api",
@@ -710,14 +710,14 @@ native:
       expect(targets).toEqual({
         projectName: "test-project",
         prefix: "zap.test-project",
-        pm2: ["zap.test-project.api", "zap.test-project.dev.worker"],
+        nativeProcesses: ["zap.test-project.api", "zap.test-project.dev.worker"],
         containers: ["zap.test-project.redis"],
       });
     });
 
-    it("deletes discovered targets from PM2 and Docker", async () => {
+    it("deletes discovered targets from native process and Docker", async () => {
       const deleteProcessMock = vi
-        .spyOn(Pm2Manager, "deleteProcess")
+        .spyOn(NativeProcessManager, "deleteProcess")
         .mockResolvedValue(undefined);
 
       const removeContainerMock = vi
@@ -727,7 +727,7 @@ native:
       const targets: ProjectKillTargets = {
         projectName: "test-project",
         prefix: "zap.test-project",
-        pm2: ["zap.test-project.api", "zap.test-project.worker"],
+        nativeProcesses: ["zap.test-project.api", "zap.test-project.worker"],
         containers: ["zap.test-project.redis"],
       };
 
@@ -756,7 +756,7 @@ native:
       const unloadedZapper = new Zapper();
 
       (
-        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
       ).mockResolvedValue([
         {
           name: "zap.legacy.api",
@@ -804,7 +804,7 @@ native:
       expect(targets).toEqual({
         projectName: "legacy",
         prefix: "zap.legacy",
-        pm2: ["zap.legacy.api"],
+        nativeProcesses: ["zap.legacy.api"],
         containers: ["zap.legacy.redis"],
       });
     });
@@ -813,7 +813,7 @@ native:
       const unloadedZapper = new Zapper();
 
       const deleteProcessMock = vi
-        .spyOn(Pm2Manager, "deleteProcess")
+        .spyOn(NativeProcessManager, "deleteProcess")
         .mockResolvedValue(undefined);
 
       const removeContainerMock = vi
@@ -821,7 +821,7 @@ native:
         .mockResolvedValue(undefined);
 
       (
-        Pm2Manager.listProcesses as unknown as ReturnType<typeof vi.fn>
+        NativeProcessManager.listProcesses as unknown as ReturnType<typeof vi.fn>
       ).mockResolvedValue([
         {
           name: "zap.legacy.api",
@@ -857,7 +857,7 @@ native:
       expect(result).toEqual({
         projectName: "legacy",
         prefix: "zap.legacy",
-        pm2: ["zap.legacy.api"],
+        nativeProcesses: ["zap.legacy.api"],
         containers: ["zap.legacy.redis"],
       });
     });

@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Planner } from "./Planner";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
 import { Action } from "../types";
 import { ProcessInfo } from "../types/index";
 
-vi.mock("./process/Pm2Manager");
+vi.mock("./process/NativeProcessManager");
 vi.mock("./docker");
 
-const mockPm2Manager = vi.mocked(Pm2Manager);
+const mockNativeProcessManager = vi.mocked(NativeProcessManager);
 const mockDockerManager = vi.mocked(DockerManager);
 
 function createMockProcessInfo(name: string, status: string): ProcessInfo {
@@ -53,7 +53,7 @@ function getActionTypes(wave: { actions: Action[] }): Set<string> {
 describe("Planner Wave Generation", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     mockDockerManager.listContainers.mockResolvedValue([]);
   });
 
@@ -71,7 +71,7 @@ describe("Planner Wave Generation", () => {
       };
 
       // Simulate all services running
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.admin-app", "online"),
         createMockProcessInfo("zap.test-project.scribe", "online"),
         createMockProcessInfo("zap.test-project.mongo", "online"),
@@ -108,7 +108,7 @@ describe("Planner Wave Generation", () => {
       };
 
       // Simulate all services running
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.worker", "online"),
       ]);
@@ -242,7 +242,7 @@ describe("Planner Wave Generation", () => {
       };
 
       // Simulate all running
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "online"),
       ]);
@@ -272,7 +272,7 @@ describe("Planner Wave Generation", () => {
       };
 
       // Simulate all running
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.worker", "online"),
       ]);
@@ -308,7 +308,7 @@ describe("Planner Wave Generation", () => {
       };
 
       // Already running
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
 
@@ -346,7 +346,7 @@ describe("Planner Wave Generation", () => {
 describe("Wave output formatting", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     mockDockerManager.listContainers.mockResolvedValue([]);
   });
 

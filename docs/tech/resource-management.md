@@ -2,7 +2,7 @@
 
 Zapper names the resources it creates so they can be discovered later:
 
-- PM2 processes and Docker containers: `zap.<project>.<instanceId>.<service>`
+- Native processes and Docker containers: `zap.<project>.<instanceId>.<service>`
 - Generated Docker volumes: `zap.<project>.<instanceId>.volN`
 
 For the proposed machine-wide project registry and dashboard model, see
@@ -25,7 +25,7 @@ managed volume path in the current `zap.yaml`.
 Dangling resources belong to an instance recorded in this repo, but no longer
 match the current `zap.yaml` or current state. Common causes:
 
-- A service was renamed or removed while its PM2 process or Docker container
+- A service was renamed or removed while its native process or Docker container
   still exists.
 - A generated Docker volume exists but is no longer tracked in
   `.zap/state.json`.
@@ -42,46 +42,46 @@ instance recorded in the local `.zap/state.json`. They usually come from another
 checkout, older state, or manual resource creation.
 
 Use `zap global list` (or `zap global ls`, `zap g ls`) for a machine-wide view
-of discovered Zapper PM2 and Docker container resources. It also lists
-**orphaned processes**: processes still doing Zapper work that PM2 knows
-nothing about (typically survivors of a PM2 daemon kill) — wrapper processes
-outside any PM2-managed tree, and listeners on zap-assigned ports. Orphans
+of discovered Zapper native and Docker container resources. It also lists
+**orphaned processes**: processes still doing Zapper work that the supervisor
+knows nothing about (typically survivors of a daemon restart) — wrapper processes
+outside any supervisor-managed tree, and listeners on zap-assigned ports. Orphans
 hold their old ports, so the owning service fails to start with "port already
-in use" while PM2 reports it errored. Use `zap global kill <project>` when you
+in use" while the supervisor reports it errored. Use `zap global kill <project>` when you
 want project-wide cleanup across checkouts.
 
 ## Cleanup Commands
 
 - `zap down` stops resources for the selected instance and current config.
-- `zap kill` deletes all PM2 processes and Docker containers for the current
+- `zap kill` deletes all native processes and Docker containers for the current
   project across instances.
-- `zap global kill <project>` deletes PM2 processes and Docker containers for a
+- `zap global kill <project>` deletes native processes and Docker containers for a
   named project.
 - `zap global prune` audits stale registry entries and orphaned resources
-  before mutating anything. After confirmation, it deletes orphaned PM2
+  before mutating anything. After confirmation, it deletes orphaned native
   processes, Docker containers, and generated Docker volumes, then removes stale
   registry entries. Use `--force` (`-y`) for non-interactive cleanup.
-  - The audit only judges a running PM2 process or container "dangling" when its
+  - The audit only judges a running native process or container "dangling" when its
     owning project loads successfully and no longer lists that service. If a
     registered project cannot be loaded right now (invalid config, missing
     dependency, mid-edit), its live resources are left alone rather than offered
     for deletion, so a temporarily broken project is never pruned out from under
     you.
-  - It also flags PM2 registrations whose `.zap` wrapper script no longer exists
-    (they can only crash-loop), and orphaned processes unknown to PM2 — wrapper
+  - It also flags supervisor registrations whose `.zap` wrapper script no longer exists
+    (they can only crash-loop), and orphaned processes unknown to the supervisor — wrapper
     survivors of a daemon kill and listeners on zap-assigned ports. Orphan
-    process trees are killed after a fresh re-check against PM2's table.
+    process trees are killed after a fresh re-check against the supervisor table.
 - `zap volume prune` deletes stale generated Docker volumes for the selected
   instance.
 - `zap volume reset` forgets generated volume assignments in `.zap/state.json`
   without deleting Docker volumes.
 
-For one-off cleanup, Docker and PM2 commands are still valid escape hatches:
+For one-off cleanup, Docker and Zapper cleanup commands are still valid escape hatches:
 
 ```bash
 docker rm -f <container>
 docker volume rm <volume>
-pm2 delete <process>
+zap kill
 ```
 
 ## Practical Recovery

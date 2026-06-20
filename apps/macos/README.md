@@ -55,10 +55,10 @@ apps/macos/build/Zapper.app
 No Xcode project is required for this first version.
 
 By default the build also packages a local Node runtime, the built CLI from
-`packages/cli/dist`, production CLI dependencies, and PM2 into
-`Contents/Resources/ZapperRuntime`. Run `pnpm --filter @mp-lb/zapper build`
-before building the app. Set `PACKAGE_ZAPPER_RUNTIME=0` to skip runtime
-packaging for a development-only build.
+`packages/cli/dist`, the built SDK from `packages/sdk/dist`, and production
+dependencies into `Contents/Resources/ZapperRuntime`. Run `pnpm build` before
+building the app. Set `PACKAGE_ZAPPER_RUNTIME=0` to skip runtime packaging for
+a development-only build.
 
 Local builds use ad-hoc signing by default. To sign with a Developer ID
 certificate already installed in your keychain, pass its identity explicitly:

@@ -9,7 +9,7 @@ Build the CLI, rebuild the app bundle, stop any running Zapper app, and launch
 the freshly built development app:
 
 ```bash
-pnpm --filter @mp-lb/zapper build
+pnpm build
 apps/macos/bin/run
 ```
 
@@ -32,9 +32,9 @@ the `NPM_TOKEN` value from `docs/secrets.txt.enc`. The macOS app release
 workflow is separate and starts from pushed `v*` tags after the CLI package
 version is final.
 
-By default the app build packages the built CLI, Node runtime, production CLI
-dependencies, and PM2 into the app bundle. If you only changed Swift code and
-want a faster local-only build, you can skip runtime packaging:
+By default the app build packages the built CLI, built SDK, Node runtime, and
+production runtime dependencies into the app bundle. If you only changed Swift
+code and want a faster local-only build, you can skip runtime packaging:
 
 ```bash
 PACKAGE_ZAPPER_RUNTIME=0 apps/macos/bin/run
@@ -44,6 +44,8 @@ PACKAGE_ZAPPER_RUNTIME=0 apps/macos/bin/run
 
 - The app shells out to its bundled `zap` wrapper for `zap system projects
   --json`, links, and start/stop/restart actions.
+- The bundled CLI resolves its shared implementation from the bundled SDK
+  package, not a workspace dependency.
 - Use the gear menu to choose an external CLI only when debugging CLI selection.
 - If the popover still looks stale, open the app menu and refresh after launch.
 - Open Settings (gear) and click **Debug Console** to see every `zap` command

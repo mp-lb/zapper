@@ -148,7 +148,7 @@ export type CommandResult =
       status: "aborted" | "completed";
       projectName: string;
       prefix: string;
-      pm2: string[];
+      nativeProcesses: string[];
       containers: string[];
     }
   | {
@@ -194,7 +194,7 @@ export type CommandResult =
       projects: Array<{
         name: string;
         prefix: string;
-        pm2: string[];
+        nativeProcesses: string[];
         containers: string[];
       }>;
       // Processes running Zapper work but unknown to the supervisor (daemon-kill
@@ -213,7 +213,7 @@ export type CommandResult =
       projects: Array<{
         name: string;
         prefix: string;
-        pm2: string[];
+        nativeProcesses: string[];
         containers: string[];
       }>;
     }

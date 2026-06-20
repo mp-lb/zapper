@@ -1,4 +1,4 @@
-import { Pm2Manager } from "./process";
+import { NativeProcessManager } from "./process";
 import { DockerManager } from "./docker";
 import { Context } from "../types/Context";
 import { Healthcheck } from "../types";
@@ -91,10 +91,10 @@ export async function getStatus(
   const matchesService = (name: string): boolean =>
     !serviceSet || serviceSet.has(name);
 
-  const pm2List = await Pm2Manager.listProcesses();
+  const nativeProcessList = await NativeProcessManager.listProcesses();
 
   if (!context) {
-    const filtered = pm2List.filter(() => {
+    const filtered = nativeProcessList.filter(() => {
       if (all) return true;
       return true;
     });
@@ -131,13 +131,13 @@ export async function getStatus(
   for (const proc of context.processes) {
     if (!matchesService(proc.name)) continue;
 
-    const expectedPm2Name = buildServiceName(
+    const expectedNativeProcessName = buildServiceName(
       projectName,
       proc.name,
       context.instanceId,
     );
 
-    const runningProcess = pm2List.find((p) => p.name === expectedPm2Name);
+    const runningProcess = nativeProcessList.find((p) => p.name === expectedNativeProcessName);
     const healthcheck = proc.healthcheck;
 
     let status: Status = "down";
@@ -154,7 +154,7 @@ export async function getStatus(
 
     native.push({
       service: proc.name as string,
-      rawName: expectedPm2Name,
+      rawName: expectedNativeProcessName,
       status,
       type: "native" as const,
       enabled: true,

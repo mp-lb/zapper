@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { GlobalCommand } from "./GlobalCommand";
 import { confirm } from "../utils/confirm";
 import { DockerManager } from "../core/docker/DockerManager";
-import { Pm2Manager } from "../core/process/Pm2Manager";
+import { NativeProcessManager } from "../core/process/NativeProcessManager";
 import {
   auditSystemResources,
   cleanupSystemResources,
@@ -46,13 +46,13 @@ const mockedPruneSystemRegistry = vi.mocked(pruneSystemRegistry);
 describe("GlobalCommand", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([]);
+    vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([]);
     vi.spyOn(DockerManager, "listContainers").mockResolvedValue([]);
     mockedGetStaleSystemRegistryProjects.mockReturnValue([]);
   });
 
   it("lists all discovered projects by default", async () => {
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([
       {
         name: "zap.alpha.abc123.api",
         pid: 1,
@@ -100,13 +100,13 @@ describe("GlobalCommand", () => {
         {
           name: "alpha",
           prefix: "zap.alpha",
-          pm2: ["zap.alpha.abc123.api"],
+          nativeProcesses: ["zap.alpha.abc123.api"],
           containers: ["zap.alpha.abc123.db"],
         },
         {
           name: "beta",
           prefix: "zap.beta",
-          pm2: ["zap.beta.def456.worker"],
+          nativeProcesses: ["zap.beta.def456.worker"],
           containers: [],
         },
       ],
@@ -142,7 +142,7 @@ describe("GlobalCommand", () => {
     };
 
     const orphanedResource = {
-      type: "pm2" as const,
+      type: "nativeProcess" as const,
       name: "zap.old.abc123.api",
       project: "old",
       instanceId: "abc123",

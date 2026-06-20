@@ -1,5 +1,5 @@
 import { ZapperConfig, Process, Container } from "../config/schemas";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 import { ActionPlan, ExecutionWave, Action } from "../types";
 import { DependencyGraph } from "./DependencyGraph";
@@ -172,25 +172,25 @@ export class Planner {
       selectedContainers = allContainers;
     }
 
-    const pm2List =
-      selectedProcesses.length > 0 ? await Pm2Manager.listProcesses() : [];
+    const nativeProcessList =
+      selectedProcesses.length > 0 ? await NativeProcessManager.listProcesses() : [];
 
-    const onlinePm2 = new Set(
-      pm2List
+    const onlineNativeProcesses = new Set(
+      nativeProcessList
         .filter((p) => p.status.toLowerCase() === "online")
         .map((p) => p.name as string),
     );
 
-    const existingPm2 = new Set(pm2List.map((p) => p.name as string));
+    const existingNativeProcesses = new Set(nativeProcessList.map((p) => p.name as string));
 
     const instanceId = (this.config as ZapperConfig & { instanceId?: string })
       .instanceId;
 
-    const isPm2Online = (name: string) =>
-      onlinePm2.has(buildServiceName(projectName, name, instanceId));
+    const isNativeProcessOnline = (name: string) =>
+      onlineNativeProcesses.has(buildServiceName(projectName, name, instanceId));
 
-    const hasPm2Process = (name: string) =>
-      existingPm2.has(buildServiceName(projectName, name, instanceId));
+    const hasNativeProcess = (name: string) =>
+      existingNativeProcesses.has(buildServiceName(projectName, name, instanceId));
 
     const shouldListContainers =
       selectedContainers.length > 0 && !(op === "start" && forceStart);
@@ -217,7 +217,7 @@ export class Planner {
       const servicesToStart = new Set<string>();
 
       for (const p of selectedProcesses) {
-        if (forceStart || !isPm2Online(p.name as string)) {
+        if (forceStart || !isNativeProcessOnline(p.name as string)) {
           servicesToStart.add(p.name as string);
         }
       }
@@ -240,7 +240,7 @@ export class Planner {
     const servicesToStop = new Set<string>();
 
     for (const p of selectedProcesses) {
-      if (hasPm2Process(p.name as string)) servicesToStop.add(p.name as string);
+      if (hasNativeProcess(p.name as string)) servicesToStop.add(p.name as string);
     }
 
     for (const [name] of selectedContainers) {

@@ -8,7 +8,6 @@ import {
   readFileSync,
 } from "fs";
 import path from "path";
-import * as pm2Module from "pm2";
 import { Process } from "../../config/schemas";
 import { ProcessInfo } from "../../types/index";
 import { renderer } from "../../ui/renderer";
@@ -16,70 +15,35 @@ import { buildServiceName } from "../../utils/nameBuilder";
 import { resolveBashRuntime, resolveTailRuntime } from "../../runtime";
 import { OrphanScanner } from "../../system/OrphanScanner";
 import { captureShellEnv } from "./shellEnvCapture";
+import { ZapperSupervisorClient } from "./ZapperSupervisorClient";
+import {
+  SupervisorProcessRecord,
+  SupervisorStartOptions,
+} from "./ZapperSupervisorProtocol";
 
 interface ShellCapture {
   shell: string;
   env: Record<string, string>;
 }
 
-interface Pm2Callback<T = unknown> {
-  (error: Error | null, result?: T): void;
-}
-
-interface Pm2ApiProcess {
-  name?: string;
-  pid?: number;
-  monit?: {
-    memory?: number;
-    cpu?: number;
-  };
-  pm2_env?: {
-    status?: string;
-    pm_uptime?: number;
-    restart_time?: number;
-    pm_cwd?: string;
-    pm_exec_path?: string;
-  };
-}
-
-interface Pm2StartOptions {
-  name: string;
-  script: string;
-  interpreter: string;
-  cwd: string;
-  env: Record<string, string | number | boolean>;
+interface NativeProcessStartOptions extends SupervisorStartOptions {
   out_file: string;
   error_file: string;
-  logFile?: string;
   merge_logs: boolean;
-  autorestart: boolean;
   max_restarts: number;
-  maxRestarts: number;
   min_uptime: number;
-  minUptime: number;
   exp_backoff_restart_delay: number;
-  restartBackoffMs: number;
 }
 
-interface Pm2Api {
-  connect(callback: Pm2Callback<void>): void;
-  disconnect(): void;
-  start(arg: Pm2StartOptions | string, callback: Pm2Callback): void;
-  stop(name: string, callback: Pm2Callback): void;
-  restart(name: string, callback: Pm2Callback): void;
-  delete(name: string, callback: Pm2Callback): void;
-  list(callback: Pm2Callback<Pm2ApiProcess[]>): void;
-  dump(callback: Pm2Callback): void;
-  resurrect(callback: Pm2Callback): void;
-  killDaemon(callback: Pm2Callback): void;
+function assertNativeProcessPlatform(): void {
+  if (process.platform !== "win32") return;
+
+  throw new Error(
+    "Native Zapper services are not supported on Windows. Run Zapper from WSL2, macOS, or Linux.",
+  );
 }
 
-const pm2 = ((pm2Module as { default?: unknown }).default ??
-  pm2Module) as Pm2Api;
-
-const PM2_API_TIMEOUT_MS = 15_000;
-
-export class Pm2Manager {
+export class NativeProcessManager {
   static async startProcess(
     processConfig: Process,
     projectName: string,
@@ -100,6 +64,8 @@ export class Pm2Manager {
     configDir?: string,
     instanceId?: string | null,
   ): Promise<void> {
+    assertNativeProcessPlatform();
+
     if (!configDir) {
       throw new Error("Config directory is required for process management");
     }
@@ -126,7 +92,7 @@ export class Pm2Manager {
 
     const shellCapture = await this.resolveShellCapture(processConfig);
 
-    // Create a minimal wrapper script for PM2 to execute.
+    // Create a minimal wrapper script for the supervisor to execute.
     const wrapperScript = this.createWrapperScript(
       projectName,
       processConfig,
@@ -140,11 +106,11 @@ export class Pm2Manager {
       { data: processConfig.env },
     );
 
-    renderer.log.debug(`Final env for PM2 process:`, {
+    renderer.log.debug(`Final env for supervisor process:`, {
       data: processConfig.resolvedEnv,
     });
 
-    const appConfig = this.createPm2StartOptions(
+    const appConfig = this.createNativeProcessStartOptions(
       projectName,
       processConfig,
       configDir,
@@ -158,26 +124,28 @@ export class Pm2Manager {
     renderer.log.debug(ecosystemJson);
     renderer.log.debug("─".repeat(50));
 
-    await this.startPm2Process(appConfig);
+    await this.startNativeProcess(appConfig);
   }
 
   static async startProcessFromEcosystem(ecosystemPath: string): Promise<void> {
+    assertNativeProcessPlatform();
+
     const ecosystem = JSON.parse(readFileSync(ecosystemPath, "utf8")) as {
-      apps?: Pm2StartOptions[];
+      apps?: NativeProcessStartOptions[];
     };
 
     const app = ecosystem.apps?.[0];
     if (!app) throw new Error(`No app found in ecosystem: ${ecosystemPath}`);
-    await this.startPm2Process(app);
+    await this.startNativeProcess(app);
   }
 
-  private static createPm2StartOptions(
+  private static createNativeProcessStartOptions(
     projectName: string,
     processConfig: Process,
     configDir: string,
     wrapperScript: string,
     instanceId?: string | null,
-  ): Pm2StartOptions {
+  ): NativeProcessStartOptions {
     return {
       name: buildServiceName(
         projectName,
@@ -188,8 +156,9 @@ export class Pm2Manager {
       interpreter: resolveBashRuntime([]).command,
       cwd: this.resolveProcessCwd(processConfig, configDir),
       env: processConfig.resolvedEnv || {},
-      // PM2 7 ignores the `log` attribute; out_file/error_file are the
-      // supported way to get a combined managed log file.
+      // Keep the old process-manager-shaped fields for compatibility with tests
+      // and any callers that inspect the generated config; the native
+      // supervisor uses logFile below.
       out_file: this.managedLogFilePath(
         projectName,
         processConfig.name as string,
@@ -244,134 +213,55 @@ export class Pm2Manager {
     return resolved;
   }
 
-  private static startPm2Process(appConfig: Pm2StartOptions): Promise<void> {
-    return this.pm2Action("start", appConfig);
+  private static startNativeProcess(appConfig: NativeProcessStartOptions): Promise<void> {
+    return this.supervisorAction("start", appConfig);
   }
 
-  private static async pm2Action(
+  private static async supervisorAction(
     method: string,
-    arg?: Pm2StartOptions | string,
+    arg?: NativeProcessStartOptions | string,
     retryCount = 0,
   ): Promise<any> {
-    renderer.log.debug(`Running PM2 API action: ${method}`);
+    void retryCount;
+    renderer.log.debug(`Running supervisor action: ${method}`);
 
-    try {
-      await this.pm2Connect();
-
-      return await this.pm2ActionResult(method, arg);
-    } catch (error) {
-      const message = String(error);
-
-      const isStateCorruption =
-        message.includes("Process") &&
-        message.includes("not found") &&
-        message.includes("Cannot read properties of undefined");
-
-      const isVersionMismatch = message.includes(
-        "In-memory PM2 is out-of-date",
-      );
-
-      if ((isStateCorruption || isVersionMismatch) && retryCount === 0) {
-        renderer.log.warn(
-          isVersionMismatch
-            ? `PM2 daemon/API version mismatch detected, restarting the PM2 daemon...`
-            : `PM2 state corruption detected, restarting the PM2 daemon...`,
-        );
-
-        try {
-          await this.recoverPm2Daemon();
-          return await this.pm2Action(method, arg, 1);
-        } catch (resetError) {
-          renderer.log.warn(`PM2 recovery failed: ${resetError}`);
-        }
-      }
-
-      throw error;
-    } finally {
-      this.pm2Disconnect();
+    switch (method) {
+      case "start":
+        await ZapperSupervisorClient.start(arg as NativeProcessStartOptions);
+        return [];
+      case "stop":
+        await ZapperSupervisorClient.stop(String(arg));
+        return [];
+      case "restart":
+        await ZapperSupervisorClient.restart(String(arg));
+        return [];
+      case "delete":
+        await ZapperSupervisorClient.delete(String(arg));
+        return [];
+      case "list":
+        return ZapperSupervisorClient.list();
+      case "killDaemon":
+        await ZapperSupervisorClient.shutdown();
+        return [];
+      case "dump":
+      case "resurrect":
+        return [];
+      default:
+        throw new Error(`Unsupported supervisor action: ${method}`);
     }
   }
 
-  private static pm2Connect(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      pm2.connect((error) => {
-        if (error) reject(error);
-        else resolve();
-      });
-    });
-  }
-
-  private static pm2Disconnect(): void {
-    try {
-      pm2.disconnect();
-    } catch {
-      // Preserve the action's real result; disconnect failures are cleanup.
-    }
-  }
-
-  private static pm2ActionResult(
-    method: string,
-    arg?: Pm2StartOptions | string,
-  ): Promise<unknown> {
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(
-          new Error(
-            `PM2 API action timed out after ${PM2_API_TIMEOUT_MS}ms: ${method}`,
-          ),
-        );
-      }, PM2_API_TIMEOUT_MS);
-
-      const callback: Pm2Callback = (error, result) => {
-        clearTimeout(timeout);
-
-        if (error) reject(error);
-        else resolve(result ?? []);
-      };
-
-      switch (method) {
-        case "start":
-          pm2.start(arg as Pm2StartOptions | string, callback);
-          break;
-        case "stop":
-          pm2.stop(String(arg), callback);
-          break;
-        case "restart":
-          pm2.restart(String(arg), callback);
-          break;
-        case "delete":
-          pm2.delete(String(arg), callback);
-          break;
-        case "list":
-          pm2.list(callback as Pm2Callback<Pm2ApiProcess[]>);
-          break;
-        case "dump":
-          pm2.dump(callback);
-          break;
-        case "resurrect":
-          pm2.resurrect(callback);
-          break;
-        case "killDaemon":
-          pm2.killDaemon(callback);
-          break;
-        default:
-          clearTimeout(timeout);
-          reject(new Error(`Unsupported PM2 API action: ${method}`));
-      }
-    });
-  }
-
-  private static toProcessInfo(proc: Pm2ApiProcess): ProcessInfo {
+  private static toProcessInfo(proc: SupervisorProcessRecord): ProcessInfo {
     return {
-      name: proc.name || "",
-      pid: proc.pid || 0,
-      status: proc.pm2_env?.status || "unknown",
-      uptime: proc.pm2_env?.pm_uptime || 0,
-      memory: proc.monit?.memory || 0,
-      cpu: proc.monit?.cpu || 0,
-      restarts: proc.pm2_env?.restart_time || 0,
-      cwd: proc.pm2_env?.pm_cwd,
-      script: proc.pm2_env?.pm_exec_path,
+      name: proc.name,
+      pid: proc.pid,
+      status: proc.status,
+      uptime: proc.uptime,
+      memory: proc.memory,
+      cpu: proc.cpu,
+      restarts: proc.restarts,
+      cwd: proc.cwd,
+      script: proc.script,
     };
   }
 
@@ -408,8 +298,8 @@ export class Pm2Manager {
   }
 
   /**
-   * Kill the process tree of an orphan Zapper wrapper that PM2 no longer
-   * manages.
+   * Kill the process tree of an orphan Zapper wrapper that the supervisor no
+   * longer manages.
    */
   static killDetachedProcessTree(pid: number): void {
     this.killProcessTree(pid);
@@ -425,7 +315,7 @@ export class Pm2Manager {
       ? buildServiceName(projectName, name, instanceId)
       : name;
 
-    await this.pm2Action("stop", prefixedName);
+    await this.supervisorAction("stop", prefixedName);
 
     if (projectName) {
       await this.cleanupLogs(projectName, name, configDir, instanceId);
@@ -445,15 +335,15 @@ export class Pm2Manager {
     const info = await this.getProcessInfo(prefixedName);
 
     if (info && this.hasMissingWrapperScript(info)) {
-      await this.pm2Action("delete", prefixedName);
+      await this.supervisorAction("delete", prefixedName);
 
       throw new Error(
         `Cannot restart ${prefixedName}: its wrapper script no longer exists (${info.script}). ` +
-          `The registration was removed from PM2 to prevent a crash loop; start the service again to recreate it.`,
+          `The registration was removed from the supervisor to prevent a crash loop; start the service again to recreate it.`,
       );
     }
 
-    await this.pm2Action("restart", prefixedName);
+    await this.supervisorAction("restart", prefixedName);
   }
 
   /**
@@ -484,7 +374,7 @@ export class Pm2Manager {
       );
 
       try {
-        await this.pm2Action("delete", proc.name, 1);
+        await this.supervisorAction("delete", proc.name, 1);
         removed.push(proc.name);
       } catch (error) {
         renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
@@ -512,7 +402,7 @@ export class Pm2Manager {
       }
 
       try {
-        await this.pm2Action("delete", proc.name);
+        await this.supervisorAction("delete", proc.name);
         removed.push(proc.name);
       } catch (error) {
         renderer.log.warn(`Failed to deregister ${proc.name}: ${error}`);
@@ -532,7 +422,7 @@ export class Pm2Manager {
       ? buildServiceName(projectName, name, instanceId)
       : name;
 
-    await this.pm2Action("delete", prefixedName);
+    await this.supervisorAction("delete", prefixedName);
 
     if (projectName) {
       await this.cleanupLogs(projectName, name, configDir, instanceId);
@@ -567,7 +457,7 @@ export class Pm2Manager {
       );
 
       for (const proc of matchingProcesses) {
-        await this.pm2Action("delete", proc.name);
+        await this.supervisorAction("delete", proc.name);
       }
 
       if (projectName) {
@@ -723,7 +613,9 @@ export class Pm2Manager {
 
   static async listProcesses(): Promise<ProcessInfo[]> {
     try {
-      const rawList = (await this.pm2Action("list")) as Pm2ApiProcess[];
+      const rawList = (await this.supervisorAction(
+        "list",
+      )) as SupervisorProcessRecord[];
       const processes = rawList.map((proc) => this.toProcessInfo(proc));
 
       return processes;
@@ -849,12 +741,12 @@ export class Pm2Manager {
   }
 
   /**
-   * Restart the PM2 daemon and sweep wrapper processes that survived.
+   * Restart the supervisor daemon and sweep wrapper processes that survived.
    */
-  static async recoverPm2Daemon(): Promise<void> {
+  static async recoverSupervisorDaemon(): Promise<void> {
     const hadProcesses = (await this.listProcesses()).length > 0;
 
-    await this.pm2Action("killDaemon", undefined, 1);
+    await this.supervisorAction("killDaemon", undefined, 1);
     await new Promise((r) => setTimeout(r, 500));
 
     await this.killWrapperSurvivors();
@@ -875,7 +767,7 @@ export class Pm2Manager {
 
     for (const survivor of survivors) {
       renderer.log.warn(
-        `Killing process tree that survived the PM2 daemon restart (PID ${survivor.pid}, ${survivor.scriptPath})`,
+        `Killing process tree that survived the supervisor daemon restart (PID ${survivor.pid}, ${survivor.scriptPath})`,
       );
 
       this.killProcessTree(survivor.pid);
@@ -883,7 +775,7 @@ export class Pm2Manager {
 
     await new Promise((r) => setTimeout(r, 1000));
 
-    for (const survivor of OrphanScanner.listWrapperProcesses()) {
+    for (const survivor of survivors) {
       try {
         globalThis.process.kill(-survivor.pid, "SIGKILL");
       } catch (e) {
@@ -902,7 +794,7 @@ export class Pm2Manager {
 
     if (remaining.length > 0) {
       renderer.log.warn(
-        `Processes survived the PM2 daemon restart and could not be terminated (PIDs ${remaining
+        `Processes survived the supervisor daemon restart and could not be terminated (PIDs ${remaining
           .map((p) => p.pid)
           .join(", ")}); they may still hold their ports`,
       );

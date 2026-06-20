@@ -39,8 +39,12 @@ docker:
 ```bash
 zap up
 zap status
+zap ps --watch
 zap down
 ```
+
+Use `zap status --watch` or `zap ps --watch` to keep status open. It polls
+slowly while idle, then refreshes every second after a status change.
 
 ## Add Tasks
 

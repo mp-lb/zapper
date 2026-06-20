@@ -1,7 +1,7 @@
 import { parseYamlFile } from "../config/yamlParser";
 import { EnvResolver } from "../config/EnvResolver";
-import { Pm2Executor } from "./process/Pm2Executor";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessExecutor } from "./process/NativeProcessExecutor";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
 import { Context, Process, Container } from "../types/Context";
@@ -64,7 +64,7 @@ const READ_ONLY_STATE_COMMANDS = new Set([
 export interface ProjectKillTargets {
   projectName: string;
   prefix: string;
-  pm2: string[];
+  nativeProcesses: string[];
   containers: string[];
 }
 
@@ -640,7 +640,7 @@ export class Zapper {
     const prefix = buildPrefix(resolvedProjectName);
     const scopedPrefix = `${prefix}.`;
 
-    const pm2 = (await Pm2Manager.listProcesses())
+    const nativeProcesses = (await NativeProcessManager.listProcesses())
       .map((process) => process.name)
       .filter((name) => name.startsWith(scopedPrefix))
       .sort();
@@ -653,7 +653,7 @@ export class Zapper {
     return {
       projectName: resolvedProjectName,
       prefix,
-      pm2: Array.from(new Set(pm2)),
+      nativeProcesses: Array.from(new Set(nativeProcesses)),
       containers: Array.from(new Set(containers)),
     };
   }
@@ -665,8 +665,8 @@ export class Zapper {
     const resolvedTargets =
       targets ?? (await this.getProjectKillTargets(projectName));
 
-    for (const processName of resolvedTargets.pm2) {
-      await Pm2Manager.deleteProcess(processName);
+    for (const processName of resolvedTargets.nativeProcesses) {
+      await NativeProcessManager.deleteProcess(processName);
     }
 
     for (const containerName of resolvedTargets.containers) {
@@ -702,13 +702,13 @@ export class Zapper {
       if (!exists) throw new ContainerNotRunningError(resolvedName, dockerName);
       await DockerManager.showLogs(dockerName, follow);
     } else if (isProcess) {
-      const pm2Executor = new Pm2Executor(
+      const nativeProcessExecutor = new NativeProcessExecutor(
         projectName,
         projectRoot,
         this.context.instanceId,
       );
 
-      await pm2Executor.showLogs(resolvedName, follow);
+      await nativeProcessExecutor.showLogs(resolvedName, follow);
     } else {
       throw new ServiceNotFoundError(processName);
     }
@@ -757,10 +757,11 @@ export class Zapper {
 
     if (fs.existsSync(zapDir)) {
       // stopProcesses only covers the current stack. Deleting .zap while any
-      // other stack/instance of this local copy still has a PM2 registration
+      // other stack/instance of this local copy still has a native process
+      // registration
       // would leave that registration pointing at a missing wrapper script,
       // which crash-loops unbounded — deregister them all first.
-      await Pm2Manager.deregisterAppsUnderZapDir(zapDir);
+      await NativeProcessManager.deregisterAppsUnderZapDir(zapDir);
       fs.rmSync(zapDir, { recursive: true, force: true });
       renderer.log.info(renderer.command.removedZapDirText());
     } else {

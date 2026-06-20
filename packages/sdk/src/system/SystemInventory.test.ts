@@ -3,7 +3,7 @@ import os from "os";
 import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { DockerManager } from "../core/docker/DockerManager";
-import { Pm2Manager } from "../core/process/Pm2Manager";
+import { NativeProcessManager } from "../core/process/NativeProcessManager";
 import type { Context } from "../types/Context";
 import { auditSystemResources } from "./SystemInventory";
 import { OrphanScanner } from "./OrphanScanner";
@@ -52,7 +52,7 @@ describe("SystemInventory", () => {
   beforeEach(() => {
     tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "zapper-system-"));
     vi.stubEnv("ZAPPER_SYSTEM_STATE_HOME", path.join(tempDir, "system"));
-    vi.spyOn(Pm2Manager, "listProcesses").mockResolvedValue([
+    vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([
       {
         name: "zap.unregistered.abc123.api",
         pid: 1,
@@ -103,13 +103,13 @@ describe("SystemInventory", () => {
     expect(audit.resources).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          type: "pm2",
+          type: "nativeProcess",
           name: "zap.unregistered.abc123.api",
           classification: "live-unregistered",
           location: "unregistered / instance abc123 / api",
         }),
         expect.objectContaining({
-          type: "pm2",
+          type: "nativeProcess",
           name: "zap.legacy.worker",
           classification: "legacy",
         }),
@@ -138,7 +138,7 @@ describe("SystemInventory", () => {
     const context = makeContext(projectRoot);
     touchSystemProject({ context, configPath: context.configPath! });
 
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([]);
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([]);
     vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
     vi.mocked(DockerManager.listVolumes).mockResolvedValue([
       { name: "zap.registered.unknown456.vol1" },
@@ -174,7 +174,7 @@ describe("SystemInventory", () => {
       "project: [unclosed\n",
     );
 
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([
       {
         name: "zap.registered.known123.api",
         pid: 1,
@@ -200,8 +200,8 @@ describe("SystemInventory", () => {
     expect(audit.resources).toEqual([]);
   });
 
-  it("flags PM2 processes whose working directory no longer exists as dangling", async () => {
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+  it("flags native processes whose working directory no longer exists as dangling", async () => {
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([
       {
         name: "zap.anyproject.gone123.api",
         pid: 11,
@@ -221,7 +221,7 @@ describe("SystemInventory", () => {
 
     expect(audit.resources).toEqual([
       expect.objectContaining({
-        type: "pm2",
+        type: "nativeProcess",
         name: "zap.anyproject.gone123.api",
         classification: "dangling",
         reason: "Process working directory no longer exists",
@@ -229,8 +229,8 @@ describe("SystemInventory", () => {
     ]);
   });
 
-  it("flags PM2 registrations whose wrapper script no longer exists as dangling", async () => {
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+  it("flags supervisor registrations whose wrapper script no longer exists as dangling", async () => {
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([
       {
         name: "zap.anyproject.gone456.api",
         pid: 12,
@@ -251,7 +251,7 @@ describe("SystemInventory", () => {
 
     expect(audit.resources).toEqual([
       expect.objectContaining({
-        type: "pm2",
+        type: "nativeProcess",
         name: "zap.anyproject.gone456.api",
         classification: "dangling",
         reason:
@@ -260,8 +260,8 @@ describe("SystemInventory", () => {
     ]);
   });
 
-  it("reports processes holding zap-assigned ports that are unknown to PM2", async () => {
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([]);
+  it("reports processes holding zap-assigned ports that are unknown to the supervisor", async () => {
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([]);
     vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
     vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
 
@@ -290,12 +290,12 @@ describe("SystemInventory", () => {
     ]);
   });
 
-  it("flags non-PM2 wrapper processes whose script is gone, skipping live scripts and PM2-managed pids", async () => {
+  it("flags non-supervisor wrapper processes whose script is gone, skipping live scripts and supervisor-managed pids", async () => {
     const liveScript = path.join(tempDir, ".zap", "proj.svc.111.sh");
     fs.mkdirSync(path.dirname(liveScript), { recursive: true });
     fs.writeFileSync(liveScript, "#!/bin/bash\n");
 
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([]);
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([]);
     vi.mocked(DockerManager.listContainers).mockResolvedValue([]);
     vi.mocked(DockerManager.listVolumes).mockResolvedValue([]);
 
@@ -316,8 +316,8 @@ describe("SystemInventory", () => {
     ]);
   });
 
-  it("does not report a wrapper pid that PM2 still manages", async () => {
-    vi.mocked(Pm2Manager.listProcesses).mockResolvedValue([
+  it("does not report a wrapper pid that supervisor still manages", async () => {
+    vi.mocked(NativeProcessManager.listProcesses).mockResolvedValue([
       {
         name: "zap.unregistered.abc123.api",
         pid: 300,

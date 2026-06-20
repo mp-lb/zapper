@@ -2,18 +2,18 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getServiceList } from "./getServiceList";
 import { getStatus } from "./getStatus";
 import type { Context } from "../types/Context";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 
 vi.mock("./getStatus", () => ({
   getStatus: vi.fn(),
 }));
 
-vi.mock("./process/Pm2Manager");
+vi.mock("./process/NativeProcessManager");
 vi.mock("./docker");
 
 const mockedGetStatus = vi.mocked(getStatus);
-const mockedPm2Manager = vi.mocked(Pm2Manager);
+const mockedNativeProcessManager = vi.mocked(NativeProcessManager);
 const mockedDockerManager = vi.mocked(DockerManager);
 
 function createContext(): Context {
@@ -94,7 +94,7 @@ function createContext(): Context {
 describe("getServiceList", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedPm2Manager.listProcesses.mockResolvedValue([]);
+    mockedNativeProcessManager.listProcesses.mockResolvedValue([]);
     mockedDockerManager.listContainers.mockResolvedValue([]);
     mockedDockerManager.listVolumes.mockResolvedValue([]);
   });
@@ -177,7 +177,7 @@ describe("getServiceList", () => {
 
   it("reports project-shaped dangling and alien resources", async () => {
     mockedGetStatus.mockResolvedValue({ native: [], docker: [] });
-    mockedPm2Manager.listProcesses.mockResolvedValue([
+    mockedNativeProcessManager.listProcesses.mockResolvedValue([
       {
         name: "zap.demo.abc123.old-api",
         pid: 1,
@@ -220,7 +220,7 @@ describe("getServiceList", () => {
 
     expect(result.resources?.dangling).toEqual([
       {
-        type: "pm2",
+        type: "nativeProcess",
         name: "zap.demo.abc123.old-api",
         reason: 'service "old-api" is not in current zap.yaml',
       },
@@ -243,7 +243,7 @@ describe("getServiceList", () => {
 
     expect(result.resources?.alien).toEqual([
       {
-        type: "pm2",
+        type: "nativeProcess",
         name: "zap.demo.zz9999.api",
         reason: "instance not in this repo state",
       },

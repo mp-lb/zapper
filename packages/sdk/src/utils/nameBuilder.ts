@@ -1,5 +1,5 @@
 /**
- * Centralized service name construction for PM2 processes and Docker containers.
+ * Centralized service name construction for native processes and Docker containers.
  * All names follow the pattern: zap.{project}.{service}
  * or with an instance: zap.{project}.{instanceId}.{service}
  */

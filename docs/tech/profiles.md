@@ -478,7 +478,7 @@ A resolved profile contains:
 }
 ```
 
-Runtime names, PM2 names, Docker names, and name parsing are core Zapper
+Runtime names, native process names, Docker names, and name parsing are core Zapper
 mechanics and stay outside the profile migration except where existing runtime
 code consumes the selected profile.
 

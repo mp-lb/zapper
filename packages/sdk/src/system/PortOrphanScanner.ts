@@ -118,7 +118,7 @@ export const PortOrphanScanner = {
    * Find processes listening on a zap-assigned port that do not belong to
    * any supervisor-managed process tree — survivors of a daemon kill. They hold
    * the port, so every later start of the owning service fails with "port
-   * already in use" while PM2 shows nothing running.
+   * already in use" while the supervisor shows nothing running.
    *
    * `managedPids` are the supervisor's current process PIDs; `ignorePids` are roots of
    * trees already reported by another scan (to avoid double-reporting).

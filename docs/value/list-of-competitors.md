@@ -9,7 +9,7 @@ inputs:
 
 - Docker Compose for container-only stack definition and lifecycle control. The repo has an explicit `compose-study.md`, which implies Compose is a meaningful comparison point.
 - Task or Taskfile for one-off commands and repeatable local scripts. The repo has an explicit `taskfile-study.md`, which makes it a relevant adjacent alternative.
-- PM2 plus repo-specific shell scripts for native process supervision, because Zapper itself delegates native services to PM2.
+- Process managers plus repo-specific shell scripts for native process supervision.
 - Manual local-dev workflows:
   - multiple terminal tabs
   - ad hoc `docker run` or `docker compose` commands

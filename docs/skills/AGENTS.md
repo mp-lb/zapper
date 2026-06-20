@@ -6,13 +6,13 @@ Read this file before making changes in this repository.
 
 - Put authored skills in `authored-skills/<skill-name>/`.
 - Put authoring process, style rules, and templates in `authoring/`.
-- Keep service metadata in hidden service folders such as `.doctrine/`.
+- Keep service metadata in hidden service folders such as `.forum/`.
 - Do not add loose files at the repository root unless a tool requires the file at root.
-- Keep `doctrine.yaml` at the repository root so `dx` can discover checkout sync config.
+- Keep `forum.yaml` at the repository root so `fm` can discover checkout sync config.
 - Keep `README.md` at the repository root for install and publishing instructions.
-- Treat the public Doctrine store as the website for this repository:
-`https://app.doctrine.ink/s/felixsebastian/skills/README.md`.
-- After making changes, always run `dx sync`.
+- Treat the public Forum store as the website for this repository:
+`https://app.forumlabs.net/s/felixsebastian/skills/README.md`.
+- After making changes, always run `fm sync`.
 
 ## Skill Folders
 

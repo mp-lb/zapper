@@ -1,15 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Planner } from "./Planner";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { DockerManager } from "./docker";
 import { ZapperConfig } from "../config/schemas";
 import { Action, ActionPlan } from "../types";
 import { ProcessInfo } from "../types/index";
 
-vi.mock("./process/Pm2Manager");
+vi.mock("./process/NativeProcessManager");
 vi.mock("./docker");
 
-const mockPm2Manager = vi.mocked(Pm2Manager);
+const mockNativeProcessManager = vi.mocked(NativeProcessManager);
 const mockDockerManager = vi.mocked(DockerManager);
 
 function createMockProcessInfo(name: string, status: string): ProcessInfo {
@@ -77,7 +77,7 @@ describe("Planner - start/stop/restart planning", () => {
 
   describe("startAll", () => {
     it("should start every configured service that is not already running", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "stopped"),
         createMockProcessInfo("zap.test-project.frontend", "stopped"),
         createMockProcessInfo("zap.test-project.worker", "online"),
@@ -121,7 +121,7 @@ describe("Planner - start/stop/restart planning", () => {
     });
 
     it("should force start all configured services", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "stopped"),
         createMockProcessInfo("zap.test-project.worker", "stopped"),
@@ -157,7 +157,7 @@ describe("Planner - start/stop/restart planning", () => {
     });
 
     it("should start all services when none are running", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "stopped"),
         createMockProcessInfo("zap.test-project.frontend", "stopped"),
         createMockProcessInfo("zap.test-project.worker", "stopped"),
@@ -211,7 +211,7 @@ describe("Planner - start/stop/restart planning", () => {
     });
 
     it("should return an empty plan when every service is already running", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "online"),
         createMockProcessInfo("zap.test-project.worker", "online"),
@@ -234,7 +234,7 @@ describe("Planner - start/stop/restart planning", () => {
 
   describe("targeted operations", () => {
     it("should start targeted services", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
         createMockProcessInfo("zap.test-project.frontend", "stopped"),
       ]);
@@ -250,7 +250,7 @@ describe("Planner - start/stop/restart planning", () => {
     });
 
     it("should stop targeted services", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "stopped"),
         createMockProcessInfo("zap.test-project.frontend", "online"),
       ]);
@@ -268,7 +268,7 @@ describe("Planner - start/stop/restart planning", () => {
 
   describe("restart operations", () => {
     it("should restart all services", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
 
@@ -292,7 +292,7 @@ describe("Planner - start/stop/restart planning", () => {
 
       const dependencyPlanner = new Planner(dependencyConfig);
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
 
@@ -344,7 +344,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -368,7 +368,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -393,7 +393,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
 
@@ -413,7 +413,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
 
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
@@ -430,7 +430,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
 
     const planner = new Planner(config);
     const plan = await planner.plan("start", undefined, "test-project", true);
@@ -451,7 +451,7 @@ describe("Planner - Dependency-aware waves", () => {
       },
     };
 
-    mockPm2Manager.listProcesses.mockResolvedValue([
+    mockNativeProcessManager.listProcesses.mockResolvedValue([
       createMockProcessInfo("zap.test-project.api", "online"),
       createMockProcessInfo("zap.test-project.frontend", "online"),
     ]);

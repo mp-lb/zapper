@@ -2,7 +2,7 @@
 
 Zapper is instance-first. A project can have multiple stack instances, and each instance has:
 
-- Its own random `id` (used in PM2/Docker names)
+- Its own random `id` (used in native process and Docker names)
 - An optional human `label` for display in status output and the desktop app
 - Its own assigned `ports` map
 - Its own generated Docker `volumes` map for path-only volume mounts
@@ -41,7 +41,7 @@ without a value to print the current display label for the selected instance.
 
 ## Naming
 
-PM2 and Docker names are always namespaced:
+Native process and Docker names are always namespaced:
 
 - `zap.<project>.<instanceId>.<service>`
 

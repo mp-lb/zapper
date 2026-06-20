@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { getStatus } from "./getStatus";
-import { Pm2Manager } from "./process";
+import { NativeProcessManager } from "./process";
 import { DockerManager } from "./docker";
 import { Context } from "../types/Context";
 import { ProcessInfo } from "../types/index";
@@ -14,7 +14,7 @@ vi.mock("./docker");
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-const mockPm2Manager = vi.mocked(Pm2Manager);
+const mockNativeProcessManager = vi.mocked(NativeProcessManager);
 const mockDockerManager = vi.mocked(DockerManager);
 
 // Helper functions for creating mock data
@@ -114,14 +114,14 @@ describe("getStatus", () => {
     mockFetch.mockReset();
 
     // Default mocks
-    mockPm2Manager.listProcesses.mockResolvedValue([]);
+    mockNativeProcessManager.listProcesses.mockResolvedValue([]);
     mockDockerManager.listContainers.mockResolvedValue([]);
     mockDockerManager.getContainerInfo.mockResolvedValue(null);
   });
 
   describe("context-free mode", () => {
-    it("should list all PM2 and Docker processes when no context provided", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+    it("should list all native process and Docker processes when no context provided", async () => {
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("some-app", "online"),
         createMockProcessInfo("another-service", "stopped"),
       ]);
@@ -169,7 +169,7 @@ describe("getStatus", () => {
     });
 
     it("should extract service name from dotted names", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.project.api", "online"),
       ]);
 
@@ -184,7 +184,7 @@ describe("getStatus", () => {
     });
 
     it("should filter by service name when provided", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.project.api", "online"),
         createMockProcessInfo("zap.project.worker", "online"),
       ]);
@@ -202,7 +202,7 @@ describe("getStatus", () => {
     });
 
     it("should filter by multiple service names when provided", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.project.api", "online"),
         createMockProcessInfo("zap.project.worker", "online"),
       ]);
@@ -221,21 +221,21 @@ describe("getStatus", () => {
     });
 
     it("should handle all flag correctly", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("system-service", "online"),
       ]);
 
       const result = await getStatus(undefined, undefined, true);
 
       expect(result.native).toHaveLength(1);
-      expect(mockPm2Manager.listProcesses).toHaveBeenCalledTimes(1);
+      expect(mockNativeProcessManager.listProcesses).toHaveBeenCalledTimes(1);
     });
   });
 
   describe("service aliases", () => {
     it("filters native services by canonical name when given an alias", async () => {
       const context = createMockContext();
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test-project.api", "online"),
       ]);
 
@@ -260,11 +260,11 @@ describe("getStatus", () => {
     });
   });
 
-  describe("context mode - PM2 processes", () => {
-    it("should match PM2 processes by zap naming pattern", async () => {
+  describe("context mode - native processes", () => {
+    it("should match native processes by zap naming pattern", async () => {
       const context = createMockContext("myproject");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.myproject.api", "online", 5000),
         createMockProcessInfo("zap.myproject.worker", "stopped"),
         createMockProcessInfo("other-process", "online"), // Should be ignored
@@ -299,7 +299,7 @@ describe("getStatus", () => {
       // Mock Date.now to control elapsed time calculation
       const mockNow = vi.spyOn(Date, "now").mockReturnValue(15000);
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "online", 8000), // Started 8 seconds ago
       ]);
 
@@ -318,7 +318,7 @@ describe("getStatus", () => {
 
       const mockNow = vi.spyOn(Date, "now").mockReturnValue(20000);
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "online", 15000), // Started 15 seconds ago
       ]);
 
@@ -335,7 +335,7 @@ describe("getStatus", () => {
     it("should handle URL-based healthcheck", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.frontend", "online", 5000),
       ]);
 
@@ -360,7 +360,7 @@ describe("getStatus", () => {
     it("should handle failed URL healthcheck", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.frontend", "online", 5000),
       ]);
 
@@ -378,7 +378,7 @@ describe("getStatus", () => {
     it("should mark context services as enabled", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "online"),
         createMockProcessInfo("zap.test.worker", "online"),
       ]);
@@ -398,7 +398,7 @@ describe("getStatus", () => {
         (process) => process.name === "frontend",
       );
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.frontend", "online"),
       ]);
 
@@ -417,7 +417,7 @@ describe("getStatus", () => {
     it("should filter by specific service name", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "online"),
         createMockProcessInfo("zap.test.worker", "online"),
       ]);
@@ -431,7 +431,7 @@ describe("getStatus", () => {
     it("should filter by multiple specific service names", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "online"),
         createMockProcessInfo("zap.test.worker", "online"),
       ]);
@@ -626,7 +626,7 @@ describe("getStatus", () => {
     it("should handle fetch timeout for URL healthchecks", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.frontend", "online"),
       ]);
 
@@ -657,7 +657,7 @@ describe("getStatus", () => {
     it("should handle processes without uptime when stopped", async () => {
       const context = createMockContext("test");
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.api", "stopped", 0),
       ]);
 
@@ -675,7 +675,7 @@ describe("getStatus", () => {
 
       const mockNow = vi.spyOn(Date, "now").mockReturnValue(10000);
 
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("zap.test.worker", "online", 3000), // 3 seconds uptime
       ]);
 
@@ -703,7 +703,7 @@ describe("getStatus", () => {
 
   describe("all flag behavior", () => {
     it("should respect all flag in context-free mode", async () => {
-      mockPm2Manager.listProcesses.mockResolvedValue([
+      mockNativeProcessManager.listProcesses.mockResolvedValue([
         createMockProcessInfo("system-process", "online"),
         createMockProcessInfo("zap.other.service", "online"),
       ]);

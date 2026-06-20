@@ -20,7 +20,7 @@ describe("KillCommand", () => {
     const targets: ProjectKillTargets = {
       projectName: "myproj",
       prefix: "zap.myproj",
-      pm2: ["zap.myproj.api"],
+      nativeProcesses: ["zap.myproj.api"],
       containers: ["zap.myproj.redis"],
     };
 
@@ -48,7 +48,7 @@ describe("KillCommand", () => {
       status: "aborted",
       projectName: "myproj",
       prefix: "zap.myproj",
-      pm2: ["zap.myproj.api"],
+      nativeProcesses: ["zap.myproj.api"],
       containers: ["zap.myproj.redis"],
     });
   });
@@ -59,7 +59,7 @@ describe("KillCommand", () => {
     const targets: ProjectKillTargets = {
       projectName: "myproj",
       prefix: "zap.myproj",
-      pm2: ["zap.myproj.api", "zap.myproj.worker"],
+      nativeProcesses: ["zap.myproj.api", "zap.myproj.worker"],
       containers: ["zap.myproj.redis"],
     };
 
@@ -87,7 +87,7 @@ describe("KillCommand", () => {
       status: "completed",
       projectName: "myproj",
       prefix: "zap.myproj",
-      pm2: ["zap.myproj.api", "zap.myproj.worker"],
+      nativeProcesses: ["zap.myproj.api", "zap.myproj.worker"],
       containers: ["zap.myproj.redis"],
     });
   });
@@ -98,7 +98,7 @@ describe("KillCommand", () => {
     const targets: ProjectKillTargets = {
       projectName: "legacy-proj",
       prefix: "zap.legacy-proj",
-      pm2: ["zap.legacy-proj.api"],
+      nativeProcesses: ["zap.legacy-proj.api"],
       containers: [],
     };
 

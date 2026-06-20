@@ -22,7 +22,7 @@ inputs:
 - Category frames to avoid:
   - production orchestrator
   - task runner
-  - PM2 wrapper
+  - Native process supervisor
   - Docker Compose replacement without qualification
 
 That frame keeps the product close to an existing developer mental model while preserving the real differentiator: one stateful stack model across multiple local runtimes and control surfaces.

@@ -7,7 +7,7 @@ import {
   loadVolumesForInstance,
 } from "../config/volumeManager";
 import { DockerManager } from "./docker";
-import { Pm2Manager } from "./process/Pm2Manager";
+import { NativeProcessManager } from "./process/NativeProcessManager";
 import { parseServiceName } from "../utils/nameBuilder";
 import { resolveServiceTargets } from "../utils/serviceAliases";
 import { StoredVolume } from "../config/schemas";
@@ -51,7 +51,7 @@ export interface InstanceResourceInventory {
 }
 
 export interface ResourceInventoryEntry {
-  type: "pm2" | "container" | "volume";
+  type: "nativeProcess" | "container" | "volume";
   name: string;
   reason: string;
 }
@@ -150,8 +150,8 @@ async function getResourceInventory(
     currentSpecs.map((spec) => `${spec.serviceName}:${spec.internalDir}`),
   );
 
-  const [pm2Processes, dockerContainers, dockerVolumes] = await Promise.all([
-    Pm2Manager.listProcesses(),
+  const [nativeProcesses, dockerContainers, dockerVolumes] = await Promise.all([
+    NativeProcessManager.listProcesses(),
     DockerManager.listContainers(),
     DockerManager.listVolumes(),
   ]);
@@ -189,7 +189,7 @@ async function getResourceInventory(
   const alien: ResourceInventoryEntry[] = [];
   const dangling: ResourceInventoryEntry[] = [];
 
-  const classifyServiceResource = (type: "pm2" | "container", name: string) => {
+  const classifyServiceResource = (type: "nativeProcess" | "container", name: string) => {
     const parsed = parseServiceName(name);
     if (!parsed || parsed.project !== context.projectName) return;
 
@@ -216,8 +216,8 @@ async function getResourceInventory(
     }
   };
 
-  for (const process of pm2Processes) {
-    classifyServiceResource("pm2", process.name);
+  for (const process of nativeProcesses) {
+    classifyServiceResource("nativeProcess", process.name);
   }
 
   for (const container of dockerContainers) {

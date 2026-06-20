@@ -63,7 +63,7 @@ $ zap open
   - Body: `zap ps and zap ls return the real state of the stack, not whatever your last terminal session remembered. Any agent, any shell, any time.`
 2. `02 · DETACHED`
   - Title: `No long-lived terminals`
-  - Body: `PM2-backed processes keep running after the agent that started them exits. Another agent can zap logs api later. No PIDs to pass around, no babysitting.`
+  - Body: `Supervisor-backed processes keep running after the agent that started them exits. Another agent can zap logs api later. No PIDs to pass around, no babysitting.`
 3. `03 · ISOLATED`
   - Title: `One stack per worktree`
   - Body: `Run N agents on N worktrees of the same repo. Each gets its own ports, volumes, and state. Parallel work without coordination overhead.`
@@ -80,7 +80,7 @@ $ zap open
 ## Process Manager Section
 
 - Heading: `Also a really good process manager`
-- Body: `The agent story is the why. The day-to-day is just: a small CLI built on PM2 and the Docker CLI, plus a single yaml that replaces the half-dozen scripts you usually keep in package.json and your shell history.`
+- Body: `The agent story is the why. The day-to-day is just: a small CLI built on Zapper's native supervisor and the Docker CLI, plus a single yaml that replaces the half-dozen scripts you usually keep in package.json and your shell history.`
 
 ### Features
 
@@ -89,7 +89,7 @@ $ zap open
 - `Automatic port management`
   - `Every stack instance gets unique random ports. Run the same project from three git worktrees, no clashes, no env juggling.`
 - `Native + Docker, same config`
-  - `Declare PM2-managed processes and Docker services in one zap.yaml. Mix and match without writing two systems.`
+  - `Declare native processes and Docker services in one zap.yaml. Mix and match without writing two systems.`
 - `Status at a glance`
   - `zap ps shows what's up, what's down, and what ports are bound the moment you cd into a project.`
 - `Tasks, profiles, environments`
@@ -97,7 +97,7 @@ $ zap open
 - `Instances`
   - `Spin up named instances of the same stack side by side for testing, demos, or e2e runs.`
 - `Logs that survive crashes`
-  - `PM2-backed under the hood, so logs keep flowing even if your terminal or editor dies. zap logs api when you need them.`
+  - `Supervisor-backed under the hood, so logs keep flowing even if your terminal or editor dies. zap logs api when you need them.`
 - `Env vars, whitelisted per service`
   - `Each service only sees the env vars it declares. Secrets stay out of processes that don't need them.`
 

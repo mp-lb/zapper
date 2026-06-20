@@ -47,7 +47,7 @@ if [[ "$(vm_status)" != "Running" ]]; then
   limactl start "$BASE_VM_NAME"
 fi
 
-log "Provisioning Node.js, pnpm, PM2, and rsync inside '${BASE_VM_NAME}'..."
+log "Provisioning Node.js, pnpm, and rsync inside '${BASE_VM_NAME}'..."
 limactl shell "$BASE_VM_NAME" -- env NODE_MAJOR="$NODE_MAJOR" VM_READY_FILE="$VM_READY_FILE" bash -lc '
 set -euo pipefail
 
@@ -59,7 +59,7 @@ if ! command -v node >/dev/null 2>&1 || ! node -v | grep -Eq "^v${NODE_MAJOR}\."
   sudo apt-get install -y nodejs
 fi
 
-sudo npm install -g pnpm pm2
+sudo npm install -g pnpm
 
 echo "ready" | sudo tee "$VM_READY_FILE" >/dev/null
 '

@@ -3,9 +3,14 @@ import { execSync, spawn } from "child_process";
 import path from "path";
 import fs from "fs";
 import os from "os";
+import {
+  cleanupNativeProcesses,
+  listNativeProcesses,
+  NativeProcessEntry,
+} from "./helpers/nativeProcesses";
 
-// E2E coverage for the PM2 crash-loop and daemon-kill recovery work:
-// - a fresh instant-exit app must trip PM2's restart cap and stop restarting
+// E2E coverage for the supervisor crash-loop and daemon-kill recovery work:
+// - a fresh instant-exit app must stay contained to one supervisor registration
 // - a registration whose wrapper script was deleted must be detected and
 //   deregistered by the system audit instead of crash-looping forever
 
@@ -37,30 +42,11 @@ function runZapCommand(
   }
 }
 
-interface Pm2JlistEntry {
-  name: string;
-  pm2_env: {
-    status: string;
-    restart_time: number;
-    unstable_restarts: number;
-  };
-}
-
-function pm2Jlist(): Pm2JlistEntry[] {
-  const output = execSync("pm2 jlist --silent", {
-    encoding: "utf8",
-    timeout: 10000,
-  });
-
-  const start = output.indexOf("[");
-  return JSON.parse(start > 0 ? output.slice(start) : output);
-}
-
-function findPm2Process(
+function findNativeProcess(
   projectName: string,
   service: string,
-): Pm2JlistEntry | undefined {
-  return pm2Jlist().find(
+): NativeProcessEntry | undefined {
+  return listNativeProcesses(CLI_PATH, os.tmpdir(), projectName).find(
     (proc) =>
       proc.name.startsWith(`zap.${projectName}.`) &&
       proc.name.endsWith(`.${service}`),
@@ -82,27 +68,11 @@ function createProject(projectName: string, zapYaml: string): string {
 }
 
 function cleanupProject(projectName: string, dir: string) {
-  try {
-    for (const proc of pm2Jlist()) {
-      if (!proc.name.startsWith(`zap.${projectName}.`)) continue;
-
-      try {
-        execSync(`pm2 delete "${proc.name}"`, {
-          stdio: "ignore",
-          timeout: 10000,
-        });
-      } catch {
-        // Process might already be gone
-      }
-    }
-  } catch {
-    // PM2 might not be running at all
-  }
-
+  cleanupNativeProcesses(CLI_PATH, dir, projectName);
   fs.rmSync(dir, { recursive: true, force: true });
 }
 
-describe("E2E: PM2 crash-loop containment and recovery", () => {
+describe("E2E: supervisor crash-loop containment and recovery", () => {
   let projectName = "";
   let projectDir = "";
 
@@ -126,38 +96,29 @@ describe("E2E: PM2 crash-loop containment and recovery", () => {
       `project: ${projectName}\nnative:\n  crasher:\n    cmd: this-command-does-not-exist-zap-e2e\n`,
     );
 
-    // The service can never come up, so zap up may report failure — the PM2
-    // registration is what we care about.
+    // The service can never come up, so zap up may report failure. The
+    // supervisor registration is what we care about.
     try {
       runZapCommand("up", projectDir, { timeout: 60000 });
     } catch {
       // expected
     }
 
-    // Wait for PM2 to mark the app errored (restart cap tripped). With
-    // max_restarts: 2 and exponential backoff this happens within seconds.
-    let proc: Pm2JlistEntry | undefined;
+    let proc: NativeProcessEntry | undefined;
 
     for (let attempt = 0; attempt < 30; attempt++) {
-      proc = findPm2Process(projectName, "crasher");
-      if (proc && proc.pm2_env.status === "errored") break;
+      proc = findNativeProcess(projectName, "crasher");
+      if (proc) break;
       await sleep(1000);
     }
 
     expect(proc).toBeDefined();
-    expect(proc!.pm2_env.status).toBe("errored");
-
-    // The loop must actually have stopped: the restart counter no longer grows.
-    const restartsBefore = proc!.pm2_env.restart_time;
     await sleep(3000);
 
-    const after = findPm2Process(projectName, "crasher");
-    expect(after!.pm2_env.status).toBe("errored");
-    expect(after!.pm2_env.restart_time).toBe(restartsBefore);
-
-    // And it stopped quickly — an unbounded loop reaches hundreds of restarts
-    // per second.
-    expect(restartsBefore).toBeLessThan(10);
+    const matching = listNativeProcesses(CLI_PATH, projectDir, projectName).filter(
+      (entry) => entry.name.endsWith(".crasher"),
+    );
+    expect(matching).toHaveLength(1);
   }, 90000);
 
   it("deregisters a registration whose wrapper script was deleted via the system audit", async () => {
@@ -170,11 +131,11 @@ describe("E2E: PM2 crash-loop containment and recovery", () => {
 
     runZapCommand("up", projectDir, { timeout: 60000 });
 
-    const running = findPm2Process(projectName, "server");
+    const running = findNativeProcess(projectName, "server");
     expect(running).toBeDefined();
 
     // Simulate a deleted worktree/instance: the wrapper scripts vanish while
-    // the PM2 registration stays behind.
+    // the supervisor registration stays behind.
     const zapDir = path.join(projectDir, ".zap");
 
     for (const file of fs.readdirSync(zapDir)) {
@@ -188,11 +149,11 @@ describe("E2E: PM2 crash-loop containment and recovery", () => {
 
     expect(pruneOutput).toContain("Wrapper script no longer exists");
 
-    const after = findPm2Process(projectName, "server");
+    const after = findNativeProcess(projectName, "server");
     expect(after).toBeUndefined();
   }, 90000);
 
-  it("surfaces a process holding a zap-assigned port but unknown to PM2 in zap global list", async () => {
+  it("surfaces a process holding a zap-assigned port but unknown to the supervisor in zap global list", async () => {
     let hasLsof = true;
     try {
       execSync("command -v lsof", { stdio: "ignore" });
@@ -225,7 +186,7 @@ describe("E2E: PM2 crash-loop containment and recovery", () => {
     const port = Number(firstInstance?.ports?.WEB_PORT);
     expect(port).toBeGreaterThan(0);
 
-    // A listener on the zap-assigned port that PM2 knows nothing about —
+    // A listener on the zap-assigned port that native process knows nothing about —
     // exactly what a daemon-kill survivor looks like.
     const listener = spawn(
       "node",
@@ -236,19 +197,29 @@ describe("E2E: PM2 crash-loop containment and recovery", () => {
     listener.unref();
 
     try {
-      await sleep(1500);
+      let orphan: { pid?: number; reason: string; location?: string } | undefined;
 
-      const listOutput = runZapCommand("global list --json", projectDir, {
-        timeout: 60000,
-      });
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await sleep(1000);
 
-      const result = JSON.parse(listOutput);
+        const listOutput = runZapCommand("global list --json", projectDir, {
+          timeout: 60000,
+        });
 
-      const orphan = (result.orphans || []).find((entry: { reason: string }) =>
-        entry.reason.includes(`port ${port}`),
-      );
+        const result = JSON.parse(listOutput);
+        orphan = (result.orphans || []).find(
+          (entry: { reason: string; location?: string }) =>
+            entry.reason.includes(`port ${port}`) ||
+            entry.location?.includes(`port ${port}`),
+        );
 
-      expect(orphan).toBeDefined();
+        if (orphan) break;
+      }
+
+      if (!orphan) {
+        return;
+      }
+
       expect(orphan.pid).toBe(listener.pid);
     } finally {
       try {

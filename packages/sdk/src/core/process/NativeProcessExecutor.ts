@@ -1,7 +1,7 @@
 import { Process } from "../../config/schemas";
-import { Pm2Manager } from "./Pm2Manager";
+import { NativeProcessManager } from "./NativeProcessManager";
 
-export class Pm2Executor {
+export class NativeProcessExecutor {
   private projectName?: string;
   private configDir?: string;
   private instanceId?: string | null;
@@ -17,7 +17,7 @@ export class Pm2Executor {
   }
 
   async startProcess(process: Process, projectName: string): Promise<void> {
-    await Pm2Manager.startProcessWithTempEcosystem(
+    await NativeProcessManager.startProcessWithTempEcosystem(
       projectName,
       process,
       this.configDir,
@@ -26,7 +26,7 @@ export class Pm2Executor {
   }
 
   async stopProcess(processName: string): Promise<void> {
-    await Pm2Manager.deleteAllMatchingProcesses(
+    await NativeProcessManager.deleteAllMatchingProcesses(
       processName,
       this.projectName,
       this.configDir,
@@ -35,7 +35,7 @@ export class Pm2Executor {
   }
 
   async restartProcess(processName: string): Promise<void> {
-    await Pm2Manager.restartProcess(
+    await NativeProcessManager.restartProcess(
       processName,
       this.projectName,
       this.instanceId,
@@ -43,7 +43,7 @@ export class Pm2Executor {
   }
 
   async showLogs(processName: string, follow: boolean = false): Promise<void> {
-    await Pm2Manager.showLogs(
+    await NativeProcessManager.showLogs(
       processName,
       this.projectName,
       follow,

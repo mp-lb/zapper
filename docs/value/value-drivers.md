@@ -6,9 +6,9 @@ inputs:
 
 ## Evidence
 
-- One config model across native and Docker services removes the need to split local setup across Compose files, PM2 configs, npm scripts, and README instructions.
+- One config model across native and Docker services removes the need to split local setup across Compose files, process-manager configs, npm scripts, and README instructions.
 - Profile and instance handling reduces collisions when one team or one developer needs different env stacks, service subsets, or isolated local copies.
-- Shared namespacing across PM2, Docker, ports, and volumes makes cleanup, inspection, and automation less fragile than ad hoc naming conventions.
+- Shared namespacing across native processes, Docker, ports, and volumes makes cleanup, inspection, and automation less fragile than ad hoc naming conventions.
 - System inventory, structured output, and the macOS app make the same local stack readable by humans, scripts, and desktop tooling.
 - Detached stack state means the actor who starts local infrastructure does not need to be the same actor who inspects, debugs, or stops it later.
 

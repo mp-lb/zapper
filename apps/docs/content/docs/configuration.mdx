@@ -58,7 +58,7 @@ links:
     url: http://localhost:${API_PORT}/docs
 ```
 
-- `project` is required and is used as the PM2/Docker namespace.
+- `project` is required and is used as the native/Docker namespace.
 - `env` defines root environment file stacks.
 - `env_files` is accepted as a compatibility alias for root `env`.
 - `profiles` defines named runtime profiles with env files, service selection,
@@ -67,7 +67,7 @@ links:
 - `init_task` names a task to run after `zap init`.
 - `git_method` controls repo clone URLs: `ssh`, `http`, or `cli`.
 - `task_delimiters` changes task template delimiters.
-- `native` defines local PM2-managed processes.
+- `native` defines local supervisor-managed processes.
 - `docker` and `containers` define Docker-managed services.
 - `volumes` declares reusable Docker named volumes.
 - `secrets` declares local file/env-backed secrets for Docker services.
@@ -213,4 +213,3 @@ zap clone
 zap clone api
 zap clone api web
 ```
-

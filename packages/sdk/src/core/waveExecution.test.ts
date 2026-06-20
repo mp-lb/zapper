@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { executeActions } from "./executeActions";
-import { Pm2Executor } from "./process/Pm2Executor";
+import { NativeProcessExecutor } from "./process/NativeProcessExecutor";
 import { ActionPlan } from "../types";
 import { ZapperConfig } from "../utils";
 
@@ -23,13 +23,13 @@ vi.mock("../utils/logger", () => ({
   },
 }));
 
-vi.mock("./process/Pm2Executor", () => ({
-  Pm2Executor: vi.fn(),
+vi.mock("./process/NativeProcessExecutor", () => ({
+  NativeProcessExecutor: vi.fn(),
 }));
 
 describe("Wave Execution", () => {
   let mockConfig: ZapperConfig;
-  let mockPm2Executor: {
+  let mockNativeProcessExecutor: {
     startProcess: ReturnType<typeof vi.fn>;
     stopProcess: ReturnType<typeof vi.fn>;
   };
@@ -52,7 +52,7 @@ describe("Wave Execution", () => {
       docker: {},
     };
 
-    mockPm2Executor = {
+    mockNativeProcessExecutor = {
       startProcess: vi
         .fn()
         .mockImplementation(async (process: { name: string }) => {
@@ -68,8 +68,8 @@ describe("Wave Execution", () => {
       }),
     };
 
-    vi.mocked(Pm2Executor).mockImplementation(function () {
-      return mockPm2Executor as unknown as Pm2Executor;
+    vi.mocked(NativeProcessExecutor).mockImplementation(function () {
+      return mockNativeProcessExecutor as unknown as NativeProcessExecutor;
     });
 
     // Mock findProcess to return a process
@@ -119,10 +119,10 @@ describe("Wave Execution", () => {
       await executeActions(mockConfig, "test-project", "/config", plan);
 
       // All three stops should have been called
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledTimes(3);
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledWith("admin-app");
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledWith("scribe");
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledWith("mongo");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledTimes(3);
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("admin-app");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("scribe");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("mongo");
 
       // Verify they executed concurrently by checking timestamps are close together
       const ts1 = executionTimestamps.get("stop:admin-app")!;
@@ -138,7 +138,7 @@ describe("Wave Execution", () => {
     it("should execute waves sequentially but actions within waves in parallel", async () => {
       const waveTimings: { wave: number; action: string; time: number }[] = [];
 
-      mockPm2Executor.startProcess.mockImplementation(
+      mockNativeProcessExecutor.startProcess.mockImplementation(
         async (process: { name: string }) => {
           waveTimings.push({
             wave: 1,
@@ -150,7 +150,7 @@ describe("Wave Execution", () => {
         },
       );
 
-      mockPm2Executor.stopProcess.mockImplementation(async (name: string) => {
+      mockNativeProcessExecutor.stopProcess.mockImplementation(async (name: string) => {
         waveTimings.push({ wave: 2, action: `stop:${name}`, time: Date.now() });
         await new Promise((r) => setTimeout(r, 20));
       });
@@ -227,7 +227,7 @@ describe("Wave Execution", () => {
       await executeActions(mockConfig, "test-project", "/config", plan);
 
       // Both stops should execute in parallel
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledTimes(2);
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledTimes(2);
 
       const ts1 = executionTimestamps.get("stop:admin-app")!;
       const ts2 = executionTimestamps.get("stop:scribe")!;
@@ -266,7 +266,7 @@ describe("Wave Execution", () => {
 
       await executeActions(mockConfig, "test-project", "/config", plan);
 
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledTimes(3);
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledTimes(3);
 
       const timestamps = [
         executionTimestamps.get("start:admin-app")!,

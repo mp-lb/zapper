@@ -160,6 +160,32 @@ export class TaskRunner {
     return context;
   }
 
+  private buildTaskParamEnv(
+    taskParams: TaskParam[] | undefined,
+    params: TaskParams,
+  ): Record<string, string> {
+    const values: Record<string, string> = {};
+
+    if (taskParams) {
+      for (const param of taskParams) {
+        if (param.default !== undefined) {
+          values[param.name] = param.default;
+        }
+      }
+    }
+
+    for (const [key, value] of Object.entries(params.named)) {
+      values[key] = value;
+    }
+
+    return Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [
+        `ZAP_TASK_PARAM_${key.replace(/[^A-Za-z0-9]/g, "_").toUpperCase()}`,
+        value,
+      ]),
+    );
+  }
+
   private interpolate(
     cmd: string,
     taskParams: TaskParam[] | undefined,
@@ -430,10 +456,12 @@ export class TaskRunner {
     task: Task,
     taskName: string,
     cwd: string,
+    params: TaskParams,
   ): NodeJS.ProcessEnv {
     return {
       ...process.env,
       ...(task.resolvedEnv || {}),
+      ...this.buildTaskParamEnv(task.params, params),
       ZAPPER_ROOT: this.baseCwd,
       ZAPPER_CWD: cwd,
       ZAPPER_TASK: taskName,
@@ -465,7 +493,7 @@ export class TaskRunner {
       stack.length === 0,
     );
 
-    const env = this.taskEnv(task, name, cwd);
+    const env = this.taskEnv(task, name, cwd, params);
 
     if (!execution.silent && !task.silent) {
       renderer.log.info(

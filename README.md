@@ -10,7 +10,7 @@ Infrastructure as code for your local development environment.
 
 **Resource-friendly.** Spin up and tear down entire multi-service projects instantly. On a MacBook juggling multiple projects, this matters.
 
-**Detached logs.** Built on PM2, so logs persist even if your terminal or editor crashes. Attach when you need them, detach when you don't. No dedicated terminal windows to babysit. This is much friendlier for AI agents too.
+**Detached logs.** Native services run through Zapper's own supervisor, so logs persist even if your terminal or editor crashes. Attach when you need them, detach when you don't. No dedicated terminal windows to babysit. This is much friendlier for AI agents too.
 
 **Editor integration.** The Cursor/VSCode extension lets you start/stop services and view logs without leaving your editor.
 

@@ -181,7 +181,7 @@ polished promo graphics unless the post is explicitly announcing a release.
 
 17. Zapper is WIP, but the shape is clear:
 
-    PM2 for native processes.
+    Zapper's native supervisor for native processes.
     Docker for containers.
     `zap.yaml` as the project contract.
 

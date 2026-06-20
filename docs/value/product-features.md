@@ -7,7 +7,7 @@ inputs:
 ## Evidence
 
 - Zapper uses one `zap.yaml` to define a local multi-service project.
-- It manages native services through PM2 and Docker services through Docker CLI, while treating both as peer service types.
+- It manages native services through Zapper's native supervisor and Docker services through Docker CLI, while treating both as peer service types.
 - It supports service lifecycle control and inspection through commands such as `zap up`, `zap down`, `zap restart`, `zap status`, `zap ls`, `zap logs`, `zap startup-log`, and `zap watch`.
 - It also exposes `zap ps` as a CLI alias for stack status, matching the landing-page messaging.
 - It supports root env stacks, service-specific env routing, config interpolation, and assigned port variables.

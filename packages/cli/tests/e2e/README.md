@@ -1,6 +1,6 @@
 # E2E Tests
 
-End-to-end tests for the Zapper CLI that run against real PM2 processes.
+End-to-end tests for the Zapper CLI that run against real supervised processes.
 
 ## Structure
 
@@ -25,17 +25,17 @@ pnpm test
 
 The e2e tests exercise the full CLI workflow:
 
-1. **`zap up`** - Starts processes via PM2
+1. **`zap up`** - Starts native supervised processes
 2. **`zap status`** - Reports running processes (human + JSON output)
 3. **`zap logs`** - Shows process output
 4. **`zap down`** - Stops all processes
-5. **PM2 process naming** - Verifies `zap.{project}.{instanceId}.{service}` convention
+5. **Process naming** - Verifies `zap.{project}.{instanceId}.{service}` convention
 6. **Cleanup** - Ensures no test processes remain after tests
 
 ## Key Design Decisions
 
 - **Unique project names**: Each test run uses `e2e-test-{timestamp}-{random}` to avoid collisions
-- **Real PM2 processes**: No Docker/mocking - tests actual PM2 integration
+- **Real supervised processes**: No Docker/mocking - tests actual native process integration
 - **Simple fixture code**: Uses `node -e "..."` with no dependencies
 - **Robust cleanup**: `afterAll`/`afterEach` hooks ensure test processes are removed
 - **Longer timeouts**: E2E tests have 60s timeout vs 5s for unit tests
@@ -58,7 +58,6 @@ The e2e tests exercise the full CLI workflow:
 
 If tests fail:
 
-1. **Check PM2**: `pm2 list` to see if test processes are still running
-2. **Manual cleanup**: `pm2 delete all` to clear all processes
+1. **Check Zapper**: `zap global list` to see if test processes are still running
+2. **Manual cleanup**: `zap global prune --all` to clear matching resources
 3. **Build CLI**: Ensure `pnpm build` completed successfully
-4. **PM2 installation**: Ensure PM2 is installed globally (`npm i -g pm2`)

@@ -10,17 +10,17 @@ Zapper can already answer "what is running for this repo?" because each project
 has a local `zap.yaml` and `.zap/state.json`. A dashboard needs a wider view:
 
 - Which Zapper projects exist on this machine?
-- Which projects currently have PM2 processes, Docker containers, or generated
-  Docker volumes?
+- Which projects currently have native processes, Docker containers, or
+  generated Docker volumes?
 - Which live resources are stale, unregistered, orphaned, or from another
   checkout?
 - Where should a user go on disk to inspect or operate on a project?
 
 The hard part is that the reliable sources have different blind spots:
 
-- PM2 and Docker can reveal live resources, but names only give `project`,
-  optional `instanceId`, and `service`. They do not reliably tell us the
-  originating project root.
+- The native supervisor and Docker can reveal live resources, but names only
+  give `project`, optional `instanceId`, and `service`. They do not reliably
+  tell us the originating project root.
 - A global file can remember project roots, but it can go stale when repos move
   or are deleted.
 - Writing global metadata can leak local repo paths if the file is too broad,
@@ -30,15 +30,16 @@ The recommended design has two related but separate surfaces:
 
 - A reliable global project registry that answers which Zapper projects exist,
   where they live, and what Zapper reports for them when loaded normally.
-- An orphaned resources audit that scans PM2 and Docker directly for live
-  resources that no registered/current project can explain.
+- An orphaned resources audit that scans the native supervisor and Docker
+  directly for live resources that no registered/current project can explain.
 
 The project registry should be the primary source for the desktop app's
 Projects tab. For each registered project, Zapper can load that project and use
 existing status/list/config paths to report services, ports, and
-`up`/`pending`/`down`. Direct PM2 and Docker scanning should power a separate
-Orphaned Resources tab, because resources can keep running after a project name
-changes, a service is removed, a checkout moves, or local state is deleted.
+`up`/`pending`/`down`. Direct native supervisor and Docker scanning should power
+a separate Orphaned Resources tab, because resources can keep running after a
+project name changes, a service is removed, a checkout moves, or local state is
+deleted.
 
 For the precise definition of a Zapper project root, including nested
 `zap.yaml` files and custom config paths, see [Project Roots](project-roots.md).
@@ -47,7 +48,7 @@ For the precise definition of a Zapper project root, including nested
 
 Zapper currently names managed resources with a predictable namespace:
 
-- PM2 processes and Docker containers:
+- Native processes and Docker containers:
   `zap.<project>.<instanceId>.<service>`
 - Legacy unscoped resources:
   `zap.<project>.<service>`
@@ -59,18 +60,18 @@ The current local resource inventory in `zap ls --extended` uses:
 
 - `.zap/state.json` for known instance keys, instance IDs, ports, and generated
   volumes.
-- PM2 process names and Docker container/volume names for live resources.
+- Native process names and Docker container/volume names for live resources.
 - Current `zap.yaml` services to classify dangling resources.
 
-For a loaded project, `zap status` builds expected PM2/Docker names from the
-project context, then checks PM2 for native processes and Docker for containers.
-It also applies the same Zapper healthcheck logic that can report a live process
-as `pending` before it becomes `up`.
+For a loaded project, `zap status` builds expected native process and Docker
+names from the project context, then checks the native supervisor for processes
+and Docker for containers. It also applies the same Zapper healthcheck logic
+that can report a live process as `pending` before it becomes `up`.
 
 The current `zap global list` and `zap global kill` commands discover projects
-from live PM2 and Docker names only. That is useful for cleanup, but it cannot
-show inactive registered projects, cannot map a live project name back to a repo
-root, and does not have enough project context to exactly mirror local
+from live native process and Docker names only. That is useful for cleanup, but
+it cannot show inactive registered projects, cannot map a live project name back
+to a repo root, and does not have enough project context to exactly mirror local
 `zap status` for each registered service.
 
 ## Goals
@@ -83,9 +84,9 @@ root, and does not have enough project context to exactly mirror local
   tab.
 - Reuse Zapper's existing project-local status behavior when reporting whether
   a service is `up`, `pending`, or `down`.
-- Use a separate direct PM2/Docker audit to detect orphaned, unregistered,
-  ambiguous, and legacy resources that registry-backed project queries cannot
-  see.
+- Use a separate direct native supervisor/Docker audit to detect orphaned,
+  unregistered, ambiguous, and legacy resources that registry-backed project
+  queries cannot see.
 - Map known live resources back to a project root when possible.
 - Keep stale registry data harmless and easy to prune.
 - Avoid storing environment values, commands, notes, homepage URLs, or other
@@ -242,7 +243,8 @@ com.zapper.project-root-hash=<sha256(realProjectRoot)>
 Do not put raw project roots or config paths in Docker labels. Docker labels are
 visible to anyone with access to the local Docker daemon.
 
-For PM2 processes, add equivalent environment metadata to the PM2 ecosystem:
+For native processes, add equivalent environment metadata to the supervisor
+environment:
 
 ```text
 ZAPPER_PROJECT
@@ -290,10 +292,10 @@ displayed services, ports, config-derived details, and service states.
 
 ## Orphaned Resource Audit
 
-The orphaned resource audit scans PM2 and Docker directly. It is separate from
-the project registry read path:
+The orphaned resource audit scans the native supervisor and Docker directly. It
+is separate from the project registry read path:
 
-1. List PM2 processes, Docker containers, and generated Docker volumes.
+1. List native processes, Docker containers, and generated Docker volumes.
 2. Parse Zapper resource names. Prefer labels/env metadata when present, but
    fall back to `zap.<project>.<instanceId>.<service>`.
 3. Match live resources to registered projects by `registryId` when metadata is
@@ -360,9 +362,10 @@ come from the same project-local paths used by normal commands.
 
 ### Orphaned Resources
 
-The Orphaned Resources tab is backed by direct PM2/Docker scans. It should show:
+The Orphaned Resources tab is backed by direct native supervisor/Docker scans. It
+should show:
 
-- Live Zapper-looking PM2 processes with no registered/current owner.
+- Live Zapper-looking native processes with no registered/current owner.
 - Live Zapper-looking Docker containers with no registered/current owner.
 - Generated Docker volumes that no current project state owns.
 - Legacy resources that use old names without instance IDs.
@@ -380,11 +383,11 @@ Registry entries should be validated on read:
   normal project load/status path decide what can still be shown.
 - If a project has not been seen for a long time, keep it but show it as old.
 
-Direct PM2/Docker scans are necessary for orphan detection, but a missing
-PM2/Docker resource does not mean the registry entry is stale. It may simply be
-an inactive project. A registry entry should usually be considered stale because
-its project root/config path is gone or cannot be loaded, not because nothing is
-currently running.
+Direct native supervisor/Docker scans are necessary for orphan detection, but a
+missing runtime resource does not mean the registry entry is stale. It may
+simply be an inactive project. A registry entry should usually be considered
+stale because its project root/config path is gone or cannot be loaded, not
+because nothing is currently running.
 
 Add explicit maintenance commands:
 
@@ -407,23 +410,23 @@ Suggested behavior:
   returning missing entries with `state: "stale"` without mutating the registry.
 - `prune` removes entries whose config path is missing after any matching live
   resources have been cleaned up.
-- `forget` removes one entry without touching PM2 or Docker.
+- `forget` removes one entry without touching native processes or Docker.
 - `repair` rewrites the registry from currently accessible entries and live
   metadata.
-- `system resources audit` scans PM2/Docker for orphaned, dangling, legacy, and
-  ambiguous resources without changing the registry.
+- `system resources audit` scans native processes and Docker for orphaned,
+  dangling, legacy, and ambiguous resources without changing the registry.
 - `system resources cleanup` stops/removes selected audited resources after
   explicit confirmation.
 - `global list` and its `global ls` alias always list discovered global
-  PM2/container resources. `--all` is retained only as a compatibility no-op for
-  this command.
-- `global prune` audits stale registry entries and orphaned PM2 processes,
+  native process/container resources. `--all` is retained only as a
+  compatibility no-op for this command.
+- `global prune` audits stale registry entries and orphaned native processes,
   Docker containers, and generated Docker volumes before mutating anything.
   After confirmation, it removes orphaned resources and then prunes stale
   registry entries. `--force` (`-y`) skips the confirmation for automation.
 - Runtime orphan cleanup should be explicit and confirmation-heavy because it
-  deletes live PM2/Docker resources that current project config may no longer
-  describe.
+  deletes live native process/Docker resources that current project config may
+  no longer describe.
 
 Cleanup commands should remain separate:
 
@@ -446,7 +449,7 @@ Recommended controls:
 - `zap system registry prune` removes stale entries.
 - Keep file permissions user-only.
 - Never store env values or raw service definitions globally.
-- Never write raw project roots into Docker labels or PM2 process names.
+- Never write raw project roots into Docker labels or native process names.
 
 Open question: whether there should also be a config-level opt-out in
 `zap.yaml`. That would be convenient but changes supported config fields, so it
@@ -468,7 +471,7 @@ should wait until the command/env controls prove insufficient.
      write behavior.
 3. Enrich runtime resources.
    - Add Docker labels for instance ID/key and registry ID.
-   - Add PM2 environment metadata for the same values.
+   - Add native process environment metadata for the same values.
    - Preserve name parsing fallback for existing resources.
 4. Build a project registry service.
    - Start from registry entries.
@@ -477,7 +480,7 @@ should wait until the command/env controls prove insufficient.
    - Return structured JSON with classification, last known location, and
      reasons.
 5. Build an orphaned resource audit service.
-   - Scan PM2, Docker containers, and Docker volumes directly.
+   - Scan native processes, Docker containers, and Docker volumes directly.
    - Compare live resources against registry entries and current project
      state.
    - Keep cleanup separate from registry maintenance.
@@ -521,9 +524,10 @@ Start with the smallest useful version:
 - `zap system projects --json` output that starts from registered projects and
   reports project/service details using normal Zapper command semantics.
 - `zap system resources audit --json` output for live
-  orphaned/unregistered/ambiguous resources discovered from PM2 and Docker.
+  orphaned/unregistered/ambiguous resources discovered from the native
+  supervisor and Docker.
 - `zap system registry prune` and `zap system registry forget`.
 
 Then add runtime metadata labels/env once the registry ID exists. That keeps the
-first change useful while preserving compatibility with existing PM2 and Docker
-resources.
+first change useful while preserving compatibility with existing legacy native
+process and Docker resources.

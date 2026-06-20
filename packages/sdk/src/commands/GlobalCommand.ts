@@ -3,7 +3,7 @@ import { CommandResult } from "./CommandResult";
 import { confirm } from "../utils/confirm";
 import { ProjectKillTargets, Zapper } from "../core/Zapper";
 import { buildPrefix, parseServiceName } from "../utils/nameBuilder";
-import { Pm2Manager } from "../core/process/Pm2Manager";
+import { NativeProcessManager } from "../core/process/NativeProcessManager";
 import { DockerManager } from "../core/docker/DockerManager";
 import { renderer } from "../ui/renderer";
 import {
@@ -70,7 +70,7 @@ export class GlobalCommand extends CommandHandler {
           {
             name: targets.projectName,
             prefix: targets.prefix,
-            pm2: targets.pm2,
+            nativeProcesses: targets.nativeProcesses,
             containers: targets.containers,
           },
         ],
@@ -88,16 +88,15 @@ export class GlobalCommand extends CommandHandler {
   }
 
   /**
-   * Processes still doing Zapper work that PM2 knows nothing about —
-   * survivors of a PM2 daemon kill. Found two ways: OS processes running a
-   * .zap wrapper script, and listeners on zap-assigned ports outside any
-   * supervisor-managed process tree.
+   * Processes still doing Zapper work that the supervisor no longer tracks.
+   * Found two ways: OS processes running a .zap wrapper script, and listeners
+   * on zap-assigned ports outside any supervisor-managed process tree.
    */
   private async findOrphanProcesses(): Promise<
     Array<{ name: string; pid: number; location: string; reason: string }>
   > {
     const managedPids = new Set(
-      (await Pm2Manager.listProcesses())
+      (await NativeProcessManager.listProcesses())
         .map((process) => process.pid)
         .filter(Boolean),
     );
@@ -116,13 +115,13 @@ export class GlobalCommand extends CommandHandler {
         name: `pid ${wrapper.pid}`,
         pid: wrapper.pid,
         location: wrapper.scriptPath,
-        reason: "Running a Zapper wrapper but unknown to PM2",
+        reason: "Running a Zapper wrapper but unknown to the supervisor",
       })),
       ...portOrphans.map((orphan) => ({
         name: `pid ${orphan.pid} (${orphan.command})`,
         pid: orphan.pid,
         location: `${orphan.project} port ${orphan.port} ($${orphan.portName})`,
-        reason: `Listening on zap-assigned port ${orphan.port} but unknown to PM2`,
+        reason: `Listening on zap-assigned port ${orphan.port} but unknown to the supervisor`,
       })),
     ];
   }
@@ -196,7 +195,7 @@ export class GlobalCommand extends CommandHandler {
         };
       }
 
-      const totalPm2 = projects.reduce((sum, p) => sum + p.pm2.length, 0);
+      const totalNativeProcesses = projects.reduce((sum, p) => sum + p.nativeProcesses.length, 0);
 
       const totalContainers = projects.reduce(
         (sum, p) => sum + p.containers.length,
@@ -207,7 +206,7 @@ export class GlobalCommand extends CommandHandler {
         renderer.confirm.globalKillAllPromptText({
           projectCount: projects.length,
           projectNames: projects.map((p) => p.name),
-          pm2Count: totalPm2,
+          nativeProcessCount: totalNativeProcesses,
           containerCount: totalContainers,
         }),
       );
@@ -233,7 +232,7 @@ export class GlobalCommand extends CommandHandler {
         await this.killProjectResources({
           projectName: project.name,
           prefix: project.prefix,
-          pm2: project.pm2,
+          nativeProcesses: project.nativeProcesses,
           containers: project.containers,
         });
       }
@@ -285,7 +284,7 @@ export class GlobalCommand extends CommandHandler {
         {
           name: targets.projectName,
           prefix: targets.prefix,
-          pm2: targets.pm2,
+          nativeProcesses: targets.nativeProcesses,
           containers: targets.containers,
         },
       ];
@@ -295,7 +294,7 @@ export class GlobalCommand extends CommandHandler {
         renderer.confirm.killProjectPromptText({
           projectName: targets.projectName,
           prefix: targets.prefix,
-          pm2Count: targets.pm2.length,
+          nativeProcessCount: targets.nativeProcesses.length,
           containerCount: targets.containers.length,
         }),
       );
@@ -330,7 +329,7 @@ export class GlobalCommand extends CommandHandler {
     const prefix = buildPrefix(projectName);
     const scopedPrefix = `${prefix}.`;
 
-    const pm2 = (await Pm2Manager.listProcesses())
+    const nativeProcesses = (await NativeProcessManager.listProcesses())
       .map((process) => process.name)
       .filter((name) => name.startsWith(scopedPrefix))
       .sort();
@@ -343,26 +342,26 @@ export class GlobalCommand extends CommandHandler {
     return {
       projectName,
       prefix,
-      pm2: Array.from(new Set(pm2)),
+      nativeProcesses: Array.from(new Set(nativeProcesses)),
       containers: Array.from(new Set(containers)),
     };
   }
 
   private async getAllProjects(): Promise<
-    Array<{ name: string; prefix: string; pm2: string[]; containers: string[] }>
+    Array<{ name: string; prefix: string; nativeProcesses: string[]; containers: string[] }>
   > {
-    const [allPm2, allContainers] = await Promise.all([
-      Pm2Manager.listProcesses(),
+    const [allNativeProcesses, allContainers] = await Promise.all([
+      NativeProcessManager.listProcesses(),
       DockerManager.listContainers(),
     ]);
 
     const projectMap = new Map<
       string,
-      { name: string; prefix: string; pm2: string[]; containers: string[] }
+      { name: string; prefix: string; nativeProcesses: string[]; containers: string[] }
     >();
 
-    // Process PM2 processes
-    for (const process of allPm2) {
+    // Process native supervisor entries
+    for (const process of allNativeProcesses) {
       const parsed = parseServiceName(process.name);
 
       if (parsed) {
@@ -370,12 +369,12 @@ export class GlobalCommand extends CommandHandler {
           projectMap.set(parsed.project, {
             name: parsed.project,
             prefix: buildPrefix(parsed.project),
-            pm2: [],
+            nativeProcesses: [],
             containers: [],
           });
         }
 
-        projectMap.get(parsed.project)!.pm2.push(process.name);
+        projectMap.get(parsed.project)!.nativeProcesses.push(process.name);
       }
     }
 
@@ -388,7 +387,7 @@ export class GlobalCommand extends CommandHandler {
           projectMap.set(parsed.project, {
             name: parsed.project,
             prefix: buildPrefix(parsed.project),
-            pm2: [],
+            nativeProcesses: [],
             containers: [],
           });
         }
@@ -399,7 +398,7 @@ export class GlobalCommand extends CommandHandler {
 
     // Sort and dedupe arrays
     for (const project of projectMap.values()) {
-      project.pm2 = Array.from(new Set(project.pm2)).sort();
+      project.nativeProcesses = Array.from(new Set(project.nativeProcesses)).sort();
       project.containers = Array.from(new Set(project.containers)).sort();
     }
 
@@ -411,8 +410,8 @@ export class GlobalCommand extends CommandHandler {
   private async killProjectResources(
     targets: ProjectKillTargets,
   ): Promise<void> {
-    for (const processName of targets.pm2) {
-      await Pm2Manager.deleteProcess(processName);
+    for (const processName of targets.nativeProcesses) {
+      await NativeProcessManager.deleteProcess(processName);
     }
 
     for (const containerName of targets.containers) {

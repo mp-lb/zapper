@@ -183,12 +183,12 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
           containers: ["zap.zapper-playground.postgres"],
         },
         {
           name: "hyperstore",
-          pm2: ["zap.hyperstore.web"],
+          nativeProcesses: ["zap.hyperstore.web"],
           containers: ["zap.hyperstore.redis"],
         },
       ],
@@ -206,7 +206,7 @@ function main(): void {
     renderer.confirm.globalKillAllPromptText({
       projectCount: 3,
       projectNames: ["zapper-playground", "hyperstore", "newbird"],
-      pm2Count: 7,
+      nativeProcessCount: 7,
       containerCount: 2,
     }),
   );
@@ -216,17 +216,17 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
           containers: ["zap.zapper-playground.postgres"],
         },
         {
           name: "hyperstore",
-          pm2: ["zap.hyperstore.web"],
+          nativeProcesses: ["zap.hyperstore.web"],
           containers: ["zap.hyperstore.redis"],
         },
         {
           name: "newbird",
-          pm2: [],
+          nativeProcesses: [],
           containers: [],
         },
       ],
@@ -245,7 +245,7 @@ function main(): void {
     renderer.command.killCompletedText({
       projectName: "zapper-playground",
       prefix: "zap.zapper-playground",
-      pm2Count: 3,
+      nativeProcessCount: 3,
       containerCount: 2,
     }),
   );
@@ -255,12 +255,12 @@ function main(): void {
       [
         {
           name: "zapper-playground",
-          pm2: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
+          nativeProcesses: ["zap.zapper-playground.api", "zap.zapper-playground.worker"],
           containers: ["zap.zapper-playground.postgres"],
         },
         {
           name: "old-sandbox",
-          pm2: [],
+          nativeProcesses: [],
           containers: [],
         },
       ],

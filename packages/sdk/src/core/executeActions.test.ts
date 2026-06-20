@@ -5,7 +5,7 @@ import path from "path";
 import { executeActions } from "./executeActions";
 import { ZapperConfig } from "../utils";
 import { DockerManager } from "./docker";
-import { Pm2Executor } from "./process/Pm2Executor";
+import { NativeProcessExecutor } from "./process/NativeProcessExecutor";
 import { ActionPlan } from "../types";
 import { findProcess } from "./findProcess";
 import { findContainer } from "./findContainer";
@@ -60,15 +60,15 @@ vi.mock("../utils/logger", () => ({
   },
 }));
 
-vi.mock("./process/Pm2Executor", () => {
+vi.mock("./process/NativeProcessExecutor", () => {
   return {
-    Pm2Executor: vi.fn(),
+    NativeProcessExecutor: vi.fn(),
   };
 });
 
 describe("executeActions", () => {
   let mockConfig: ZapperConfig;
-  let mockPm2Executor: {
+  let mockNativeProcessExecutor: {
     startProcess: ReturnType<typeof vi.fn>;
     stopProcess: ReturnType<typeof vi.fn>;
     restartProcess: ReturnType<typeof vi.fn>;
@@ -118,15 +118,15 @@ describe("executeActions", () => {
       },
     };
 
-    mockPm2Executor = {
+    mockNativeProcessExecutor = {
       startProcess: vi.fn().mockResolvedValue(undefined),
       stopProcess: vi.fn().mockResolvedValue(undefined),
       restartProcess: vi.fn().mockResolvedValue(undefined),
       showLogs: vi.fn().mockResolvedValue(undefined),
     };
 
-    vi.mocked(Pm2Executor).mockImplementation(function () {
-      return mockPm2Executor as any;
+    vi.mocked(NativeProcessExecutor).mockImplementation(function () {
+      return mockNativeProcessExecutor as any;
     });
 
     vi.mocked(DockerManager.createVolume).mockResolvedValue(undefined);
@@ -167,7 +167,7 @@ describe("executeActions", () => {
       await executeActions(mockConfig, "test-project", "/config/dir", plan);
 
       expect(findProcess).toHaveBeenCalledWith(mockConfig, "api");
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledWith(
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledWith(
         mockProcess,
         "test-project",
       );
@@ -199,7 +199,7 @@ describe("executeActions", () => {
       await executeActions(mockConfig, "test-project", "/config/dir", plan);
 
       expect(findProcess).toHaveBeenCalledWith(mockConfig, "worker");
-      expect(mockPm2Executor.stopProcess).toHaveBeenCalledWith("worker");
+      expect(mockNativeProcessExecutor.stopProcess).toHaveBeenCalledWith("worker");
     });
 
     it("should throw error when bare metal process not found", async () => {
@@ -639,7 +639,7 @@ describe("executeActions", () => {
 
       await executeActions(mockConfig, "test-project", "/config/dir", plan);
 
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledWith(
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledWith(
         mockProcess,
         "test-project",
       );
@@ -702,19 +702,19 @@ describe("executeActions", () => {
       );
 
       await vi.advanceTimersByTimeAsync(0);
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledTimes(2);
-      expect(mockPm2Executor.startProcess).not.toHaveBeenCalledWith(
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledTimes(2);
+      expect(mockNativeProcessExecutor.startProcess).not.toHaveBeenCalledWith(
         expect.objectContaining({ name: "next" }),
         "test-project",
       );
 
       await vi.advanceTimersByTimeAsync(1000);
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledTimes(2);
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledTimes(2);
 
       await vi.advanceTimersByTimeAsync(4000);
       await execution;
 
-      expect(mockPm2Executor.startProcess).toHaveBeenCalledWith(
+      expect(mockNativeProcessExecutor.startProcess).toHaveBeenCalledWith(
         expect.objectContaining({ name: "next" }),
         "test-project",
       );
@@ -832,14 +832,14 @@ describe("executeActions", () => {
 
       await executeActions(mockConfig, "test-project", null, plan);
 
-      expect(Pm2Executor).toHaveBeenCalledWith(
+      expect(NativeProcessExecutor).toHaveBeenCalledWith(
         "test-project",
         undefined,
         undefined,
       );
     });
 
-    it("should pass config directory to Pm2Executor", async () => {
+    it("should pass config directory to NativeProcessExecutor", async () => {
       const mockProcess = {
         name: "api",
         cmd: "npm start",
@@ -864,7 +864,7 @@ describe("executeActions", () => {
 
       await executeActions(mockConfig, "test-project", "/custom/config", plan);
 
-      expect(Pm2Executor).toHaveBeenCalledWith(
+      expect(NativeProcessExecutor).toHaveBeenCalledWith(
         "test-project",
         "/custom/config",
         undefined,

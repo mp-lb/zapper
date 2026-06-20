@@ -94,12 +94,11 @@ This is intentional:
 - A checkout can move on disk.
 
 The `project` field in `zap.yaml` remains the runtime resource namespace used in
-PM2/Docker names. It is not globally unique and should not be treated as the
-system registry identity by itself.
+native process and Docker names. It is not globally unique and should not be
+treated as the system registry identity by itself.
 
 ## Practical Rule
 
 If a directory contains a `zap.yaml` or `zap.yml`, it can be a Zapper project
 root when Zapper resolves that file. Nested Zapper projects are allowed and
 should be treated as separate projects by system-level tooling.
-

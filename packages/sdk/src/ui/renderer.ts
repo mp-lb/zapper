@@ -290,7 +290,7 @@ function labeledList(
 
 function resourceRowsByType(
   entries: ResourceInventoryEntry[],
-  type: "pm2" | "container" | "volume",
+  type: "nativeProcess" | "container" | "volume",
 ): string[][] {
   return entries
     .filter((entry) => entry.type === type)
@@ -551,7 +551,7 @@ export const renderer = {
     killProjectPromptText(data: {
       projectName: string;
       prefix: string;
-      pm2Count: number;
+      nativeProcessCount: number;
       containerCount: number;
     }): string {
       return [
@@ -559,7 +559,7 @@ export const renderer = {
         "",
         keyValueLines([
           ["Prefix", `${data.prefix}.`],
-          ["Native processes", data.pm2Count],
+          ["Native processes", data.nativeProcessCount],
           ["Containers", data.containerCount],
         ]),
       ].join("\n");
@@ -568,7 +568,7 @@ export const renderer = {
     globalKillAllPromptText(data: {
       projectCount: number;
       projectNames: string[];
-      pm2Count: number;
+      nativeProcessCount: number;
       containerCount: number;
     }): string {
       return [
@@ -578,7 +578,7 @@ export const renderer = {
         ...data.projectNames.map((name) => `  - ${name}`),
         "",
         keyValueLines([
-          ["Native processes", data.pm2Count],
+          ["Native processes", data.nativeProcessCount],
           ["Containers", data.containerCount],
         ]),
       ].join("\n");
@@ -601,10 +601,10 @@ export const renderer = {
     killCompletedText(data: {
       projectName: string;
       prefix: string;
-      pm2Count: number;
+      nativeProcessCount: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) across all instances for project ${data.projectName} (${data.prefix}.).`;
+      return `Killed ${data.nativeProcessCount} native process(es) and ${data.containerCount} container(s) across all instances for project ${data.projectName} (${data.prefix}.).`;
     },
 
     noProjectsFoundText(): string {
@@ -614,7 +614,7 @@ export const renderer = {
     globalListText(
       projects: Array<{
         name: string;
-        pm2: string[];
+        nativeProcesses: string[];
         containers: string[];
       }>,
       allProjects = false,
@@ -626,7 +626,7 @@ export const renderer = {
         const rows: Array<[string, string]> = [];
 
         if (allProjects) {
-          const totalResources = project.pm2.length + project.containers.length;
+          const totalResources = project.nativeProcesses.length + project.containers.length;
           projectSections.push(
             renderer.heading.text(
               project.name,
@@ -637,7 +637,7 @@ export const renderer = {
           projectSections.push(renderer.heading.text(project.name));
         }
 
-        for (const process of project.pm2) {
+        for (const process of project.nativeProcesses) {
           rows.push(["Native", process]);
         }
 
@@ -645,7 +645,7 @@ export const renderer = {
           rows.push(["DOCKER", container]);
         }
 
-        if (project.pm2.length === 0 && project.containers.length === 0) {
+        if (project.nativeProcesses.length === 0 && project.containers.length === 0) {
           projectSections.push("");
           projectSections.push(dim("No resources found"));
         } else {
@@ -696,19 +696,19 @@ export const renderer = {
 
     globalKillAllCompletedText(data: {
       projectCount: number;
-      pm2Count: number;
+      nativeProcessCount: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) across ${data.projectCount} project(s).`;
+      return `Killed ${data.nativeProcessCount} native process(es) and ${data.containerCount} container(s) across ${data.projectCount} project(s).`;
     },
 
     globalKillProjectCompletedText(data: {
       projectName: string;
       prefix: string;
-      pm2Count: number;
+      nativeProcessCount: number;
       containerCount: number;
     }): string {
-      return `Killed ${data.pm2Count} native process(es) and ${data.containerCount} container(s) for project ${data.projectName} (${data.prefix}.).`;
+      return `Killed ${data.nativeProcessCount} native process(es) and ${data.containerCount} container(s) for project ${data.projectName} (${data.prefix}.).`;
     },
 
     globalPrunePlanText(data: {
@@ -938,7 +938,7 @@ export const renderer = {
             heading: "Unrecognized Processes",
             rows: [
               [bold("NAME"), bold("WHY")],
-              ...resourceRowsByType(resources.alien, "pm2"),
+              ...resourceRowsByType(resources.alien, "nativeProcess"),
             ],
           },
           {

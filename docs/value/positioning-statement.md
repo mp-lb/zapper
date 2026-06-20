@@ -8,7 +8,7 @@ inputs:
 ---
 
 For engineers and agent-assisted teams working on multi-service apps,
-who currently juggle Docker Compose, PM2, shell history, and repo-specific setup scripts,
+who currently juggle Docker Compose, process managers, shell history, and repo-specific setup scripts,
 Zapper is an agent-ready cross-runtime local dev environment runner
 that lets any human or agent start, inspect, and reopen the same isolated local stack from one `zap.yaml`,
 unlike container-only orchestrators or terminal-bound process runners,

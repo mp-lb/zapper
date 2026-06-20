@@ -97,7 +97,7 @@ export default function Home() {
 
                 <div className="inline-flex min-h-11 items-center border border-white/80 px-4 text-sm text-white/72">
                   <code className="overflow-x-auto whitespace-nowrap">
-                    npm i -g pm2 @mp-lb/zapper
+                    npm i -g @mp-lb/zapper
                   </code>
                 </div>
               </div>

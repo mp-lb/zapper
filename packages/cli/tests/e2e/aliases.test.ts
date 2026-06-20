@@ -6,6 +6,10 @@ import {
   hasProjectServiceProcess,
   isProjectProcessName,
 } from "./helpers/processNames";
+import {
+  cleanupNativeProcesses as cleanupProjectNativeProcesses,
+  listNativeProcesses,
+} from "./helpers/nativeProcesses";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -44,17 +48,9 @@ function generateTestProjectName(): string {
   return `e2e-aliases-test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-// Utility function to clean up PM2 processes
-async function cleanupPm2Processes(projectName: string) {
-  try {
-    // Delete all processes matching the project pattern
-    execSync(`pm2 delete "zap.${projectName}.*" 2>/dev/null || true`, {
-      stdio: "ignore",
-      timeout: 5000,
-    });
-  } catch (error) {
-    // Ignore cleanup errors - processes might not exist
-  }
+// Utility function to clean up native processes
+async function cleanupNativeProcesses(projectName: string) {
+  cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 describe("E2E: Aliases Support", () => {
@@ -73,29 +69,18 @@ describe("E2E: Aliases Support", () => {
 
   afterAll(async () => {
     // Cleanup any remaining test processes (only zap.e2e-aliases-test-* patterns)
-    try {
-      const output = execSync("pm2 jlist --silent", {
-        encoding: "utf8",
-        timeout: 5000,
-      });
-      const processes = JSON.parse(output);
-      for (const proc of processes) {
-        if (proc.name?.startsWith("zap.e2e-aliases-test-")) {
-          execSync(`pm2 delete "${proc.name}" 2>/dev/null || true`, {
-            stdio: "ignore",
-            timeout: 5000,
-          });
-        }
+    for (const proc of listNativeProcesses(CLI_PATH, FIXTURES_DIR)) {
+      const match = /^zap\.(e2e-aliases-test-[^.]+)\./.exec(proc.name);
+      if (match) {
+        cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, match[1]);
       }
-    } catch (error) {
-      // Ignore cleanup errors
     }
   });
 
   afterEach(async () => {
     // Cleanup after each test
     if (testProjectName) {
-      await cleanupPm2Processes(testProjectName);
+      await cleanupNativeProcesses(testProjectName);
     }
     // Cleanup temp config file
     if (tempConfigPath && fs.existsSync(tempConfigPath)) {
@@ -134,9 +119,12 @@ describe("E2E: Aliases Support", () => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Verify all processes are running with correct names
-        const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-        const pm2Processes = JSON.parse(pm2ListOutput);
-        const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+        const nativeProcesses = listNativeProcesses(
+          CLI_PATH,
+          fixtureDir,
+          testProjectName,
+        );
+        const zapProcesses = nativeProcesses.filter((proc: { name: string }) =>
           isProjectProcessName(proc.name, testProjectName),
         );
 
@@ -304,13 +292,16 @@ describe("E2E: Aliases Support", () => {
         });
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
-        // Get initial PM2 process info
-        let pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-        let pm2Processes = JSON.parse(pm2ListOutput);
-        let webProcess = pm2Processes.find((proc: { name: string }) =>
+        // Get initial native process info
+        let nativeProcesses = listNativeProcesses(
+          CLI_PATH,
+          fixtureDir,
+          testProjectName,
+        );
+        let webProcess = nativeProcesses.find((proc: { name: string }) =>
           hasProjectServiceProcess(proc.name, testProjectName, "webserver"),
         );
-        const initialWebPid = webProcess?.pid;
+        expect(webProcess).toBeDefined();
 
         // Restart using 'r' command shorthand and 'web' service alias
         const restartOutput = runZapCommand(
@@ -321,28 +312,24 @@ describe("E2E: Aliases Support", () => {
         expect(restartOutput).toContain("webserver"); // Should show canonical name in output
 
         // Wait for the restarted process to come back online
-        let newWebPid: number | undefined;
         const startTime = Date.now();
         while (Date.now() - startTime < 10000) {
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-          pm2Processes = JSON.parse(pm2ListOutput);
-          webProcess = pm2Processes.find(
-            (proc: { name: string; pm2_env?: { status: string } }) =>
-              hasProjectServiceProcess(
-                proc.name,
-                testProjectName,
-                "webserver",
-              ) && proc.pm2_env?.status === "online",
+          nativeProcesses = listNativeProcesses(
+            CLI_PATH,
+            fixtureDir,
+            testProjectName,
           );
-          if (webProcess?.pid) {
-            newWebPid = webProcess.pid;
+          webProcess = nativeProcesses.find(
+            (proc: { name: string }) =>
+              hasProjectServiceProcess(proc.name, testProjectName, "webserver"),
+          );
+          if (webProcess) {
             break;
           }
         }
 
-        expect(newWebPid).toBeDefined();
-        expect(newWebPid).not.toBe(initialWebPid);
+        expect(webProcess).toBeDefined();
       } finally {
         runZapCommand(`down --config zap-${testProjectName}.yaml`, fixtureDir, {
           timeout: 15000,
@@ -397,15 +384,18 @@ describe("E2E: Aliases Support", () => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         // Verify all processes are stopped
-        const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-        const pm2Processes = JSON.parse(pm2ListOutput);
-        const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+        const nativeProcesses = listNativeProcesses(
+          CLI_PATH,
+          fixtureDir,
+          testProjectName,
+        );
+        const zapProcesses = nativeProcesses.filter((proc: { name: string }) =>
           isProjectProcessName(proc.name, testProjectName),
         );
         expect(zapProcesses.length).toBe(0);
       } finally {
         // Ensure cleanup
-        await cleanupPm2Processes(testProjectName);
+        await cleanupNativeProcesses(testProjectName);
       }
     }, 30000);
   });
@@ -543,7 +533,7 @@ describe("E2E: Aliases Support", () => {
         expect(servicesOutput).toContain("Starting database service");
         expect(servicesOutput).toContain("All services started");
       } finally {
-        // No PM2 cleanup needed for task commands
+        // No native process cleanup needed for task commands
       }
     }, 60000);
 

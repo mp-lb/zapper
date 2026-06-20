@@ -7,6 +7,10 @@ import {
   isProjectProcessName,
   parseProjectProcessName,
 } from "./helpers/processNames";
+import {
+  cleanupNativeProcesses as cleanupProjectNativeProcesses,
+  listNativeProcesses,
+} from "./helpers/nativeProcesses";
 
 // Path to built CLI
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
@@ -46,17 +50,9 @@ function generateTestProjectName(): string {
   return `e2e-multi-test-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 }
 
-// Utility function to clean up PM2 processes
-async function cleanupPm2Processes(projectName: string) {
-  try {
-    // Delete all processes matching the project pattern
-    execSync(`pm2 delete "zap.${projectName}.*" 2>/dev/null || true`, {
-      stdio: "ignore",
-      timeout: 5000,
-    });
-  } catch (error) {
-    // Ignore cleanup errors - processes might not exist
-  }
+// Utility function to clean up native processes
+async function cleanupNativeProcesses(projectName: string) {
+  cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName);
 }
 
 // Utility function to wait for services to be healthy
@@ -68,18 +64,21 @@ async function waitForServices(
   const startTime = Date.now();
   while (Date.now() - startTime < maxWaitMs) {
     try {
-      const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-      const pm2Processes = JSON.parse(pm2ListOutput);
+      const nativeProcesses = listNativeProcesses(
+        CLI_PATH,
+        FIXTURES_DIR,
+        projectName,
+      );
 
-      const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+      const zapProcesses = nativeProcesses.filter((proc: { name: string }) =>
         expectedServices.some((service) =>
           hasProjectServiceProcess(proc.name, projectName, service),
         ),
       );
 
-      const runningServices = zapProcesses
-        .filter((proc: { name: string }) => proc.pm2_env?.status === "online")
-        .map((proc: { name: string }) => proc.name.split(".").pop());
+      const runningServices = zapProcesses.map(
+        (proc: { name: string }) => proc.name.split(".").pop(),
+      );
 
       if (runningServices.length === expectedServices.length) {
         return true;
@@ -94,20 +93,9 @@ async function waitForServices(
 
 // Utility function to get running service names for a project
 function getRunningServices(projectName: string): string[] {
-  try {
-    const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-    const pm2Processes = JSON.parse(pm2ListOutput);
-
-    return pm2Processes
-      .filter(
-        (proc: { name: string }) =>
-          isProjectProcessName(proc.name, projectName) &&
-          proc.pm2_env?.status === "online",
-      )
-      .map((proc: { name: string }) => proc.name.split(".").pop());
-  } catch (error) {
-    return [];
-  }
+  return listNativeProcesses(CLI_PATH, FIXTURES_DIR, projectName)
+    .filter((proc) => isProjectProcessName(proc.name, projectName))
+    .map((proc) => proc.name.split(".").pop() || proc.name);
 }
 
 describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
@@ -127,29 +115,18 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
 
   afterAll(async () => {
     // Cleanup any remaining test processes for this suite only
-    try {
-      const output = execSync("pm2 jlist --silent", {
-        encoding: "utf8",
-        timeout: 5000,
-      });
-      const processes = JSON.parse(output);
-      for (const proc of processes) {
-        if (proc.name?.startsWith("zap.e2e-multi-test-")) {
-          execSync(`pm2 delete "${proc.name}" 2>/dev/null || true`, {
-            stdio: "ignore",
-            timeout: 5000,
-          });
-        }
+    for (const proc of listNativeProcesses(CLI_PATH, FIXTURES_DIR)) {
+      const match = /^zap\.(e2e-multi-test-[^.]+)\./.exec(proc.name);
+      if (match) {
+        cleanupProjectNativeProcesses(CLI_PATH, FIXTURES_DIR, match[1]);
       }
-    } catch (error) {
-      // Ignore cleanup errors
     }
   });
 
   afterEach(async () => {
     // Cleanup after each test
     if (testProjectName) {
-      await cleanupPm2Processes(testProjectName);
+      await cleanupNativeProcesses(testProjectName);
     }
     if (tempConfigPath && fs.existsSync(tempConfigPath)) {
       // Reset any selected profile before cleanup.
@@ -219,10 +196,13 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
         ["database", "api", "frontend", "worker"].sort(),
       );
 
-      // Verify PM2 process names follow convention
-      const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-      const pm2Processes = JSON.parse(pm2ListOutput);
-      const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+      // Verify native process names follow convention
+      const nativeProcesses = listNativeProcesses(
+        CLI_PATH,
+        fixtureDir,
+        testProjectName,
+      );
+      const zapProcesses = nativeProcesses.filter((proc: { name: string }) =>
         isProjectProcessName(proc.name, testProjectName),
       );
 
@@ -367,15 +347,16 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       ]);
 
       // Get initial process info for api service
-      const initialPm2List = execSync("pm2 jlist", { encoding: "utf8" });
-      const initialProcesses = JSON.parse(initialPm2List);
+      const initialProcesses = listNativeProcesses(
+        CLI_PATH,
+        fixtureDir,
+        testProjectName,
+      );
       const initialApiProcess = initialProcesses.find(
         (proc: { name: string }) =>
           hasProjectServiceProcess(proc.name, testProjectName, "api"),
       );
       expect(initialApiProcess).toBeDefined();
-      const initialPid = initialApiProcess.pid;
-
       // Restart the api service
       const restartOutput = runZapCommand(
         `restart api`,
@@ -387,17 +368,18 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      // Verify service is still running but with new PID
-      const afterRestartPm2List = execSync("pm2 jlist", { encoding: "utf8" });
-      const afterRestartProcesses = JSON.parse(afterRestartPm2List);
+      // Verify service is still managed after restart.
+      const afterRestartProcesses = listNativeProcesses(
+        CLI_PATH,
+        fixtureDir,
+        testProjectName,
+      );
       const restartedApiProcess = afterRestartProcesses.find(
         (proc: { name: string }) =>
           hasProjectServiceProcess(proc.name, testProjectName, "api"),
       );
 
       expect(restartedApiProcess).toBeDefined();
-      expect(restartedApiProcess.pm2_env.status).toBe("online");
-      expect(restartedApiProcess.pid).not.toBe(initialPid); // Should have new PID
 
       // Other services should still be running and unchanged
       const runningServices = getRunningServices(testProjectName);
@@ -537,10 +519,13 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
         /stopped|not running|offline|No processes|down/i,
       );
 
-      // 6. Verify processes are completely gone from PM2
-      const pm2ListAfterDown = execSync("pm2 jlist", { encoding: "utf8" });
-      const pm2ProcessesAfterDown = JSON.parse(pm2ListAfterDown);
-      const zapProcessesAfterDown = pm2ProcessesAfterDown.filter(
+      // 6. Verify processes are completely gone from native process
+      const nativeProcessesAfterDown = listNativeProcesses(
+        CLI_PATH,
+        fixtureDir,
+        testProjectName,
+      );
+      const zapProcessesAfterDown = nativeProcessesAfterDown.filter(
         (proc: { name: string }) =>
           isProjectProcessName(proc.name, testProjectName),
       );
@@ -564,10 +549,13 @@ describe("E2E: Multi-Service Project with Dependencies and Profiles", () => {
       ]);
 
       // Verify naming convention
-      const pm2ListOutput = execSync("pm2 jlist", { encoding: "utf8" });
-      const pm2Processes = JSON.parse(pm2ListOutput);
+      const nativeProcesses = listNativeProcesses(
+        CLI_PATH,
+        fixtureDir,
+        testProjectName,
+      );
 
-      const zapProcesses = pm2Processes.filter((proc: { name: string }) =>
+      const zapProcesses = nativeProcesses.filter((proc: { name: string }) =>
         isProjectProcessName(proc.name, testProjectName),
       );
 

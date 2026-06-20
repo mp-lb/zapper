@@ -56,7 +56,7 @@ links:
     url: http://localhost:${API_PORT}/docs
 ```
 
-- `project` is required and is used as the PM2/Docker namespace.
+- `project` is required and is used as the native/Docker namespace.
 - `env` defines root environment file stacks.
 - `env_files` is accepted as a compatibility alias for root `env`.
 - `profiles` defines named runtime profiles with env files, service selection,
@@ -66,7 +66,7 @@ links:
 - `git_method` controls repo clone URLs: `ssh`, `http`, or `cli`.
 - `runtime` optionally overrides native-process toolchain resolution.
 - `task_delimiters` changes task template delimiters.
-- `native` defines local PM2-managed processes.
+- `native` defines local supervisor-managed processes.
 - `docker` and `containers` define Docker-managed services.
 - `volumes` declares reusable Docker named volumes.
 - `secrets` declares local file/env-backed secrets for Docker services.
@@ -127,7 +127,7 @@ autodetects common mise project files:
 - `.mise.toml`
 - `.tool-versions`
 
-When exactly one of those files exists, native PM2 wrappers run service commands
+When exactly one of those files exists, native supervisor wrappers run service commands
 through `mise exec`. Tool versions stay in the mise file; Zapper does not need
 to repeat them in `zap.yaml`.
 
@@ -183,7 +183,7 @@ Supported provider values:
 - `ambient` uses the existing captured environment.
 - `mise` runs the command through `mise exec`.
 - `shell` captures the environment from the user's login shell and bakes it
-  into the PM2 wrapper, so processes find tools (nvm-installed node, shims)
+  into the supervisor wrapper, so processes find tools (nvm-installed node, shims)
   even when `zap up` runs outside an interactive shell. The shell defaults to
   `$SHELL` and can be overridden with `runtime.shell`. Each `zap up` or
   restart re-captures. If capture fails (missing shell, non-zero exit,

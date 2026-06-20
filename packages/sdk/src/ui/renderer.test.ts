@@ -193,7 +193,7 @@ describe("renderer", () => {
       renderer.confirm.globalKillAllPromptText({
         projectCount: 2,
         projectNames: ["alpha", "beta"],
-        pm2Count: 4,
+        nativeProcessCount: 4,
         containerCount: 1,
       }),
     ).toContain("\n  - alpha\n  - beta\n");

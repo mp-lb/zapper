@@ -1,2 +1,2 @@
-export * from "./Pm2Manager";
-export * from "./Pm2Executor";
+export * from "./NativeProcessManager";
+export * from "./NativeProcessExecutor";
