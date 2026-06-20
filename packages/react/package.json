@@ -1,6 +1,6 @@
 {
   "name": "@mp-lb/zapper-react",
-  "version": "0.20.0",
+  "version": "0.21.0",
   "description": "React hooks and client boundaries for local Zapper projects",
   "type": "module",
   "main": "./dist/index.js",

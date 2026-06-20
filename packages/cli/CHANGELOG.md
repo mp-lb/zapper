@@ -1,5 +1,36 @@
 # @mp-lb/zapper
 
+## 0.21.0
+
+### Minor Changes
+
+- 86748c1: New bundled arc module `aws-s3`: a private, versioned S3 bucket plus an IAM
+  user scoped to that bucket only, injecting `AWS_S3_BUCKET`, `AWS_REGION`,
+  `AWS_ACCESS_KEY_ID`, and `AWS_SECRET_ACCESS_KEY` into sibling container
+  services. AWS auth comes from the network's provider config
+  (`{{cred.AWS_*}}`) or ambient AWS configuration.
+
+  Arc env precedence fix: module env injections now fill gaps only — a
+  service's own `env:` entry (whitelist or literal) wins on conflict, so a
+  project can adopt a binding module without its injected values overriding
+  explicitly declared env.
+
+- bd05685: Zap Arc engine is now provider-agnostic: all GCP/Atlas/Vercel knowledge moved
+  out of the engine into module data (`module.yaml` manifests with hooks,
+  defaults, credentials, and env injections) and generic network config
+  (`backend:`, `providers:`, `module-defaults:`, `registry:`, template
+  variables). Modules resolve from the bundled library, remote URLs, or
+  `./relative` paths; GCP projects are Terraform-managed via a new
+  `deploy.project:` section; `env:` is one list (bare `KEY` whitelists from the
+  pool, `KEY=value` is a literal) replacing `env-values`. Existing network.yaml
+  and deploy blocks need migrating to the new shape. Remote-build Vercel
+  services deploy via pull/build/`--prebuilt` from the module hook.
+
+  `zap profile select`/`reset` now hot-swap the running stack: the new
+  profile's services are started, shared services are left alone, and Zapper
+  prompts (skippable with `--force`, `-y`) before stopping services the new
+  profile no longer needs.
+
 ## 0.20.0
 
 ### Minor Changes
