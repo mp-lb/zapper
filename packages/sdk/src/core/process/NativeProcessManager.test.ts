@@ -103,6 +103,35 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     expect(wrapperScripts.length).toBeGreaterThan(0);
   });
 
+  it("clears the managed log when replacing an existing process", async () => {
+    const logsDir = path.join(zapDir, "logs");
+    const logPath = path.join(logsDir, "test-project.test-service.log");
+
+    mkdirSync(logsDir, { recursive: true });
+    writeFileSync(logPath, "previous startup failure\n");
+
+    vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([
+      {
+        name: "zap.test-project.test-service",
+        pid: 0,
+        status: "errored",
+        uptime: 0,
+        memory: 0,
+        cpu: 0,
+        restarts: 2,
+      },
+    ]);
+
+    await NativeProcessManager.startProcessWithTempEcosystem(
+      "test-project",
+      { name: "test-service", cmd: "echo ok" },
+      testDir,
+    );
+
+    expect(existsSync(logPath)).toBe(true);
+    expect(readFileSync(logPath, "utf8")).toBe("");
+  });
+
   it("fails clearly for native services on Windows", async () => {
     const originalPlatform = Object.getOwnPropertyDescriptor(
       process,
@@ -207,7 +236,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     });
   });
 
-  it("only cleans up the stopped stack's log file, not other stacks' logs", async () => {
+  it("preserves managed logs when deleting a process", async () => {
     const logsDir = path.join(zapDir, "logs");
     mkdirSync(logsDir, { recursive: true });
 
@@ -227,7 +256,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "abc123",
     );
 
-    expect(existsSync(ownLog)).toBe(false);
+    expect(existsSync(ownLog)).toBe(true);
     expect(existsSync(otherLog)).toBe(true);
   });
 

@@ -645,6 +645,27 @@ native:
     });
   });
 
+  describe("showLogs", () => {
+    beforeEach(async () => {
+      const configPath = createTempConfig({});
+      await zapper.loadConfig(configPath);
+    });
+
+    it("shows Docker startup logs when the container is gone after a startup failure", async () => {
+      vi.mocked(DockerManager.containerExists).mockResolvedValue(false);
+      vi.mocked(DockerManager.startupLogExists).mockReturnValue(true);
+      vi.mocked(DockerManager.showStartupLog).mockResolvedValue(undefined);
+
+      await zapper.showLogs("database");
+
+      expect(DockerManager.showStartupLog).toHaveBeenCalledWith({
+        projectName: "test-project",
+        serviceName: "database",
+        configDir: tempDir,
+      });
+    });
+  });
+
   describe("killProjectResources", () => {
     beforeEach(async () => {
       const configPath = createTempConfig({});

@@ -124,7 +124,9 @@ supervision is intentionally unsupported; run Zapper from WSL2 on Windows.
 The supervisor preserves the behavior Zapper needs for local development:
 
 - detached services keep running after the invoking terminal exits;
-- `zap logs` can read the last saved log even after a service stops;
+- native services use one managed log file per service and stack;
+- native service logs are cleared when a new run starts and left in place when
+  the service stops;
 - stop, restart, delete, and global cleanup kill the supervised process group;
 - fast crash loops are capped, and later crash loops are throttled with
   exponential backoff;

@@ -699,7 +699,26 @@ export class Zapper {
       );
 
       const exists = await DockerManager.containerExists(dockerName);
-      if (!exists) throw new ContainerNotRunningError(resolvedName, dockerName);
+
+      if (!exists) {
+        const logContext = {
+          projectName,
+          serviceName: resolvedName,
+          configDir: projectRoot,
+        };
+
+        if (DockerManager.startupLogExists(logContext)) {
+          renderer.log.warn(
+            `${resolvedName} is not currently running. Showing Docker startup log.`,
+          );
+
+          await DockerManager.showStartupLog(logContext);
+          return;
+        }
+
+        throw new ContainerNotRunningError(resolvedName, dockerName);
+      }
+
       await DockerManager.showLogs(dockerName, follow);
     } else if (isProcess) {
       const nativeProcessExecutor = new NativeProcessExecutor(

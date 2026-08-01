@@ -18,8 +18,9 @@ matches `zap <command> --help`. See [Tasks](tasks.md) for task configuration,
 [Command Output](output.md) for the JSON/result contract.
 
 `zap logs` delegates to the underlying runtime log command for running services.
-Native service logs are shown without supervisor metadata prefixes. If a native
-service is stopped, Zapper can still show the saved last-run log.
+Native service logs are shown without supervisor metadata prefixes from one
+managed log file per service and stack. That file is cleared when a new run
+starts, and left in place when the service stops.
 
 ## Global Options
 

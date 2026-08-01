@@ -118,6 +118,8 @@ export class NativeProcessManager {
       instanceId,
     );
 
+    this.clearManagedLogFile(appConfig.logFile);
+
     const ecosystemJson = JSON.stringify({ apps: [appConfig] }, null, 2);
     renderer.log.debug(`Ecosystem JSON for ${processConfig.name as string}:`);
     renderer.log.debug("─".repeat(50));
@@ -320,7 +322,6 @@ export class NativeProcessManager {
     await this.supervisorAction("stop", prefixedName);
 
     if (projectName) {
-      await this.cleanupLogs(projectName, name, configDir, instanceId);
       this.cleanupWrapperScripts(projectName, name, configDir, instanceId);
     }
   }
@@ -427,7 +428,6 @@ export class NativeProcessManager {
     await this.supervisorAction("delete", prefixedName);
 
     if (projectName) {
-      await this.cleanupLogs(projectName, name, configDir, instanceId);
       this.cleanupWrapperScripts(projectName, name, configDir, instanceId);
     }
   }
@@ -463,53 +463,10 @@ export class NativeProcessManager {
       }
 
       if (projectName) {
-        await this.cleanupLogs(projectName, name, configDir, instanceId);
         this.cleanupWrapperScripts(projectName, name, configDir, instanceId);
       }
     } catch (error) {
       renderer.log.warn(`Error deleting processes: ${error}`);
-    }
-  }
-
-  private static async cleanupLogs(
-    projectName: string,
-    processName: string,
-    configDir?: string,
-    instanceId?: string | null,
-  ): Promise<void> {
-    try {
-      const { rmSync, unlinkSync, existsSync } = await import("fs");
-      const logsDir = path.join(configDir || ".", ".zap", "logs");
-
-      // Remove the combined log file. The path is stack-namespaced so one
-      // stack's cleanup can never delete another stack's logs.
-      const logPath = this.managedLogFilePath(
-        projectName,
-        processName,
-        configDir,
-        instanceId,
-      );
-
-      if (existsSync(logPath)) {
-        unlinkSync(logPath);
-        renderer.log.debug(`Cleaned up log: ${logPath}`);
-      }
-
-      // Try to remove the logs directory if it's empty
-      try {
-        const { readdirSync } = await import("fs");
-        const remainingFiles = readdirSync(logsDir);
-
-        if (remainingFiles.length === 0) {
-          rmSync(logsDir, { recursive: true, force: true });
-          renderer.log.debug(`Cleaned up empty logs directory: ${logsDir}`);
-        }
-      } catch {
-        // Directory not empty or other error, that's fine
-      }
-    } catch (error) {
-      // Log cleanup errors but don't fail the operation
-      renderer.log.warn(`Failed to clean up logs: ${error}`);
     }
   }
 
@@ -644,6 +601,11 @@ export class NativeProcessManager {
       : `${projectName}.${serviceName}`;
 
     return path.join(logsDir, `${baseName}.log`);
+  }
+
+  private static clearManagedLogFile(logFile: string): void {
+    mkdirSync(path.dirname(logFile), { recursive: true });
+    writeFileSync(logFile, "");
   }
 
   private static formatLogTimestamp(date: Date): string {
