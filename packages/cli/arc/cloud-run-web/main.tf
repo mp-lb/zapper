@@ -72,6 +72,11 @@ variable "cpu" {
   default = "1"
 }
 
+variable "cpu_idle" {
+  type    = bool
+  default = false
+}
+
 # Requests served concurrently per instance — the autoscaling knob (Cloud Run
 # adds instances as concurrency fills, up to max_instances).
 variable "concurrency" {
@@ -122,8 +127,7 @@ resource "google_cloud_run_v2_service" "main" {
           memory = var.memory
         }
 
-        # CPU always allocated so background exporters (OTel) can flush.
-        cpu_idle = false
+        cpu_idle = var.cpu_idle
       }
 
       startup_probe {
@@ -178,12 +182,12 @@ resource "google_cloud_run_domain_mapping" "main" {
 
 resource "cloudflare_record" "main" {
   allow_overwrite = true
-  zone_id = data.cloudflare_zone.main.id
-  name    = var.domain
-  content = google_cloud_run_domain_mapping.main.status[0].resource_records[0].rrdata
-  type    = google_cloud_run_domain_mapping.main.status[0].resource_records[0].type
-  proxied = false
-  ttl     = 1
+  zone_id         = data.cloudflare_zone.main.id
+  name            = var.domain
+  content         = google_cloud_run_domain_mapping.main.status[0].resource_records[0].rrdata
+  type            = google_cloud_run_domain_mapping.main.status[0].resource_records[0].type
+  proxied         = false
+  ttl             = 1
 }
 
 output "url" {
