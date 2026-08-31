@@ -80,4 +80,25 @@ deploy:
     expect(parsed.native?.api.cmd).toBe("npm run dev");
     expect("deploy" in parsed).toBe(false);
   });
+
+  it("should reject root env-files when profiles are configured", () => {
+    const configPath = path.join(testDir, "zap.yaml");
+
+    writeFileSync(
+      configPath,
+      `project: myproj
+env-files: [.env.base]
+profiles:
+  default:
+    env-files: [.env.local]
+native:
+  api:
+    cmd: npm run dev
+`,
+    );
+
+    expect(() => parseYamlFile(configPath)).toThrow(
+      "Root env/env_files cannot be used with profiles; define env_files inside each profile instead",
+    );
+  });
 });

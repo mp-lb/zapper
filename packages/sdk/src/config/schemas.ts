@@ -391,7 +391,15 @@ export const ZapperConfigSchema = processValidation(
       .refine((config) => !(config.env && config.env_files), {
         message: "Use either root env or env_files, not both",
         path: ["env"],
-      }),
+      })
+      .refine(
+        (config) => !(config.profiles && (config.env || config.env_files)),
+        {
+          message:
+            "Root env/env_files cannot be used with profiles; define env_files inside each profile instead",
+          path: ["profiles"],
+        },
+      ),
   ),
 );
 

@@ -755,6 +755,52 @@ describe("ZodConfigValidator", () => {
       }).toThrow();
     });
 
+    it("should reject root env when profiles are configured", () => {
+      const config = {
+        project: "test-root-env-with-profiles",
+        env: [".env.base"],
+        profiles: {
+          default: {
+            env_files: [".env.local"],
+          },
+        },
+        native: {
+          app: {
+            cmd: "npm start",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).toThrow(
+        "Root env/env_files cannot be used with profiles; define env_files inside each profile instead",
+      );
+    });
+
+    it("should reject root env_files when profiles are configured", () => {
+      const config = {
+        project: "test-root-env-files-with-profiles",
+        env_files: [".env.base"],
+        profiles: {
+          default: {
+            env_files: [".env.local"],
+          },
+        },
+        native: {
+          app: {
+            cmd: "npm start",
+          },
+        },
+      };
+
+      expect(() => {
+        ZodConfigValidator.validate(config);
+      }).toThrow(
+        "Root env/env_files cannot be used with profiles; define env_files inside each profile instead",
+      );
+    });
+
     it("should reject env_files as environment map with default", () => {
       const config = {
         project: "myproj",
