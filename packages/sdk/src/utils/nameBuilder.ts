@@ -1,7 +1,7 @@
 /**
  * Centralized service name construction for native processes and Docker containers.
- * All names follow the pattern: zap.{project}.{service}
- * or with an instance: zap.{project}.{instanceId}.{service}
+ * New runtime resources follow zap.{project}.{stackId}.{service}.
+ * The legacy zap.{project}.{service} form remains readable for global cleanup.
  */
 
 export function buildServiceName(
@@ -12,6 +12,34 @@ export function buildServiceName(
   return instanceId
     ? `zap.${project}.${instanceId}.${service}`
     : `zap.${project}.${service}`;
+}
+
+export interface StackRuntimeIdentity {
+  stackName: string;
+  serviceName: string;
+}
+
+/**
+ * Build the canonical identity used by every runtime backend for new
+ * stack-scoped resources. Legacy unscoped names are intentionally supported
+ * only by buildServiceName/parseServiceName for global discovery and cleanup.
+ */
+export function buildStackRuntimeIdentity(
+  project: string,
+  stackId: string | null | undefined,
+  service: string,
+): StackRuntimeIdentity {
+  if (!stackId?.trim()) {
+    throw new Error(
+      `Cannot build runtime identity for ${project}.${service} without a stack ID`,
+    );
+  }
+
+  const stackName = buildPrefix(project, stackId);
+  return {
+    stackName,
+    serviceName: `${stackName}.${service}`,
+  };
 }
 
 export function buildPrefix(

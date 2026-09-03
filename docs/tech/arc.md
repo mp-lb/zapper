@@ -12,6 +12,15 @@ data (the network config and the module library), never in engine code. The
 only built-in provider actions are docker build/push (`action: container`)
 and the gcloud `bootstrap` convenience.
 
+## Prerequisites
+
+Arc's current runner uses the local Terraform CLI for `plan`, `deploy`, and
+`destroy`. Install `terraform` so it is available on `PATH`; those commands
+fail early with an install hint when the binary is missing.
+
+Operators who want reproducible tool versions can pin Terraform in mise
+(`mise.toml`) and expose it through mise shims on `PATH`.
+
 ## Commands
 
 - `zap arc plan` — render Terraform from the deploy block and show the plan.

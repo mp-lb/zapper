@@ -92,12 +92,14 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const files = readdirSync(zapDir);
 
     const wrapperScripts = files.filter(
-      (f) => f.includes("test-project.test-service") && f.endsWith(".sh"),
+      (f) =>
+        f.includes("zap.test-project.abc123.test-service") && f.endsWith(".sh"),
     );
 
     expect(wrapperScripts.length).toBeGreaterThan(0);
@@ -105,14 +107,17 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
   it("clears the managed log when replacing an existing process", async () => {
     const logsDir = path.join(zapDir, "logs");
-    const logPath = path.join(logsDir, "test-project.test-service.log");
+    const logPath = path.join(
+      logsDir,
+      "zap.test-project.abc123.test-service.log",
+    );
 
     mkdirSync(logsDir, { recursive: true });
     writeFileSync(logPath, "previous startup failure\n");
 
     vi.spyOn(NativeProcessManager, "listProcesses").mockResolvedValue([
       {
-        name: "zap.test-project.test-service",
+        name: "zap.test-project.abc123.test-service",
         pid: 0,
         status: "errored",
         uptime: 0,
@@ -126,6 +131,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       { name: "test-service", cmd: "echo ok" },
       testDir,
+      "abc123",
     );
 
     expect(existsSync(logPath)).toBe(true);
@@ -160,6 +166,16 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     }
   });
 
+  it("refuses to start a native service without a stack ID", async () => {
+    await expect(
+      NativeProcessManager.startProcessWithTempEcosystem(
+        "test-project",
+        { name: "test-service", cmd: "echo test" },
+        testDir,
+      ),
+    ).rejects.toThrow("without a stack ID");
+  });
+
   it("configures the supervisor to merge stdout and stderr into one managed log file", async () => {
     const processConfig: Process = {
       name: "test-service",
@@ -179,6 +195,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     expect(appConfig).toBeDefined();
@@ -188,11 +205,11 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const managedLog = path.join(
       zapDir,
       "logs",
-      "test-project.test-service.log",
+      "zap.test-project.abc123.test-service.log",
     );
 
     expect(appConfig).toMatchObject({
-      name: "zap.test-project.test-service",
+      name: "zap.test-project.abc123.test-service",
       out_file: managedLog,
       error_file: managedLog,
       merge_logs: true,
@@ -226,7 +243,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const managedLog = path.join(
       zapDir,
       "logs",
-      "test-project.abc123.test-service.log",
+      "zap.test-project.abc123.test-service.log",
     );
 
     expect(appConfig).toMatchObject({
@@ -240,8 +257,16 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const logsDir = path.join(zapDir, "logs");
     mkdirSync(logsDir, { recursive: true });
 
-    const ownLog = path.join(logsDir, "test-project.abc123.test-service.log");
-    const otherLog = path.join(logsDir, "test-project.zzz999.test-service.log");
+    const ownLog = path.join(
+      logsDir,
+      "zap.test-project.abc123.test-service.log",
+    );
+
+    const otherLog = path.join(
+      logsDir,
+      "zap.test-project.zzz999.test-service.log",
+    );
+
     writeFileSync(ownLog, "own\n");
     writeFileSync(otherLog, "other\n");
 
@@ -275,11 +300,13 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const wrapperScript = readdirSync(zapDir).find(
       (file) =>
-        file.includes("test-project.test-service") && file.endsWith(".sh"),
+        file.includes("zap.test-project.abc123.test-service") &&
+        file.endsWith(".sh"),
     );
 
     expect(wrapperScript).toBeTruthy();
@@ -305,11 +332,13 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const wrapperScript = readdirSync(zapDir).find(
       (file) =>
-        file.includes("test-project.test-service") && file.endsWith(".sh"),
+        file.includes("zap.test-project.abc123.test-service") &&
+        file.endsWith(".sh"),
     );
 
     expect(wrapperScript).toBeTruthy();
@@ -327,7 +356,8 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const readWrapper = (): string => {
       const wrapperScript = readdirSync(zapDir).find(
         (file) =>
-          file.includes("test-project.test-service") && file.endsWith(".sh"),
+          file.includes("zap.test-project.abc123.test-service") &&
+          file.endsWith(".sh"),
       );
 
       expect(wrapperScript).toBeTruthy();
@@ -361,6 +391,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
         "test-project",
         processConfig,
         testDir,
+        "abc123",
       );
 
       const content = readWrapper();
@@ -386,6 +417,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
         "test-project",
         processConfig,
         testDir,
+        "abc123",
       );
 
       expect(readWrapper()).not.toContain("export ZAP_TEST_TOOL=");
@@ -406,6 +438,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
         "test-project",
         processConfig,
         testDir,
+        "abc123",
       );
 
       const content = readWrapper();
@@ -429,6 +462,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const firstFiles = readdirSync(zapDir);
@@ -441,6 +475,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const secondFiles = readdirSync(zapDir);
@@ -448,6 +483,37 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
     expect(secondScripts.length).toBe(1);
     expect(secondScripts[0]).not.toBe(firstScripts[0]);
+  });
+
+  it("never cleans up another stack's wrapper script", async () => {
+    const processConfig: Process = {
+      name: "test-service",
+      cmd: "echo 'test'",
+    };
+
+    await NativeProcessManager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+      "abc123",
+    );
+
+    await NativeProcessManager.startProcessWithTempEcosystem(
+      "test-project",
+      processConfig,
+      testDir,
+      "zzz999",
+    );
+
+    const scripts = readdirSync(zapDir).filter((file) => file.endsWith(".sh"));
+    expect(scripts).toHaveLength(2);
+    expect(
+      scripts.some((file) => file.startsWith("zap.test-project.abc123")),
+    ).toBe(true);
+
+    expect(
+      scripts.some((file) => file.startsWith("zap.test-project.zzz999")),
+    ).toBe(true);
   });
 
   it("should clean up wrapper scripts when deleting process", async () => {
@@ -460,6 +526,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       processConfig,
       testDir,
+      "abc123",
     );
 
     const filesAfterStart = readdirSync(zapDir);
@@ -471,6 +538,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       "test-service",
       testDir,
+      "abc123",
     );
 
     const filesAfterDelete = readdirSync(zapDir);
@@ -497,12 +565,14 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       process1,
       testDir,
+      "abc123",
     );
 
     await NativeProcessManager.startProcessWithTempEcosystem(
       "test-project",
       process2,
       testDir,
+      "abc123",
     );
 
     const filesAfterStart = readdirSync(zapDir);
@@ -514,6 +584,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
       "test-project",
       "service-one",
       testDir,
+      "abc123",
     );
 
     const filesAfterDelete = readdirSync(zapDir);
@@ -672,6 +743,7 @@ describe("NativeProcessManager - Crash-loop and daemon-kill recovery", () => {
       "test-project",
       { name: "svc", cmd: "node server.js" },
       testDir,
+      "abc123",
     );
 
     // Backoff is the safety net that throttles services that start crashing

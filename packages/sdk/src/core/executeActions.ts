@@ -18,7 +18,7 @@ import {
 } from "../utils/serviceActionReport";
 import { findProcess } from "./findProcess";
 import { findContainer } from "./findContainer";
-import { buildServiceName } from "../utils/nameBuilder";
+import { buildStackRuntimeIdentity } from "../utils/nameBuilder";
 import { DEFAULT_INSTANCE_KEY } from "./instanceResolver";
 import { resolveContainerVolumes } from "../config/volumeManager";
 import {
@@ -279,7 +279,14 @@ async function executeAction(
 
     const instanceId = runtimeConfig.instanceId;
     const instanceKey = runtimeConfig.instanceKey || DEFAULT_INSTANCE_KEY;
-    const dockerName = buildServiceName(projectName, name, instanceId);
+
+    const runtimeIdentity = buildStackRuntimeIdentity(
+      projectName,
+      instanceId,
+      name,
+    );
+
+    const dockerName = runtimeIdentity.serviceName;
 
     if (action.type === "start") {
       const ports = Array.isArray(c.ports) ? c.ports : [];
@@ -313,7 +320,7 @@ async function executeAction(
       });
 
       const labels = {
-        "com.docker.compose.project": projectName,
+        "com.docker.compose.project": runtimeIdentity.stackName,
         "com.docker.compose.service": name,
         "com.zapper.project": projectName,
         "com.zapper.service": name,

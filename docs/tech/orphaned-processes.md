@@ -101,7 +101,7 @@ managed log file. The log path was also shared between stacks, so an isolated
 profile's cleanup deleted the default stack's log.
 
 **Fix applied**: Managed log files are written by the supervisor and
-stack-namespaced: `.zap/logs/<project>.<stackId>.<service>.log`.
+stack-namespaced: `.zap/logs/zap.<project>.<stackId>.<service>.log`.
 
 ## Cleanup Commands
 

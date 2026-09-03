@@ -13,6 +13,15 @@ out. The engine is provider-agnostic: all provider knowledge (GCP, Vercel,
 Cloudflare, …) lives in data — a network config you control and a module
 library — never in engine code.
 
+## Prerequisites
+
+Arc's current runner uses the local Terraform CLI for `plan`, `deploy`, and
+`destroy`. Install `terraform` so it is available on `PATH`; those commands
+fail early with an install hint when the binary is missing.
+
+Operators who want reproducible tool versions can pin Terraform in mise
+(`mise.toml`) and expose it through mise shims on `PATH`.
+
 ## Commands
 
 ```bash

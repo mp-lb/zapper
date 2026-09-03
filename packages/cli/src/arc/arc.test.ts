@@ -15,6 +15,7 @@ import { resolveServiceEnv, bareEnvKeys } from "./env";
 import { loadModuleManifest, resolveModules } from "./modules";
 import { renderDeployment } from "./render";
 import { NetworkConfig, ProjectManifest, deployBlockSchema } from "./schemas";
+import { requireExecutable } from "./command";
 
 describe("template", () => {
   it("expands {var} placeholders", () => {
@@ -81,6 +82,18 @@ describe("env entries", () => {
 
   it("bareEnvKeys ignores literals", () => {
     expect(bareEnvKeys(["A", "B=1"])).toEqual(["A"]);
+  });
+});
+
+describe("external dependencies", () => {
+  it("shows an install hint when a required executable is missing", () => {
+    expect(() =>
+      requireExecutable("definitely-not-zap-arc-test-bin", "install it", {
+        env: { PATH: "" },
+      }),
+    ).toThrow(
+      /definitely-not-zap-arc-test-bin is required but was not found on PATH\.\ninstall it/,
+    );
   });
 });
 

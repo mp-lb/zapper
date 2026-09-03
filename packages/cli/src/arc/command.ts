@@ -49,6 +49,39 @@ function capture(cmd: string, opts: { cwd?: string } = {}): string {
   return execSync(cmd, { cwd: opts.cwd, encoding: "utf8" }).trim();
 }
 
+export function requireExecutable(
+  cmd: string,
+  installHint: string,
+  opts: { env?: NodeJS.ProcessEnv } = {},
+): void {
+  const result = spawnSync(cmd, ["--version"], {
+    env: { ...process.env, ...opts.env },
+    stdio: "ignore",
+  });
+
+  if (
+    result.error &&
+    "code" in result.error &&
+    result.error.code === "ENOENT"
+  ) {
+    throw new Error(
+      `${cmd} is required but was not found on PATH.\n${installHint}`,
+    );
+  }
+}
+
+function requireTerraform(): void {
+  requireExecutable(
+    "terraform",
+    [
+      "Install Terraform, then retry.",
+      "macOS: brew tap hashicorp/tap && brew install hashicorp/tap/terraform",
+      'mise: add terraform = "latest" to mise.toml and make sure mise shims are on PATH.',
+      "Docs: https://developer.hashicorp.com/terraform/install",
+    ].join("\n"),
+  );
+}
+
 function imageTag(projectDir: string): string {
   const sha = capture("git rev-parse --short HEAD", { cwd: projectDir });
   const dirty = capture("git status --porcelain", { cwd: projectDir }) !== "";
@@ -221,6 +254,7 @@ export function createArcCommand(): Command {
     .description("Render Terraform from the deploy block and show the plan")
     .action(async () => {
       try {
+        requireTerraform();
         const ctx = await prepare();
 
         try {
@@ -245,6 +279,7 @@ export function createArcCommand(): Command {
     )
     .action(async (opts: { keep?: boolean }) => {
       try {
+        requireTerraform();
         const ctx = await prepare();
         let failed = false;
 
@@ -319,6 +354,7 @@ export function createArcCommand(): Command {
     .option("--yes", "skip terraform's confirmation prompt")
     .action(async (opts: { yes?: boolean }) => {
       try {
+        requireTerraform();
         const ctx = await prepare({ stubEnv: true });
 
         try {

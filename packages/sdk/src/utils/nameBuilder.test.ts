@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
-import { buildServiceName, buildPrefix, parseServiceName } from "./nameBuilder";
+import {
+  buildServiceName,
+  buildPrefix,
+  buildStackRuntimeIdentity,
+  parseServiceName,
+} from "./nameBuilder";
 
 describe("nameBuilder", () => {
   describe("buildServiceName", () => {
@@ -38,6 +43,21 @@ describe("nameBuilder", () => {
     it("should build prefix with null instance", () => {
       const result = buildPrefix("myproject", null);
       expect(result).toBe("zap.myproject");
+    });
+  });
+
+  describe("buildStackRuntimeIdentity", () => {
+    it("uses one stack namespace for runtime and service identity", () => {
+      expect(buildStackRuntimeIdentity("myproject", "abc123", "api")).toEqual({
+        stackName: "zap.myproject.abc123",
+        serviceName: "zap.myproject.abc123.api",
+      });
+    });
+
+    it("refuses to create an unscoped runtime identity", () => {
+      expect(() =>
+        buildStackRuntimeIdentity("myproject", undefined, "api"),
+      ).toThrow("without a stack ID");
     });
   });
 

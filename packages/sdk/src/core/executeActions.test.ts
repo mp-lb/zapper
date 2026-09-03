@@ -116,7 +116,9 @@ describe("executeActions", () => {
           ports: ["6379:6379"],
         },
       },
-    };
+      instanceId: "stack123",
+      instanceKey: "default",
+    } as ZapperConfig & { instanceId: string; instanceKey: string };
 
     mockNativeProcessExecutor = {
       startProcess: vi.fn().mockResolvedValue(undefined),
@@ -257,7 +259,7 @@ describe("executeActions", () => {
       );
 
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.database",
+        "zap.test-project.stack123.database",
         {
           image: "postgres:15",
           hostname: "database",
@@ -273,11 +275,11 @@ describe("executeActions", () => {
           },
           command: "postgres -c log_statement=all",
           labels: {
-            "com.docker.compose.project": "test-project",
+            "com.docker.compose.project": "zap.test-project.stack123",
             "com.docker.compose.service": "database",
             "com.zapper.project": "test-project",
             "com.zapper.service": "database",
-            "com.zapper.instance-id": "",
+            "com.zapper.instance-id": "stack123",
             "com.zapper.instance-key": "default",
           },
         },
@@ -311,7 +313,7 @@ describe("executeActions", () => {
       await executeActions(mockConfig, "test-project", "/config/dir", plan);
 
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.redis",
+        "zap.test-project.stack123.redis",
         {
           image: "redis:7",
           ports: ["6379:6379"],
@@ -320,11 +322,11 @@ describe("executeActions", () => {
           environment: {},
           command: undefined,
           labels: {
-            "com.docker.compose.project": "test-project",
+            "com.docker.compose.project": "zap.test-project.stack123",
             "com.docker.compose.service": "redis",
             "com.zapper.project": "test-project",
             "com.zapper.service": "redis",
-            "com.zapper.instance-id": "",
+            "com.zapper.instance-id": "stack123",
             "com.zapper.instance-key": "default",
           },
         },
@@ -359,7 +361,7 @@ describe("executeActions", () => {
 
       expect(findContainer).toHaveBeenCalledWith(mockConfig, "redis");
       expect(DockerManager.stopContainer).toHaveBeenCalledWith(
-        "zap.test-project.redis",
+        "zap.test-project.stack123.redis",
       );
     });
 
@@ -384,6 +386,37 @@ describe("executeActions", () => {
       await expect(
         executeActions(mockConfig, "test-project", "/config/dir", plan),
       ).rejects.toThrow("Docker service not found: nonexistent");
+    });
+
+    it("should refuse to create an unscoped docker container", async () => {
+      const mockContainer = mockConfig.docker!.redis;
+      vi.mocked(findContainer).mockReturnValue(["redis", mockContainer]);
+
+      const plan: ActionPlan = {
+        waves: [
+          {
+            actions: [
+              {
+                type: "start",
+                serviceType: "docker",
+                name: "redis",
+                healthcheck: 0,
+              },
+            ],
+          },
+        ],
+      };
+
+      await expect(
+        executeActions(
+          { ...mockConfig, instanceId: undefined } as ZapperConfig,
+          "test-project",
+          "/config/dir",
+          plan,
+        ),
+      ).rejects.toThrow("without a stack ID");
+
+      expect(DockerManager.startContainerAsync).not.toHaveBeenCalled();
     });
 
     it("should handle volumes with different formats", async () => {
@@ -421,7 +454,7 @@ describe("executeActions", () => {
       expect(DockerManager.createVolume).toHaveBeenCalledWith("complex_volume");
 
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.test",
+        "zap.test-project.stack123.test",
         expect.objectContaining({
           volumes: ["simple_volume:/data", "complex_volume:/app/data"],
         }),
@@ -514,7 +547,7 @@ describe("executeActions", () => {
 
       expect(DockerManager.createVolume).not.toHaveBeenCalled();
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.test",
+        "zap.test-project.stack123.test",
         expect.objectContaining({
           volumes: ["./init.sql:/docker-entrypoint-initdb.d/init.sql"],
         }),
@@ -586,7 +619,7 @@ describe("executeActions", () => {
 
       expect(DockerManager.createVolume).toHaveBeenCalledWith("shared-cache");
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.api",
+        "zap.test-project.stack123.api",
         expect.objectContaining({
           image: "zap.test-project.api:dev",
           volumes: [
@@ -647,7 +680,7 @@ describe("executeActions", () => {
       );
 
       expect(DockerManager.startContainerAsync).toHaveBeenCalledWith(
-        "zap.test-project.redis",
+        "zap.test-project.stack123.redis",
         expect.any(Object),
         {
           projectName: "test-project",
@@ -837,7 +870,7 @@ describe("executeActions", () => {
       expect(NativeProcessExecutor).toHaveBeenCalledWith(
         "test-project",
         undefined,
-        undefined,
+        "stack123",
       );
     });
 
@@ -869,7 +902,7 @@ describe("executeActions", () => {
       expect(NativeProcessExecutor).toHaveBeenCalledWith(
         "test-project",
         "/custom/config",
-        undefined,
+        "stack123",
       );
     });
   });

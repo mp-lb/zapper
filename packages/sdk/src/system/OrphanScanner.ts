@@ -6,7 +6,8 @@ export interface WrapperOsProcess {
   scriptPath: string;
 }
 
-// Matches a Zapper wrapper invocation: `<...>/bash <configDir>/.zap/<project>.<service>.<timestamp>.sh`.
+// Matches a Zapper wrapper invocation, including legacy unscoped and current
+// `zap.<project>.<stackId>.<service>.<timestamp>.sh` file names.
 // The wrapper script path is the only reliable marker that an OS process was
 // started by Zapper, which lets us find survivors that the supervisor no longer
 // manages (a daemon crash can orphan managed trees without killing them).

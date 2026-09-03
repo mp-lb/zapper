@@ -11,7 +11,10 @@ import path from "path";
 import { Process } from "../../config/schemas";
 import { ProcessInfo } from "../../types/index";
 import { renderer } from "../../ui/renderer";
-import { buildServiceName } from "../../utils/nameBuilder";
+import {
+  buildServiceName,
+  buildStackRuntimeIdentity,
+} from "../../utils/nameBuilder";
 import { resolveBashRuntime, resolveTailRuntime } from "../../runtime";
 import { OrphanScanner } from "../../system/OrphanScanner";
 import { captureShellEnv } from "./shellEnvCapture";
@@ -65,6 +68,12 @@ export class NativeProcessManager {
     instanceId?: string | null,
   ): Promise<void> {
     assertNativeProcessPlatform();
+
+    buildStackRuntimeIdentity(
+      projectName,
+      instanceId,
+      processConfig.name as string,
+    );
 
     if (!configDir) {
       throw new Error("Config directory is required for process management");
@@ -149,11 +158,11 @@ export class NativeProcessManager {
     instanceId?: string | null,
   ): NativeProcessStartOptions {
     return {
-      name: buildServiceName(
+      name: buildStackRuntimeIdentity(
         projectName,
-        processConfig.name as string,
         instanceId,
-      ),
+        processConfig.name as string,
+      ).serviceName,
       script: wrapperScript,
       interpreter: resolveBashRuntime([]).command,
       cwd: this.resolveProcessCwd(processConfig, configDir),
@@ -474,14 +483,16 @@ export class NativeProcessManager {
     projectName: string,
     processName: string,
     configDir?: string,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _instanceId?: string | null,
+    instanceId?: string | null,
   ): void {
     try {
       const zapDir = path.join(configDir || ".", ".zap");
       if (!existsSync(zapDir)) return;
 
-      const scriptPattern = `${projectName}.${processName}.`;
+      const scriptPattern = instanceId
+        ? `${buildStackRuntimeIdentity(projectName, instanceId, processName).serviceName}.`
+        : `${projectName}.${processName}.`;
+
       const files = readdirSync(zapDir);
 
       for (const file of files) {
@@ -597,7 +608,8 @@ export class NativeProcessManager {
     const logsDir = path.join(configDir || ".", ".zap", "logs");
 
     const baseName = instanceId
-      ? `${projectName}.${instanceId}.${serviceName}`
+      ? buildStackRuntimeIdentity(projectName, instanceId, serviceName)
+          .serviceName
       : `${projectName}.${serviceName}`;
 
     return path.join(logsDir, `${baseName}.log`);
@@ -886,12 +898,19 @@ export class NativeProcessManager {
     processConfig: Process,
     configDir: string,
 
-    _instanceId?: string | null,
+    instanceId?: string | null,
     shellCapture?: ShellCapture,
   ): string {
     const zapDir = path.join(configDir, ".zap");
     const timestamp = Date.now();
-    const fileName = `${projectName}.${processConfig.name as string}.${timestamp}.sh`;
+
+    const serviceName = buildStackRuntimeIdentity(
+      projectName,
+      instanceId,
+      processConfig.name as string,
+    ).serviceName;
+
+    const fileName = `${serviceName}.${timestamp}.sh`;
     const filePath = path.join(zapDir, fileName);
 
     let content = "#!/usr/bin/env bash\n";
