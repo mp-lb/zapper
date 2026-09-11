@@ -70,6 +70,7 @@ export function toEnquirerChoices<T>(
 export async function select<T>(
   message: string,
   options: SelectOption<T>[],
+  settings: { initial?: number; hint?: string } = {},
 ): Promise<T> {
   if (options.length === 0) {
     throw new Error("Select prompt requires at least one option");
@@ -83,7 +84,16 @@ export async function select<T>(
       name: "selected",
       message,
       choices: toEnquirerChoices(options),
-      hint: "Use ↑/↓ to move, Enter to open",
+      format(this: {
+        state: { submitted?: boolean; cancelled?: boolean };
+        selected?: EnquirerChoice;
+      }) {
+        return this.state.submitted && !this.state.cancelled
+          ? active(this.selected?.message ?? "")
+          : "";
+      },
+      initial: settings.initial ?? 0,
+      hint: settings.hint ?? "Use ↑/↓ to move, Enter to open",
       symbols: {
         pointer: "›",
       },
@@ -105,7 +115,7 @@ export async function select<T>(
   const selectedOption = options[selectedIndex];
 
   if (!selectedOption) {
-    throw new Error("No link selected.");
+    throw new Error("No option selected.");
   }
 
   return selectedOption.value;

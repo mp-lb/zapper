@@ -193,7 +193,48 @@ describe("E2E: Profiles Command", () => {
     }
   }, 60000);
 
-  it("should start default services, then selected profile services", async () => {
+  it("switches isolated stacks and empty profiles synchronously", async () => {
+    testProjectName = generateTestProjectName();
+    testDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "zapper-e2e-profiles-fixture-"),
+    );
+    tempConfigPath = path.join(testDir, "zap.yaml");
+    fs.writeFileSync(
+      tempConfigPath,
+      `project: ${testProjectName}
+profiles:
+  default:
+    services: [api, worker]
+  e2e:
+    services: [api]
+    isolate: true
+  empty:
+    services: []
+native:
+  api:
+    cmd: node -e 'setInterval(() => {}, 1000)'
+  worker:
+    cmd: node -e 'setInterval(() => {}, 1000)'
+`,
+    );
+    runZapCommand("profile set default", testDir, tempConfigPath);
+    expect(getRunningServices(testProjectName).sort()).toEqual([
+      "api",
+      "worker",
+    ]);
+    const switched = JSON.parse(
+      runZapCommand("profile set e2e --json", testDir, tempConfigPath),
+    );
+    expect(switched.hotSwap.stopped.stopped).toEqual(["api", "worker"]);
+    expect(getRunningServices(testProjectName)).toEqual(["api"]);
+    expect(runZapCommand("profile get", testDir, tempConfigPath).trim()).toBe(
+      "e2e",
+    );
+    runZapCommand("profile set empty", testDir, tempConfigPath);
+    expect(getRunningServices(testProjectName)).toEqual([]);
+  }, 90000);
+
+  it("should reconcile services when setting profiles without a separate restart", async () => {
     testProjectName = generateTestProjectName();
     testDir = fs.mkdtempSync(
       path.join(os.tmpdir(), "zapper-e2e-profiles-fixture-"),
@@ -222,16 +263,31 @@ describe("E2E: Profiles Command", () => {
       expect(runningWithoutProfile).not.toContain("frontend");
       expect(runningWithoutProfile).not.toContain("worker");
 
-      runZapCommand("profile use dev", testDir, tempConfigPath, {
+      runZapCommand("profile set dev", testDir, tempConfigPath, {
         timeout: 45000,
       });
-      runZapCommand("restart", testDir, tempConfigPath, { timeout: 45000 });
 
       const runningWithDevProfile = getRunningServices(testProjectName);
       expect(runningWithDevProfile).toContain("database");
       expect(runningWithDevProfile).toContain("api");
       expect(runningWithDevProfile).toContain("frontend");
       expect(runningWithDevProfile).not.toContain("worker");
+
+      expect(runZapCommand("profile get", testDir, tempConfigPath).trim()).toBe(
+        "dev",
+      );
+      runZapCommand("profile set prod", testDir, tempConfigPath, {
+        timeout: 45000,
+      });
+      const runningWithProdProfile = getRunningServices(testProjectName);
+      expect(runningWithProdProfile).toContain("api");
+      expect(runningWithProdProfile).toContain("worker");
+      expect(runningWithProdProfile).not.toContain("frontend");
+
+      runZapCommand("profile reset", testDir, tempConfigPath, {
+        timeout: 45000,
+      });
+      expect(getRunningServices(testProjectName)).not.toContain("worker");
     } finally {
       try {
         runZapCommand("down", testDir, tempConfigPath, {
@@ -241,5 +297,5 @@ describe("E2E: Profiles Command", () => {
         // Ignore cleanup errors
       }
     }
-  }, 90000);
+  }, 180000);
 });

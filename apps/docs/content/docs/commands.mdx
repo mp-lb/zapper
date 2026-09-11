@@ -204,7 +204,12 @@ Run a one-off task by name, or list all tasks if no task specified
 
 **Aliases:** `p`
 
-Manage profiles
+Select a profile interactively and apply its services.
+
+Use ↑/↓ to move and Enter to switch. The active profile is marked and initially
+selected. The picker closes before service progress begins; success exits the
+command. Escape or Ctrl+C cancels without changes. Without a terminal, use
+`get` or `set`. Bare `--json` still reports the current profile.
 
 | Option | Description |
 | --- | --- |
@@ -218,28 +223,34 @@ List configured profiles
 | --- | --- |
 | `-j, --json` | Output as minified JSON |
 
-### `zap profile current`
+### `zap profile get`
 
-Show the current profile
+Alias: `current`
+
+Print the current profile
 
 | Option | Description |
 | --- | --- |
 | `-j, --json` | Output as minified JSON |
 
-### `zap profile use <name>`
+### `zap profile set <name>`
 
-Switch the saved profile for this project
+Alias: `use`
+
+Stop excluded services, start required services, and save the profile
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Compatibility flag; excluded services always stop without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ### `zap profile reset`
 
-Reset to the default profile
+Apply the default profile, stopping excluded services and starting required services
 
 | Option | Description |
 | --- | --- |
+| `-y, --force` | Compatibility flag; excluded services always stop without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ## `zap state`

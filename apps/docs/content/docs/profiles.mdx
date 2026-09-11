@@ -62,7 +62,7 @@ profile = env files + service selection + isolation behavior
 Examples:
 
 ```bash
-zap profile use default
+zap profile set default
 zap up
 
 zap --profile e2e up
@@ -72,7 +72,7 @@ zap --profile e2e down
 Sticky selection remains useful for humans:
 
 ```bash
-zap profile use proddata
+zap profile set proddata
 zap up
 ```
 
@@ -195,18 +195,14 @@ profiles:
     isolate: true
 ```
 
-Switching from `default` to `proddata` updates the same local stack. The initial
-implementation is intentionally simple:
+Switching profiles stops services excluded by the target, then starts its required
+services and waits for configured health checks. Shared services keep running
+unless their definitions or env-file selection change. When switching to or from
+an isolated profile, the previous profile's services stop before the target stack
+starts. The saved selection changes only after the transition succeeds.
 
-1. Stop the current non-isolated stack.
-2. Save the selected profile.
-3. Start the newly selected profile.
-
-Later, Zapper can optimize this by diffing services, env files, ports, and
-dependencies, then restarting only affected services.
-
-Starting `e2e` does not disturb `default` or `proddata`. It uses an isolated
-stack derived from the profile.
+To run an isolated stack alongside the selected stack, use `zap --profile e2e up`.
+This one-command override leaves the saved selection and other stacks alone.
 
 ## Local Copies, Stacks, and Stack IDs
 
@@ -314,11 +310,26 @@ The global registry tracks local copies across the machine. Local
 Primary commands:
 
 ```bash
+zap profile
 zap profile list
-zap profile current
-zap profile use <name>
+zap profile get
+zap profile set <name>
 zap profile reset
 ```
+
+`zap profile` opens an arrow-key picker with the active profile marked and
+selected. Enter closes the picker and shows service progress, then a success
+message and exits. Escape or Ctrl+C cancels the picker without changing services.
+
+For scripts, `get` prints only the profile name and `set <name>` waits for the
+transition. `current` and `use` remain aliases. `reset` applies the default profile
+with the same service transition. Excluded services stop automatically; the old
+`--force` flag is accepted for compatibility.
+
+Without a terminal, use `get` or `set`. Bare `zap profile --json` continues to
+report the current profile. A failed transition exits with an error and retains
+the previous saved selection; services may have partially changed, so fix the
+reported error and retry the switch.
 
 Stack-targeting commands accept `--profile`:
 
@@ -335,7 +346,7 @@ namespace produced by that selection.
 
 Rules:
 
-- `zap profile use <name>` updates saved state.
+- `zap profile set <name>` updates saved state.
 - `zap --profile <name> <command>` overrides saved state for one invocation.
 - `--profile` does not mutate saved state.
 - Stack commands show the selected profile in human output when useful.
@@ -383,7 +394,7 @@ zap up
 After:
 
 ```bash
-zap profile use proddata
+zap profile set proddata
 zap up
 ```
 
@@ -493,7 +504,7 @@ code consumes the selected profile.
 - Service-level `profiles` are removed.
 - `zap env <service>` inspects resolved environment variables and no longer
   switches state.
-- `zap profile use <name>` updates `selectedProfile`.
+- `zap profile set <name>` updates `selectedProfile`.
 - `zap --profile <name> <command>` is a one-command override and does not
   mutate state.
 - Isolated profiles create or reuse profile-owned stacks.
