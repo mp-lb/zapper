@@ -8,6 +8,16 @@ describe("renderCommandResult", () => {
     vi.restoreAllMocks();
   });
 
+  it("prints the current profile without ANSI or labels for scripts", () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+    renderCommandResult(
+      { kind: "profiles.current", profile: "dev" },
+      { json: false },
+    );
+
+    expect(log).toHaveBeenCalledExactlyOnceWith("dev");
+  });
+
   it("prints a JSONL command completion line for service actions", () => {
     const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
 

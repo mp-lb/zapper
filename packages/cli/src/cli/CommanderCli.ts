@@ -418,11 +418,19 @@ export class CommanderCli {
     const profileCmd = this.program
       .command("profile")
       .alias("p")
-      .description("Manage profiles")
+      .description("Select a profile interactively and apply its services")
       .option("-j, --json", "Output as minified JSON")
       .action(async (_options, command) => {
-        // No subcommand defaults to showing the current profile.
-        await this.executeCommand("profile", undefined, command);
+        // Machine output keeps the existing non-interactive current-profile view.
+        await this.executeCommand(
+          "profile",
+          [
+            command.optsWithGlobals().json || command.optsWithGlobals().jsonl
+              ? "get"
+              : "select",
+          ],
+          command,
+        );
       });
 
     profileCmd
@@ -434,24 +442,28 @@ export class CommanderCli {
       });
 
     profileCmd
-      .command("current")
-      .description("Show the current profile")
+      .command("get")
+      .alias("current")
+      .description("Print the current profile")
       .option("-j, --json", "Output as minified JSON")
       .action(async (_options, command) => {
-        await this.executeCommand("profile", ["current"], command);
+        await this.executeCommand("profile", ["get"], command);
       });
 
     profileCmd
-      .command("use")
-      .description("Switch the saved profile for this project")
+      .command("set")
+      .alias("use")
+      .description(
+        "Stop excluded services, start required services, and save the profile",
+      )
       .argument("<name>", "Profile name to select")
       .option(
         "-y, --force",
-        "Shut down services no longer needed without prompting",
+        "Compatibility flag; excluded services always stop without prompting",
       )
       .option("-j, --json", "Output as minified JSON")
       .action(async (name, _options, command) => {
-        await this.executeCommand("profile", ["use", name], command);
+        await this.executeCommand("profile", ["set", name], command);
       });
 
     profileCmd
@@ -459,7 +471,7 @@ export class CommanderCli {
       .description("Reset to the default profile")
       .option(
         "-y, --force",
-        "Shut down services no longer needed without prompting",
+        "Compatibility flag; excluded services always stop without prompting",
       )
       .option("-j, --json", "Output as minified JSON")
       .action(async (_options, command) => {

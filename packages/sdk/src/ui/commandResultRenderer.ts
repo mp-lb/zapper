@@ -292,7 +292,7 @@ export function renderCommandResult(
       renderer.log.report(renderer.profiles.toText(result.profiles));
       return;
     case "profiles.current":
-      renderer.log.report(result.profile ?? "default");
+      renderer.machine.line(result.profile ?? "default");
       return;
     case "profiles.selected":
       renderer.log.info(`Selected profile: ${result.profile}`);

@@ -33,16 +33,19 @@ describe("CommanderCli - Profile Alias Resolution", () => {
     );
   });
 
-  it("does not apply service-alias resolution to the profile target", async () => {
-    // "admin" is not a configured profile, so this rejects with a not-found
-    // error. The error must reference "admin" (the literal target), never the
-    // alias-resolved service name "admin-app".
-    await expect(
-      cli.parse(["node", "test", "profile", "use", "admin"]),
-    ).rejects.toThrow(/Profile not found: admin\b/);
+  it.each(["use", "set"])(
+    "does not apply service-alias resolution to profile %s",
+    async (action) => {
+      // "admin" is not a configured profile, so this rejects with a not-found
+      // error. The error must reference "admin" (the literal target), never the
+      // alias-resolved service name "admin-app".
+      await expect(
+        cli.parse(["node", "test", "profile", action, "admin"]),
+      ).rejects.toThrow(/Profile not found: admin\b/);
 
-    await expect(
-      cli.parse(["node", "test", "profile", "use", "admin"]),
-    ).rejects.not.toThrow(/admin-app/);
-  });
+      await expect(
+        cli.parse(["node", "test", "profile", action, "admin"]),
+      ).rejects.not.toThrow(/admin-app/);
+    },
+  );
 });

@@ -30,6 +30,24 @@ describe("toEnquirerChoices", () => {
     ]);
   });
 
+  it("passes the initial selection and hint to the prompt and returns its value", async () => {
+    vi.mocked(Enquirer.prompt).mockResolvedValueOnce({ selected: "1" });
+    expect(
+      await select(
+        "Select profile",
+        [
+          { label: "default", value: "default" },
+          { label: "dev ✓ active", value: "dev" },
+        ],
+        { initial: 1, hint: "Enter to switch" },
+      ),
+    ).toBe("dev");
+
+    expect(Enquirer.prompt).toHaveBeenLastCalledWith(
+      expect.objectContaining({ initial: 1, hint: "Enter to switch" }),
+    );
+  });
+
   it("turns prompt cancellation into a shared cancellation error", async () => {
     vi.mocked(Enquirer.prompt).mockRejectedValueOnce("");
 

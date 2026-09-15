@@ -1,381 +1,258 @@
 import { ProfilesCommand } from "./ProfilesCommand";
 import { Zapper } from "../core/Zapper";
-import { vi, describe, it, expect, beforeEach } from "vitest";
-import { Context } from "../types/index";
+import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
+import { Context } from "../types/Context";
 import { saveState } from "../config/stateLoader";
-import { confirm } from "../utils/confirm";
+import { select } from "../utils/select";
+import { PromptCancelledError } from "../errors";
+import { emptyServiceActionReport } from "../utils/serviceActionReport";
 
-vi.mock("../config/stateLoader", async () => {
-  const actual = await vi.importActual<typeof import("../config/stateLoader")>(
+vi.mock("../config/stateLoader", async () => ({
+  ...(await vi.importActual<typeof import("../config/stateLoader")>(
     "../config/stateLoader",
-  );
-
-  return {
-    ...actual,
-    saveState: vi.fn(),
-  };
-});
-
-vi.mock("../utils/confirm", () => ({
-  confirm: vi.fn(),
+  )),
+  saveState: vi.fn(),
 }));
+
+vi.mock("../utils/select", () => ({ select: vi.fn() }));
+
+function profile(name: string, services: string[], isolate = false): Context {
+  return {
+    projectName: "test",
+    projectRoot: "/test",
+    configPath: "/test/zap.yaml",
+    profiles: ["default", "dev", "e2e"],
+    profile: { name, envFiles: [], services, isolate },
+    processes: services.map((name) => ({ name, cmd: "node server.js" })),
+    containers: [],
+    tasks: [],
+    environments: [],
+    links: [],
+    instanceKey: "default",
+    state: { selectedProfile: name },
+  };
+}
+
+function setup(
+  before = profile("dev", ["api", "worker"]),
+  after = profile("default", ["api"]),
+) {
+  const zapper = new Zapper();
+  let current = before;
+  vi.spyOn(zapper, "getContext").mockImplementation(() => current);
+  vi.spyOn(zapper, "loadConfig").mockImplementation(async () => {
+    current = after;
+  });
+
+  const start = vi
+    .spyOn(zapper, "startProcesses")
+    .mockResolvedValue(emptyServiceActionReport("up"));
+
+  const stop = vi
+    .spyOn(zapper, "stopProfileProcesses")
+    .mockResolvedValue(emptyServiceActionReport("down"));
+
+  const execute = (service?: string[], options = {}) =>
+    new ProfilesCommand().execute({ zapper, service, options });
+
+  return { zapper, start, stop, execute };
+}
+
+const ttyDescriptors = [process.stdin, process.stdout].map((stream) =>
+  Object.getOwnPropertyDescriptor(stream, "isTTY"),
+);
+
+function setTTY(value: boolean) {
+  for (const stream of [process.stdin, process.stdout])
+    Object.defineProperty(stream, "isTTY", { configurable: true, value });
+}
+
+afterEach(() => {
+  [process.stdin, process.stdout].forEach((stream, index) => {
+    const descriptor = ttyDescriptors[index];
+    if (descriptor) Object.defineProperty(stream, "isTTY", descriptor);
+    else Reflect.deleteProperty(stream, "isTTY");
+  });
+});
 
 describe("ProfilesCommand", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
   });
 
-  function createMockContext(overrides: Partial<Context> = {}): Context {
-    return {
-      projectName: "test",
-      profiles: ["default", "e2e", "proddata"],
-      profile: {
-        name: "default",
-        envFiles: [],
-        services: "*",
-        isolate: false,
-      },
-      processes: [],
-      containers: [],
-      tasks: [],
-      environments: [],
-      links: [],
-      instanceKey: "default",
-      state: {},
-      projectRoot: "/test",
-      ...overrides,
-    };
-  }
+  it.each(["get", "current"])(
+    "%s returns the resolved profile",
+    async (action) => {
+      const { execute } = setup();
+      expect(await execute([action])).toMatchObject({
+        kind: "profiles.current",
+        profile: "dev",
+      });
 
-  it("lists configured stack profiles", async () => {
-    const zapper = new Zapper();
-    vi.spyOn(zapper, "getContext").mockReturnValue(createMockContext());
+      expect(saveState).not.toHaveBeenCalled();
+    },
+  );
 
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["list"],
-      options: {},
-    });
-
-    expect(result).toEqual({
+  it("lists configured profiles", async () => {
+    expect(await setup().execute(["list"])).toEqual({
       kind: "profiles.list",
-      profiles: ["default", "e2e", "proddata"],
+      profiles: ["default", "dev", "e2e"],
     });
   });
 
-  it("shows the current resolved stack profile", async () => {
-    const zapper = new Zapper();
-    vi.spyOn(zapper, "getContext").mockReturnValue(
-      createMockContext({
-        profile: {
-          name: "e2e",
-          envFiles: [],
-          services: ["api"],
-          isolate: true,
-        },
-        state: { selectedProfile: "proddata" },
-      }),
+  it.each(["set", "use", "reset"])(
+    "%s stops excluded services before starting and saving, without a prompt",
+    async (action) => {
+      const { execute, start, stop } = setup();
+      stop.mockImplementation(async () => {
+        expect(start).not.toHaveBeenCalled();
+        expect(saveState).not.toHaveBeenCalled();
+        return emptyServiceActionReport("down");
+      });
+
+      start.mockImplementation(async () => {
+        expect(saveState).not.toHaveBeenCalled();
+        return emptyServiceActionReport("up");
+      });
+
+      const result = await execute([action, "default"]);
+      expect(stop).toHaveBeenCalledWith("dev", ["worker"], expect.any(Object));
+      expect(start).toHaveBeenCalledWith(["api"], expect.any(Object));
+      expect(select).not.toHaveBeenCalled();
+      expect(saveState).toHaveBeenCalledWith("/test", {
+        selectedProfile: action === "reset" ? undefined : "default",
+      });
+
+      expect(result).toMatchObject({
+        profile: "default",
+        hotSwap: { cleanupCandidates: ["worker"], cleanupSkipped: [] },
+      });
+    },
+  );
+
+  it.each([
+    [true, false],
+    [false, true],
+    [true, true],
+  ])(
+    "stops the previous stack when isolation changes (%s, %s)",
+    async (oldIsolate, newIsolate) => {
+      const { execute, stop, start } = setup(
+        profile("dev", ["api", "worker"], oldIsolate),
+        profile("e2e", ["api"], newIsolate),
+      );
+
+      await execute(["set", "e2e"]);
+      expect(stop).toHaveBeenCalledWith(
+        "dev",
+        ["api", "worker"],
+        expect.any(Object),
+      );
+
+      expect(start).toHaveBeenCalledWith(["api"], expect.any(Object));
+    },
+  );
+
+  it.each(["env", "definition"])(
+    "restarts shared services when their %s changes",
+    async (change) => {
+      const before = profile("dev", ["api"]);
+      const after = profile("default", ["api"]);
+      if (change === "env") after.profile!.envFiles = ["/test/.env.prod"];
+      else after.processes[0].cmd = "node other.js";
+      const { execute, stop } = setup(before, after);
+      await execute(["set", "default"]);
+      expect(stop).toHaveBeenCalledWith("dev", ["api"], expect.any(Object));
+    },
+  );
+
+  it("stops all previous services for an empty target profile", async () => {
+    const { execute, stop, start } = setup(
+      profile("dev", ["api"]),
+      profile("default", []),
     );
 
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["current"],
-      options: { profile: "e2e" },
-    });
-
-    expect(result).toEqual({
-      kind: "profiles.current",
-      profile: "e2e",
-      selectedProfile: "proddata",
-      overrideProfile: "e2e",
-    });
+    await execute(["set", "default"]);
+    expect(stop).toHaveBeenCalledWith("dev", ["api"], expect.any(Object));
+    expect(start).not.toHaveBeenCalled();
   });
 
-  it("saves selectedProfile for profile use", async () => {
-    const zapper = new Zapper();
-    vi.spyOn(zapper, "getContext").mockReturnValue(createMockContext());
-    vi.spyOn(zapper, "loadConfig").mockResolvedValue(undefined);
+  it("ensures services are running even when setting the current profile", async () => {
+    const { execute, start, stop } = setup(
+      profile("dev", ["api"]),
+      profile("dev", ["api"]),
+    );
 
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["use", "e2e"],
-      options: {},
-    });
-
-    expect(saveState).toHaveBeenCalledWith("/test", {
-      selectedProfile: "e2e",
-    });
-
-    expect(result).toEqual({
-      kind: "profiles.selected",
-      profile: "e2e",
-      previousProfile: "default",
-      hotSwap: undefined,
-    });
+    await execute(["set", "dev"]);
+    expect(start).toHaveBeenCalledWith(["api"], expect.any(Object));
+    expect(stop).not.toHaveBeenCalled();
   });
 
-  it("clears selectedProfile for profile reset", async () => {
-    const zapper = new Zapper();
-    vi.spyOn(zapper, "getContext").mockReturnValue(createMockContext());
-    vi.spyOn(zapper, "loadConfig").mockResolvedValue(undefined);
+  it.each(["stop", "start"])(
+    "does not save or report success when %s fails",
+    async (phase) => {
+      const { execute, start, stop } = setup();
+      (phase === "stop" ? stop : start).mockRejectedValue(
+        new Error("Service failed"),
+      );
 
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["reset"],
-      options: {},
-    });
+      await expect(execute(["set", "default"])).rejects.toThrow(
+        "Service failed",
+      );
 
-    expect(saveState).toHaveBeenCalledWith("/test", {
-      selectedProfile: undefined,
-    });
+      expect(saveState).not.toHaveBeenCalled();
+      if (phase === "stop") expect(start).not.toHaveBeenCalled();
+    },
+  );
 
-    expect(result).toEqual({
-      kind: "profiles.reset",
-      profile: "default",
-      previousProfile: "default",
-      hotSwap: undefined,
-    });
+  it("rejects an unknown profile before changing services or state", async () => {
+    const { execute, start, stop, zapper } = setup();
+    await expect(execute(["set", "missing"])).rejects.toThrow(
+      "Profile not found: missing",
+    );
+
+    expect(zapper.loadConfig).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+    expect(saveState).not.toHaveBeenCalled();
   });
 
-  it("starts newly selected non-isolated profile services", async () => {
-    const zapper = new Zapper();
+  it("requires a terminal for the picker", async () => {
+    setTTY(false);
+    await expect(setup().execute(["select"])).rejects.toThrow(
+      "zap profile get or zap profile set <name>",
+    );
+  });
 
-    const before = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [{ name: "api", cmd: "pnpm dev" }],
-      profile: {
-        name: "default",
-        envFiles: [],
-        services: ["api"],
-        isolate: false,
-      },
-    });
-
-    const after = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [
-        { name: "api", cmd: "pnpm dev" },
-        { name: "worker", cmd: "pnpm worker" },
+  it("preselects and marks the active profile, then applies the chosen profile", async () => {
+    setTTY(true);
+    vi.mocked(select).mockResolvedValue("default");
+    const { execute, stop } = setup();
+    await execute(["select"]);
+    expect(select).toHaveBeenCalledWith(
+      "Select profile",
+      [
+        { label: "default", value: "default" },
+        { label: "dev ✓ active", value: "dev" },
+        { label: "e2e", value: "e2e" },
       ],
-      profile: {
-        name: "dev",
-        envFiles: [],
-        services: ["api", "worker"],
-        isolate: false,
-      },
-    });
-
-    vi.spyOn(zapper, "getContext")
-      .mockReturnValueOnce(before)
-      .mockReturnValue(after);
-
-    vi.spyOn(zapper, "loadConfig").mockResolvedValue(undefined);
-    vi.spyOn(zapper, "startProcesses").mockResolvedValue({
-      status: "success",
-      action: "up",
-      services: ["api", "worker"],
-      started: ["worker"],
-      stopped: [],
-      failed: [],
-    });
-
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["use", "dev"],
-      options: {},
-    });
-
-    expect(zapper.startProcesses).toHaveBeenCalledWith(
-      ["api", "worker"],
-      expect.any(Object),
+      expect.objectContaining({ initial: 1 }),
     );
 
-    expect(result).toEqual({
-      kind: "profiles.selected",
-      profile: "dev",
-      previousProfile: "default",
-      hotSwap: {
-        started: {
-          status: "success",
-          action: "up",
-          services: ["api", "worker"],
-          started: ["worker"],
-          stopped: [],
-          failed: [],
-        },
-        stopped: undefined,
-        cleanupCandidates: [],
-        cleanupSkipped: [],
-      },
-    });
+    expect(stop).toHaveBeenCalledWith("dev", ["worker"], expect.any(Object));
   });
 
-  it("prompts before stopping services no longer needed by a profile", async () => {
-    vi.mocked(confirm).mockResolvedValue(false);
-
-    const zapper = new Zapper();
-
-    const before = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [
-        { name: "api", cmd: "pnpm dev" },
-        { name: "worker", cmd: "pnpm worker" },
-      ],
-      profile: {
-        name: "dev",
-        envFiles: [],
-        services: ["api", "worker"],
-        isolate: false,
-      },
-    });
-
-    const after = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [{ name: "api", cmd: "pnpm dev" }],
-      profile: {
-        name: "default",
-        envFiles: [],
-        services: ["api"],
-        isolate: false,
-      },
-    });
-
-    vi.spyOn(zapper, "getContext")
-      .mockReturnValueOnce(before)
-      .mockReturnValue(after);
-
-    vi.spyOn(zapper, "loadConfig").mockResolvedValue(undefined);
-    vi.spyOn(zapper, "startProcesses").mockResolvedValue({
-      status: "success",
-      action: "up",
-      services: ["api"],
-      started: [],
-      stopped: [],
-      failed: [],
-    });
-
-    vi.spyOn(zapper, "stopProfileProcesses").mockResolvedValue({
-      status: "success",
-      action: "down",
-      services: ["worker"],
-      started: [],
-      stopped: ["worker"],
-      failed: [],
-    });
-
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["use", "default"],
-      options: {},
-    });
-
-    expect(confirm).toHaveBeenCalledWith(
-      "Shut down services no longer needed by default: worker?",
-      { defaultYes: true },
+  it("cancels the picker without changing services or state", async () => {
+    setTTY(true);
+    vi.mocked(select).mockRejectedValue(new PromptCancelledError());
+    const { execute, stop, start } = setup();
+    await expect(execute(["select"])).rejects.toBeInstanceOf(
+      PromptCancelledError,
     );
 
-    expect(zapper.stopProfileProcesses).not.toHaveBeenCalled();
-    expect(result).toMatchObject({
-      kind: "profiles.selected",
-      profile: "default",
-      previousProfile: "dev",
-      hotSwap: {
-        cleanupCandidates: ["worker"],
-        cleanupSkipped: ["worker"],
-      },
-    });
-  });
-
-  it("force-stops services no longer needed by a profile without prompting", async () => {
-    const zapper = new Zapper();
-
-    const before = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [
-        { name: "api", cmd: "pnpm dev" },
-        { name: "worker", cmd: "pnpm worker" },
-      ],
-      profile: {
-        name: "dev",
-        envFiles: [],
-        services: ["api", "worker"],
-        isolate: false,
-      },
-    });
-
-    const after = createMockContext({
-      profiles: ["default", "dev"],
-      processes: [{ name: "api", cmd: "pnpm dev" }],
-      profile: {
-        name: "default",
-        envFiles: [],
-        services: ["api"],
-        isolate: false,
-      },
-    });
-
-    vi.spyOn(zapper, "getContext")
-      .mockReturnValueOnce(before)
-      .mockReturnValue(after);
-
-    vi.spyOn(zapper, "loadConfig").mockResolvedValue(undefined);
-    vi.spyOn(zapper, "startProcesses").mockResolvedValue({
-      status: "success",
-      action: "up",
-      services: ["api"],
-      started: [],
-      stopped: [],
-      failed: [],
-    });
-
-    vi.spyOn(zapper, "stopProfileProcesses").mockResolvedValue({
-      status: "success",
-      action: "down",
-      services: ["worker"],
-      started: [],
-      stopped: ["worker"],
-      failed: [],
-    });
-
-    const result = await new ProfilesCommand().execute({
-      zapper,
-      service: ["use", "default"],
-      options: { force: true },
-    });
-
-    expect(confirm).not.toHaveBeenCalled();
-    expect(zapper.stopProfileProcesses).toHaveBeenCalledWith(
-      "dev",
-      ["worker"],
-      expect.any(Object),
-    );
-
-    expect(result).toMatchObject({
-      kind: "profiles.selected",
-      profile: "default",
-      previousProfile: "dev",
-      hotSwap: {
-        stopped: {
-          stopped: ["worker"],
-        },
-        cleanupCandidates: ["worker"],
-        cleanupSkipped: [],
-      },
-    });
-  });
-
-  it("throws when profile use references an unknown profile", async () => {
-    const zapper = new Zapper();
-    vi.spyOn(zapper, "getContext").mockReturnValue(createMockContext());
-
-    await expect(
-      new ProfilesCommand().execute({
-        zapper,
-        service: ["use", "missing"],
-        options: {},
-      }),
-    ).rejects.toThrow(
-      "Profile not found: missing. Available profiles: default, e2e, proddata",
-    );
+    expect(stop).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
+    expect(saveState).not.toHaveBeenCalled();
   });
 });

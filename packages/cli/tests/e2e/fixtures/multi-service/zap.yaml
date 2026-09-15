@@ -1,5 +1,4 @@
 project: multi-service-test
-env: [.env]
 profiles:
   default:
     env_files: [.env]

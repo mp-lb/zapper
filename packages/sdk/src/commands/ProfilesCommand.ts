@@ -9,14 +9,10 @@ import {
   serviceActionEventReporter,
   serviceActionJsonlReporter,
 } from "../ui/serviceActionEventRenderer";
-import { confirm } from "../utils/confirm";
+import { select } from "../utils/select";
+import { isDeepStrictEqual } from "node:util";
+import type { Context } from "../types/Context";
 import { emptyServiceExecutionReport } from "../utils/serviceActionReport";
-
-interface ProfileSnapshot {
-  name: string;
-  isolate: boolean;
-  services: string[];
-}
 
 export class ProfilesCommand extends CommandHandler {
   async execute(context: CommandContext): Promise<CommandResult | void> {
@@ -28,7 +24,7 @@ export class ProfilesCommand extends CommandHandler {
     }
 
     const args = this.normalizeArgs(service);
-    const action = args[0] ?? "current";
+    let action = args[0] ?? "current";
 
     if (!zapperContext.profile && zapperContext.profiles.length === 0) {
       throw new Error("No stack profiles configured");
@@ -41,7 +37,32 @@ export class ProfilesCommand extends CommandHandler {
       };
     }
 
-    if (action === "current") {
+    if (action === "select") {
+      if (!process.stdin.isTTY || !process.stdout.isTTY) {
+        throw new Error(
+          "Interactive profile selection requires a terminal. Use zap profile get or zap profile set <name>.",
+        );
+      }
+
+      const current = zapperContext.profile?.name;
+
+      const name = await select(
+        "Select profile",
+        zapperContext.profiles.map((name) => ({
+          label: name === current ? `${name} ✓ active` : name,
+          value: name,
+        })),
+        {
+          initial: Math.max(0, zapperContext.profiles.indexOf(current ?? "")),
+          hint: "Use ↑/↓ to move, Enter to switch, Esc to cancel",
+        },
+      );
+
+      args[1] = name;
+      action = "set";
+    }
+
+    if (action === "current" || action === "get") {
       return {
         kind: "profiles.current",
         profile: zapperContext.profile?.name,
@@ -51,12 +72,9 @@ export class ProfilesCommand extends CommandHandler {
       };
     }
 
-    if (action === "use") {
-      const profileName = args[1];
-
-      if (!profileName) {
-        throw new Error("Usage: zap profile use <name>");
-      }
+    if (action === "use" || action === "set" || action === "reset") {
+      const profileName = action === "reset" ? "default" : args[1];
+      if (!profileName) throw new Error("Usage: zap profile set <name>");
 
       if (!zapperContext.profiles.includes(profileName)) {
         throw new Error(
@@ -64,45 +82,39 @@ export class ProfilesCommand extends CommandHandler {
         );
       }
 
+      const configPath = options.config ?? zapperContext.configPath;
+
       const stateManager = new StateManager(
         zapper,
         zapperContext.projectRoot,
-        options.config,
+        configPath,
       );
 
-      const before = this.snapshot(zapperContext);
-      await stateManager.setSelectedProfile(profileName);
-      const hotSwap = await this.hotSwap(context, before);
-
-      return {
-        kind: "profiles.selected",
+      // Resolve the target without saving it. A failed transition keeps the
+      // previous selection, so retrying can still clean up the old profile.
+      await zapper.loadConfig(configPath, {
         profile: profileName,
-        previousProfile: before?.name,
-        hotSwap,
-      };
-    }
+        __command: "profile",
+      });
 
-    if (action === "reset") {
-      const stateManager = new StateManager(
-        zapper,
-        zapperContext.projectRoot,
-        options.config,
-      );
+      const hotSwap = await this.hotSwap(context, zapperContext);
 
-      const before = this.snapshot(zapperContext);
-      await stateManager.clearSelectedProfile();
-      const hotSwap = await this.hotSwap(context, before);
+      if (action === "reset") {
+        await stateManager.clearSelectedProfile();
+      } else {
+        await stateManager.setSelectedProfile(profileName);
+      }
 
       return {
-        kind: "profiles.reset",
-        profile: "default",
-        previousProfile: before?.name,
+        kind: action === "reset" ? "profiles.reset" : "profiles.selected",
+        profile: profileName,
+        previousProfile: zapperContext.profile?.name,
         hotSwap,
       };
     }
 
     throw new Error(
-      `Unknown profile command: ${action}. Use: zap profile list|current|use|reset`,
+      `Unknown profile command: ${action}. Use: zap profile list|get|set|reset`,
     );
   }
 
@@ -115,90 +127,73 @@ export class ProfilesCommand extends CommandHandler {
     return `Profile not found: ${profile}. Available profiles: ${profiles.join(", ")}`;
   }
 
-  private snapshot(
-    context: ReturnType<CommandContext["zapper"]["getContext"]>,
-  ): ProfileSnapshot | undefined {
-    if (!context?.profile) return undefined;
-
-    return {
-      name: context.profile.name,
-      isolate: context.profile.isolate,
-      services: this.serviceNames(context),
-    };
-  }
-
-  private serviceNames(
-    context: NonNullable<ReturnType<CommandContext["zapper"]["getContext"]>>,
-  ): string[] {
-    return [
-      ...context.processes.map((process) => process.name),
-      ...context.containers.map((container) => container.name),
-    ].sort();
-  }
-
   private async hotSwap(
     context: CommandContext,
-    before: ProfileSnapshot | undefined,
+    before: Context,
   ): Promise<ProfileHotSwapReport | undefined> {
     const { zapper, options } = context;
-    const afterContext = zapper.getContext();
+    const after = zapper.getContext();
+    if (!before.profile || !after?.profile) return undefined;
 
-    if (!before || !afterContext?.profile) return undefined;
+    const beforeServices = [...before.processes, ...before.containers];
+    const afterServices = [...after.processes, ...after.containers];
 
-    const after: ProfileSnapshot = {
-      name: afterContext.profile.name,
-      isolate: afterContext.profile.isolate,
-      services: this.serviceNames(afterContext),
-    };
+    const differentStack =
+      before.profile.name !== after.profile.name &&
+      (before.profile.isolate || after.profile.isolate);
 
-    if (before.name === after.name) return undefined;
-    if (before.isolate || after.isolate) return undefined;
+    const envChanged =
+      !isDeepStrictEqual(before.envFiles, after.envFiles) ||
+      !isDeepStrictEqual(before.profile.envFiles, after.profile.envFiles);
 
-    const afterServices = new Set(after.services);
+    const cleanupCandidates = beforeServices
+      .filter((service) => {
+        const next = afterServices.find(
+          (candidate) => candidate.name === service.name,
+        );
 
-    const cleanupCandidates = before.services.filter(
-      (service) => !afterServices.has(service),
-    );
+        return (
+          differentStack ||
+          !next ||
+          envChanged ||
+          !isDeepStrictEqual(service, next)
+        );
+      })
+      .map((service) => service.name)
+      .sort();
 
     const reporter = options.jsonl
       ? serviceActionJsonlReporter
       : serviceActionEventReporter;
 
-    const started =
-      after.services.length > 0
-        ? await zapper.startProcesses(after.services, reporter)
-        : { ...emptyServiceExecutionReport() };
+    const stopped =
+      cleanupCandidates.length > 0
+        ? await zapper.stopProfileProcesses(
+            before.profile.name,
+            cleanupCandidates,
+            reporter,
+          )
+        : undefined;
 
-    let stopped = undefined;
-    let cleanupSkipped = cleanupCandidates;
-
-    if (cleanupCandidates.length > 0) {
-      const canPrompt = !options.json && !options.jsonl;
-
-      const shouldStop =
-        Boolean(options.force) ||
-        (canPrompt &&
-          (await confirm(
-            `Shut down services no longer needed by ${after.name}: ${cleanupCandidates.join(", ")}?`,
-            { defaultYes: true },
-          )));
-
-      if (shouldStop) {
-        stopped = await zapper.stopProfileProcesses(
-          before.name,
-          cleanupCandidates,
-          reporter,
-        );
-
-        cleanupSkipped = [];
-      }
+    if (stopped?.failed.length) {
+      throw new Error(
+        `Profile switch to ${after.profile.name} failed while stopping services. Previous profile remains selected.`,
+      );
     }
 
-    return {
-      started,
-      stopped,
-      cleanupCandidates,
-      cleanupSkipped,
-    };
+    const services = afterServices.map((service) => service.name).sort();
+
+    const started =
+      services.length > 0
+        ? await zapper.startProcesses(services, reporter)
+        : emptyServiceExecutionReport();
+
+    if (started.failed.length) {
+      throw new Error(
+        `Profile switch to ${after.profile.name} failed while starting services. Previous profile remains selected.`,
+      );
+    }
+
+    return { started, stopped, cleanupCandidates, cleanupSkipped: [] };
   }
 }
