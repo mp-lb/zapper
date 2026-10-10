@@ -142,25 +142,24 @@ export class ProfilesCommand extends CommandHandler {
       before.profile.name !== after.profile.name &&
       (before.profile.isolate || after.profile.isolate);
 
-    const envChanged =
-      !isDeepStrictEqual(before.envFiles, after.envFiles) ||
-      !isDeepStrictEqual(before.profile.envFiles, after.profile.envFiles);
-
+    // Contexts already contain each service's resolvedEnv. Compare those
+    // effective values, not the env-file paths: a different file stack may
+    // leave a service's environment unchanged (for example with a whitelist).
     const cleanupCandidates = beforeServices
       .filter((service) => {
         const next = afterServices.find(
           (candidate) => candidate.name === service.name,
         );
 
-        return (
-          differentStack ||
-          !next ||
-          envChanged ||
-          !isDeepStrictEqual(service, next)
-        );
+        return differentStack || !next || !isDeepStrictEqual(service, next);
       })
       .map((service) => service.name)
       .sort();
+
+    // Decide the full transition before executing it. Shared services that
+    // changed are stopped here and started once alongside new services;
+    // the start planner leaves already-running, unchanged services alone.
+    const services = afterServices.map((service) => service.name).sort();
 
     const reporter = options.jsonl
       ? serviceActionJsonlReporter
@@ -180,8 +179,6 @@ export class ProfilesCommand extends CommandHandler {
         `Profile switch to ${after.profile.name} failed while stopping services. Previous profile remains selected.`,
       );
     }
-
-    const services = afterServices.map((service) => service.name).sort();
 
     const started =
       services.length > 0

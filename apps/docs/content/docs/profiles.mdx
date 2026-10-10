@@ -195,9 +195,13 @@ profiles:
     isolate: true
 ```
 
-Switching profiles stops services excluded by the target, then starts its required
-services and waits for configured health checks. Shared services keep running
-unless their definitions or env-file selection change. When switching to or from
+Switching profiles compares each service's resolved environment and definition
+before changing services. It stops excluded and changed services, then starts
+the target's required services and waits for configured health checks. Shared
+services with unchanged definitions and environment values keep running, even
+when the env-file selection changes. Added or removed environment variables also
+count as changes. Each affected service is replaced once in this transition.
+When switching to or from
 an isolated profile, the previous profile's services stop before the target stack
 starts. The saved selection changes only after the transition succeeds.
 

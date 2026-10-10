@@ -159,13 +159,89 @@ describe("ProfilesCommand", () => {
     async (change) => {
       const before = profile("dev", ["api"]);
       const after = profile("default", ["api"]);
-      if (change === "env") after.profile!.envFiles = ["/test/.env.prod"];
+      if (change === "env")
+        after.processes[0].resolvedEnv = { API_URL: "https://example.test" };
       else after.processes[0].cmd = "node other.js";
       const { execute, stop } = setup(before, after);
       await execute(["set", "default"]);
       expect(stop).toHaveBeenCalledWith("dev", ["api"], expect.any(Object));
     },
   );
+
+  it.each(["native", "docker"])(
+    "only replaces affected %s services in a mixed transition",
+    async (kind) => {
+      const before = profile("dev", ["changed", "unchanged", "removed"]);
+      const after = profile("default", ["changed", "unchanged", "added"]);
+      before.envFiles = ["/test/.env.dev"];
+      after.envFiles = ["/test/.env.prod"];
+      before.profile!.envFiles = before.envFiles;
+      after.profile!.envFiles = after.envFiles;
+      before.processes[0].resolvedEnv = { MODE: "dev" };
+      after.processes[0].resolvedEnv = { MODE: "prod" };
+      before.processes[1].resolvedEnv = { PORT: "3000", MODE: "fixed" };
+      after.processes[1].resolvedEnv = { MODE: "fixed", PORT: "3000" };
+
+      if (kind === "docker") {
+        for (const context of [before, after]) {
+          context.containers = context.processes.map(
+            ({ name, resolvedEnv }) => ({
+              name,
+              image: "alpine",
+              resolvedEnv,
+            }),
+          );
+
+          context.processes = [];
+        }
+      }
+
+      const { execute, stop, start } = setup(before, after);
+      await execute(["set", "default"]);
+      expect(stop).toHaveBeenCalledExactlyOnceWith(
+        "dev",
+        ["changed", "removed"],
+        expect.any(Object),
+      );
+
+      expect(start).toHaveBeenCalledExactlyOnceWith(
+        ["added", "changed", "unchanged"],
+        expect.any(Object),
+      );
+
+      expect(stop.mock.invocationCallOrder[0]).toBeLessThan(
+        start.mock.invocationCallOrder[0],
+      );
+    },
+  );
+
+  it.each([
+    [{}, { MODE: "dev" }],
+    [{ MODE: "dev" }, {}],
+  ])(
+    "replaces services when env keys are added or removed",
+    async (oldEnv, newEnv) => {
+      const before = profile("dev", ["api"]);
+      const after = profile("default", ["api"]);
+      before.processes[0].resolvedEnv = oldEnv;
+      after.processes[0].resolvedEnv = newEnv;
+      const { execute, stop } = setup(before, after);
+      await execute(["set", "default"]);
+      expect(stop).toHaveBeenCalledWith("dev", ["api"], expect.any(Object));
+    },
+  );
+
+  it("keeps services with identical environments despite different env files", async () => {
+    const before = profile("dev", ["api"]);
+    const after = profile("default", ["api"]);
+    after.envFiles = ["/test/.env.prod"];
+    after.profile!.envFiles = after.envFiles;
+    before.processes[0].resolvedEnv = { MODE: "same" };
+    after.processes[0].resolvedEnv = { MODE: "same" };
+    const { execute, stop } = setup(before, after);
+    await execute(["set", "default"]);
+    expect(stop).not.toHaveBeenCalled();
+  });
 
   it("stops all previous services for an empty target profile", async () => {
     const { execute, stop, start } = setup(
