@@ -255,7 +255,7 @@ Show native runtime provider/tool resolution
 
 **Aliases:** `p`
 
-Manage profiles
+Select a profile interactively and apply its services
 
 | Option | Description |
 | --- | --- |
@@ -269,21 +269,25 @@ List configured profiles
 | --- | --- |
 | `-j, --json` | Output as minified JSON |
 
-### `zap profile current`
+### `zap profile get`
 
-Show the current profile
+**Aliases:** `current`
+
+Print the current profile
 
 | Option | Description |
 | --- | --- |
 | `-j, --json` | Output as minified JSON |
 
-### `zap profile use <name>`
+### `zap profile set <name>`
 
-Switch the saved profile for this project
+**Aliases:** `use`
+
+Stop excluded services, start required services, and save the profile
 
 | Option | Description |
 | --- | --- |
-| `-y, --force` | Shut down services no longer needed without prompting |
+| `-y, --force` | Compatibility flag; excluded services always stop without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ### `zap profile reset`
@@ -292,7 +296,7 @@ Reset to the default profile
 
 | Option | Description |
 | --- | --- |
-| `-y, --force` | Shut down services no longer needed without prompting |
+| `-y, --force` | Compatibility flag; excluded services always stop without prompting |
 | `-j, --json` | Output as minified JSON |
 
 ## `zap state`

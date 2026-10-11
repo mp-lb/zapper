@@ -107,6 +107,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
   it("clears the managed log when replacing an existing process", async () => {
     const logsDir = path.join(zapDir, "logs");
+
     const logPath = path.join(
       logsDir,
       "zap.test-project.abc123.test-service.log",
