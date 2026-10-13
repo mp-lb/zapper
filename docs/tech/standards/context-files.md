@@ -36,8 +36,8 @@ When neither flag is present, both local files are written.
 
 `context-build` may also accept one or more extra context paths. These are
 appended after the project-level blocks before writing the local agent files.
-This is for developer-local context such as `~/Code/mgr/agents-md/global.md` or
-any other private instruction file a developer wants in their own working copy.
+This is for private instruction files a developer explicitly chooses for their
+own working copy; no shared external checkout is required.
 
 ## Workflow
 

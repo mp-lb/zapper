@@ -39,4 +39,4 @@ tasks:
       - node scripts/context-files.mjs copy {{REST}}
   compile-agents:
     cmds:
-      - zap task context-build -- ~/Code/mgr/agents-md/global.md
+      - zap task context-build -- {{REST}}
