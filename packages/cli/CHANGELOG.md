@@ -1,5 +1,21 @@
 # @mp-lb/zapper
 
+## 0.21.1
+
+### Patch Changes
+
+- bca6137: Expose Cloud Run CPU idle configuration in the Arc Terraform module so projects can set `cpu-idle` without Terraform rejecting the generated module input.
+- 66cfd6c: Use one required stack-scoped runtime identity across Docker containers,
+  Docker Compose grouping metadata, native processes, wrapper scripts, and logs.
+  Legacy unscoped resources remain discoverable by global cleanup commands.
+- 80d4212: Allow Cloud Run web services to opt into CPU idling through the bundled Arc module's `cpu_idle` variable.
+
+  Tighten local runtime behavior by clearing managed native service logs when a new run starts, preserving stopped-service logs, showing Docker startup logs when a container never reached a running state, and rejecting configs that combine profiles with root-level env/env_files.
+
+- Updated dependencies [66cfd6c]
+- Updated dependencies [80d4212]
+  - @mp-lb/zapper-sdk@0.20.1
+
 ## 0.21.0
 
 ### Minor Changes
