@@ -1,6 +1,6 @@
 {
   "name": "@mp-lb/zapper-sdk",
-  "version": "0.20.0",
+  "version": "0.20.1",
   "description": "Programmatic SDK for managing local Zapper projects",
   "type": "module",
   "main": "./dist/index.js",
