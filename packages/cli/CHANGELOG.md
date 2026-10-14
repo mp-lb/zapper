@@ -1,5 +1,11 @@
 # @mp-lb/zapper
 
+## 0.21.2
+
+### Patch Changes
+
+- 36b8960: Pin Cloud Run, Compute Engine, and Artifact Registry resources to the configured GCP project so Arc migrations replace resources in the previous project.
+
 ## 0.21.1
 
 ### Patch Changes
