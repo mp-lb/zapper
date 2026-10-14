@@ -1,5 +1,11 @@
 # @mp-lb/zapper
 
+## 0.21.3
+
+### Patch Changes
+
+- 66fe70e: Allow an explicit Cloud Run domain mapping transfer with `params.force-override` while keeping the default safe.
+
 ## 0.21.2
 
 ### Patch Changes
