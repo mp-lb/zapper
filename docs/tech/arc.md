@@ -116,6 +116,9 @@ A bare Terraform folder is a valid module; `module.yaml` is optional.
 - `gcp-project` — project factory: the per-project GCP project (billing,
   APIs); destroying it deletes the GCP project.
 - `project-base` — per-project base resources (the Docker artifact registry).
+- The GCP modules pin each resource to the configured project, so changing a
+  project's GCP ID moves its services and registry instead of retaining them
+  in the previous provider project.
 - `gcp-budget` — monthly billing budget with spend alerts.
 - `posthog-proxy` — proxied CNAME for PostHog's managed reverse proxy.
 - `shared-mongo-atlas` — binding: scoped user + database on the network's

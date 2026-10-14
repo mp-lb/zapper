@@ -33,6 +33,8 @@ variable "machine_type" {
   default = "e2-micro"
 }
 
+data "google_client_config" "current" {}
+
 locals {
   env = merge(var.env, {
     APP_ENV  = "production"
@@ -48,6 +50,7 @@ resource "terraform_data" "image" {
 }
 
 resource "google_compute_instance" "main" {
+  project      = data.google_client_config.current.project
   name         = var.name
   machine_type = var.machine_type
   zone         = "${var.region}-a"

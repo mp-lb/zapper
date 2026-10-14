@@ -102,6 +102,7 @@ locals {
 }
 
 resource "google_cloud_run_v2_service" "main" {
+  project  = var.gcp_project_id
   name     = var.name
   location = var.region
 

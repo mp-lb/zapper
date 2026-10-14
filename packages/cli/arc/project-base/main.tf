@@ -17,7 +17,10 @@ variable "region" {
   type = string
 }
 
+data "google_client_config" "current" {}
+
 resource "google_artifact_registry_repository" "main" {
+  project       = data.google_client_config.current.project
   location      = var.region
   repository_id = var.project_slug
   format        = "DOCKER"
