@@ -27,6 +27,11 @@ variable "region" {
   type = string
 }
 
+variable "force_override" {
+  type    = bool
+  default = false
+}
+
 variable "image" {
   type = string
 }
@@ -177,7 +182,8 @@ resource "google_cloud_run_domain_mapping" "main" {
   }
 
   spec {
-    route_name = google_cloud_run_v2_service.main.name
+    route_name     = google_cloud_run_v2_service.main.name
+    force_override = var.force_override
   }
 }
 

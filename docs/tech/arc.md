@@ -108,7 +108,10 @@ A bare Terraform folder is a valid module; `module.yaml` is optional.
 ## Bundled module library
 
 - `cloud-run-web` — public HTTP container service on Cloud Run, custom domain
-  via Cloud Run domain mapping + Cloudflare DNS.
+  via Cloud Run domain mapping + Cloudflare DNS. Set the service's
+  `params.force-override: true` only when intentionally transferring a domain
+  from an existing Cloud Run mapping in another project or region. The default
+  is false, so ordinary deployments cannot claim another mapping.
 - `gce-worker` — always-on container worker on a small GCE VM.
 - `vercel-static` — Vercel-hosted static frontend with custom domain; upload
   runs as a post-apply hook. The service's deploy env is also set on the
