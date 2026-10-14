@@ -15,6 +15,8 @@ Step-by-step runbook for cutting releases of Zapper CLI.
 
 Zapper CLI is published to npm as `@mp-lb/zapper` from `packages/cli`. We use [Changesets](https://github.com/changesets/changesets) for versioning and automated publishing via GitHub Actions.
 
+The release workflow builds workspace packages before publishing. Package `prepublishOnly` hooks only verify that `dist/index.js` exists; they must not rebuild, because Changesets may publish the CLI, React package, and SDK concurrently and one rebuild can delete another package's output.
+
 The native macOS menu bar app is built separately by `.github/workflows/macos-release.yml`.
 That workflow runs on `v*` tags or manual dispatch, installs Node and pnpm,
 builds the CLI, builds `apps/macos` with a bundled Node/CLI runtime, zips

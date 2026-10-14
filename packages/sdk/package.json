@@ -27,7 +27,7 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "test -f dist/index.js"
   },
   "keywords": [
     "zapper",

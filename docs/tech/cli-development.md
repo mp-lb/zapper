@@ -30,6 +30,8 @@ pnpm add --global "link:$(pwd)/packages/cli" --config.ignore-scripts=true
 
 After linking, your global `zap` command points to the local CLI package build. Make changes, run `pnpm build`, and test immediately.
 
+Before publishing, run `pnpm build`. The package publish hook checks the built output and does not rebuild it, so concurrent workspace publication cannot race over generated files.
+
 If pnpm says its global bin directory is not on your `PATH`, run `pnpm setup`
 once and restart your shell before retrying the global commands.
 
