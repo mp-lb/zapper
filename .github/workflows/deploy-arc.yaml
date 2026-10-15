@@ -1,0 +1,45 @@
+name: Deploy ArcNet static sites
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: arcnet-vercel-production
+  cancel-in-progress: false
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    outputs:
+      approved: ${{ steps.config.outputs.approved }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec arcnet check
+      - id: config
+        run: pnpm exec arcnet ci
+
+  deploy:
+    needs: configuration
+    if: needs.configuration.outputs.approved == 'true' && github.ref ==
+      'refs/heads/main'
+    environment: arcnet-production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - name: Deploy referenced static sites
+        run: pnpm exec arcnet deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}

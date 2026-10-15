@@ -8,7 +8,7 @@ How to add a service under Zapper.
 ## Configuration Files
 
 - **`zap.yaml`** — Local services (`native` for Node.js apps, `docker` for containers)
-- **`infra/`** **(Terraform)** — Production deployment (Cloud Run, GCE, Vercel, Cloudflare)
+- **`.arcnet/arcnet.yaml`** — Opt-in production deployment selections
 - **`.env.local`** — Environment variables for local dev
 
 ## Adding a New Service
@@ -41,9 +41,9 @@ docker:
       - "${MY_PORT}:5432" # random:container
 ```
 
-### 3. Add to Terraform
+### 3. Select a deployment when needed
 
-Add the service to `infra/` as a new Terraform resource. Key things to configure:
+Add a project-specific service or site to `.arcnet/arcnet.yaml` when it should be deployed. ArcNet provides the standard provider configuration and deployment workflow. Review:
 
 - Compute target (Cloud Run vs GCE vs Vercel)
 - Container image and environment variables
@@ -62,4 +62,4 @@ zap up my-service
 
 ## Environment Variables Checklist
 
-Add env vars to `.env.production` (if non sensitive) and `env-map.yaml` (always) which routes vars to services for security reasons in prod.
+Keep local values in `.env.local`. For production, declare public values under `variables` and select service secret names in `.arcnet/arcnet.yaml`; encrypted sources and consumer mappings determine which credentials reach deployment commands.

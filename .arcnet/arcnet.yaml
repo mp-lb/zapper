@@ -1,0 +1,28 @@
+version: 1
+project: zapper
+environment: mp-lb
+repository: mp-lb/zapper
+approved: true
+vercel:
+  account:
+    type: team
+    id: team_1w5PsP1pNWCex9vAwF4PqvTs
+  sites:
+    landing-page:
+      mode: existing
+      projectId: prj_GG85ll9XgHt3i7BGCqI0jRtnEdBJ
+      projectName: arcnet.zapper.landing-page
+      root: apps/landing-page
+    docs:
+      mode: existing
+      projectName: arcnet.zapper.docs
+      root: apps/docs
+      projectId: prj_hcjUvI2lEiA8b4FPkJWbM5i6SwMz
+secrets:
+  sources:
+    - key: ARCNET_STANDARD_SECRETS_KEY
+      store: mp-lb/mp-lb
+      path: /admin/standard-secrets.json.enc
+  consumers:
+    deploy:
+      VERCEL_TOKEN: VERCEL_API_TOKEN
