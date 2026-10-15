@@ -26,3 +26,7 @@ secrets:
   consumers:
     deploy:
       VERCEL_TOKEN: VERCEL_API_TOKEN
+    publish:
+      NPM_TOKEN: NPM_TOKEN
+      NODE_AUTH_TOKEN: NPM_TOKEN
+      pnpm_config_//registry.npmjs.org/:_authToken: NPM_TOKEN
