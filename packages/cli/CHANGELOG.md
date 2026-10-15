@@ -1,5 +1,11 @@
 # @mp-lb/zapper
 
+## 0.21.4
+
+### Patch Changes
+
+- c86056a: Allow Zap Arc to read a generated deployment manifest supplied by ArcNet without changing the project's zap.yaml.
+
 ## 0.21.3
 
 ### Patch Changes
