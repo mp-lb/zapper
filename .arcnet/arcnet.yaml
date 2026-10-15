@@ -4,16 +4,19 @@ environment: mp-lb
 repository: mp-lb/zapper
 approved: true
 vercel:
+  dnsZone: mp-lb.dev
   account:
     type: team
     id: team_1w5PsP1pNWCex9vAwF4PqvTs
   sites:
     landing-page:
+      domain: zapper.mp-lb.dev
       mode: existing
       projectId: prj_GG85ll9XgHt3i7BGCqI0jRtnEdBJ
       projectName: arcnet.zapper.landing-page
       root: apps/landing-page
     docs:
+      domain: docs.zapper.mp-lb.dev
       mode: existing
       projectName: arcnet.zapper.docs
       root: apps/docs
@@ -26,6 +29,7 @@ secrets:
   consumers:
     deploy:
       VERCEL_TOKEN: VERCEL_API_TOKEN
+      CLOUDFLARE_API_TOKEN: CLOUDFLARE_API_TOKEN
     publish:
       NPM_TOKEN: NPM_TOKEN
       NODE_AUTH_TOKEN: NPM_TOKEN
