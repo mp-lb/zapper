@@ -43,3 +43,7 @@ jobs:
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
+      - name: Verify public domains
+        run: |
+          curl --fail --silent --show-error --location --max-time 15 --retry 12 --retry-delay 5 --retry-all-errors --output /dev/null https://zapper.mp-lb.dev/
+          curl --fail --silent --show-error --location --max-time 15 --retry 12 --retry-delay 5 --retry-all-errors --output /dev/null https://docs.zapper.mp-lb.dev/
