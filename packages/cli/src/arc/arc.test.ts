@@ -16,6 +16,32 @@ import { loadModuleManifest, resolveModules } from "./modules";
 import { renderDeployment } from "./render";
 import { NetworkConfig, ProjectManifest, deployBlockSchema } from "./schemas";
 import { requireExecutable } from "./command";
+import { loadManifest } from "./manifest";
+
+describe("external Arc manifest", () => {
+  it("reads a generated manifest without changing the project's zap.yaml", () => {
+    const root = mkdtempSync(join(tmpdir(), "zap-arc-manifest-"));
+    const generated = join(root, "generated.yaml");
+    writeFileSync(join(root, "zap.yaml"), "project: sample\n");
+    writeFileSync(
+      generated,
+      "project: sample\ndeploy:\n  services:\n    api:\n      module: cloud-run-web\n",
+    );
+
+    const previous = process.env.ZAP_ARC_MANIFEST_FILE;
+
+    try {
+      process.env.ZAP_ARC_MANIFEST_FILE = generated;
+      expect(Object.keys(loadManifest(root).deploy.services)).toEqual(["api"]);
+      expect(readFileSync(join(root, "zap.yaml"), "utf8")).toBe(
+        "project: sample\n",
+      );
+    } finally {
+      if (previous === undefined) delete process.env.ZAP_ARC_MANIFEST_FILE;
+      else process.env.ZAP_ARC_MANIFEST_FILE = previous;
+    }
+  });
+});
 
 describe("template", () => {
   it("expands {var} placeholders", () => {

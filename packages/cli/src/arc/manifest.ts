@@ -7,7 +7,8 @@ import { deployBlockSchema, ProjectManifest } from "./schemas";
 // outside `deploy:`; we only look at `project`, the service name keys, and
 // `deploy:` itself.
 export function loadManifest(projectDir: string): ProjectManifest {
-  const path = join(projectDir, "zap.yaml");
+  const path =
+    process.env.ZAP_ARC_MANIFEST_FILE ?? join(projectDir, "zap.yaml");
 
   if (!existsSync(path)) {
     throw new Error(
