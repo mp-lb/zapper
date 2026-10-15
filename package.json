@@ -20,13 +20,9 @@
     "test:e2e": "pnpm --filter @mp-lb/zapper test:e2e",
     "test:e2e:local": "pnpm --filter @mp-lb/zapper test:e2e:local",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "changeset": "changeset",
-    "version": "changeset version",
-    "release": "changeset publish"
+    "lint:fix": "eslint . --fix"
   },
   "devDependencies": {
-    "@changesets/cli": "2.31.0",
     "@eslint/js": "9.39.4",
     "@mp-lb/arcnet": "0.5.5",
     "@mp-lb/fssstack-config": "0.3.1",

@@ -1,64 +1,35 @@
-name: Release
+name: Release npm packages
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
 
 jobs:
   release:
+    if: github.repository == 'mp-lb/zapper'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Install PM2
-        run: npm install -g pm2
-
-      - name: Build
-        run: pnpm build
-
-      - name: Check generated CLI docs
-        run: pnpm docs:check
-
-      - name: Lint
-        run: pnpm lint
-
-      - name: Test
-        run: pnpm test
-
-      - name: Verify npm publish auth
-        run: pnpm exec arcnet env run --consumer publish -- npm whoami
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile
+      - run: npm install -g pm2
+      - run: pnpm build && pnpm docs:check && pnpm lint && pnpm test
+      - name: Publish changed package builds
+        run: pnpm exec arcnet env run --consumer publish -- node scripts/auto-publish.mjs
         env:
           ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
-
-      - name: Create Release Pull Request or Publish
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: pnpm exec arcnet env run --consumer publish -- pnpm release
-          title: "chore: release"
-          commit: "chore: release"
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
+      - name: Verify exact public versions
+        run: node scripts/verify-publication.mjs
