@@ -34,7 +34,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build CLI
-        run: pnpm --filter @mp-lb/zapper build
+        run: pnpm --filter '@mp-lb/zapper...' build
 
       - name: Load ArcNet desktop signing inputs
         env:
