@@ -27,10 +27,11 @@ apps/macos/bin/run     # Build, stop running Zapper apps, start the local app
 apps/macos/bin/clean   # Remove apps/macos/build
 ```
 
-CLI npm release publishing is handled by `.github/workflows/release.yml` using
-the `NPM_TOKEN` value from `docs/secrets.txt.enc`. The macOS app release
-workflow is separate and starts from pushed `v*` tags after the CLI package
-version is final.
+CLI npm release publishing is handled by `.github/workflows/publish.yaml` using
+the ArcNet `publish` consumer. The macOS app release workflow is separate and
+starts from pushed `v*` tags after the CLI package version is final. It reads
+its signing values from the ArcNet `desktop` consumer and public variables in
+`.arcnet/arcnet.yaml`.
 
 By default the app build packages the built CLI, built SDK, Node runtime, and
 production runtime dependencies into the app bundle. If you only changed Swift

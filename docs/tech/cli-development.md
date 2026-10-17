@@ -8,8 +8,8 @@ Zapper is a pnpm workspace:
 
 - `packages/cli` contains the published CLI package, source, unit tests, e2e tests, examples, and CLI-specific tooling.
 - `apps/landing-page` contains the Next.js landing page.
-- `docs` contains the VitePress documentation site. Its Markdown files remain the source of truth, and `pnpm --filter @mp-lb/zapper-docs raw` generates `llms.txt` and `llms-full.txt` for agents and automation.
-- `infra` contains Terraform-managed deployment resources for the landing page.
+- `apps/docs` contains the Fumadocs documentation site. Its MDX files under `content/docs` are the public source of truth.
+- `.arcnet/arcnet.yaml` contains the project-specific production site and release configuration.
 
 ## Prerequisites
 
@@ -66,7 +66,7 @@ pnpm --filter @mp-lb/zapper test yaml-parser.test.ts    # Specific CLI test file
 pnpm test:e2e                    # E2E in isolated Linux VM (macOS + Lima)
 pnpm dev:renderer                # Renderer vibe sheet (local development preview)
 pnpm dev:landing                 # Landing page dev server
-pnpm dev:docs                    # VitePress docs dev server on 127.0.0.1:4315
+pnpm dev:docs                    # Fumadocs development server
 pnpm docs:build                  # Build the docs site and generated raw docs
 ```
 
@@ -81,7 +81,7 @@ breakdowns live in `details` as space-separated CLI names such as
 `command_l1: "profile"` and `command_l2: "profile use"`.
 
 The PostHog project token is public product analytics configuration. Put it in
-the repo root `.env.production` as `POSTHOG_KEY`; `POSTHOG_HOST` is optional
+`.arcnet/arcnet.yaml` as `variables.NEXT_PUBLIC_POSTHOG_KEY`; `NEXT_PUBLIC_POSTHOG_HOST` is optional
 and defaults to `https://us.i.posthog.com`. `pnpm build` injects those values
 into the compiled CLI package. Runtime `POSTHOG_KEY` and `POSTHOG_HOST`
 environment variables override the injected values for local testing.
@@ -153,32 +153,34 @@ metadata, last update time, last action, CLI override controls, refresh, and
 quit are tucked into info menus or the gear menu. The popover uses native macOS
 material and resizes to content up to a capped height before scrolling.
 
-GitHub Actions builds release assets through `.github/workflows/macos-release.yml`.
+GitHub Actions builds release assets through `.github/workflows/release-macos.yaml`.
 The workflow runs on `v*` tags or manual dispatch, installs Node and pnpm,
 builds the CLI, builds the signed app with the bundled runtime, zips
 `Zapper.app`, and attaches both `Zapper-<tag>-macOS.zip` and the stable
 `Zapper-macOS.zip` asset to the matching GitHub Release.
 
 Local app builds are ad-hoc signed unless `CODESIGN_IDENTITY` is set. Release
-builds load `CSC_LINK`, `APPLE_ID`, and `APPLE_TEAM_ID` from `.env.production`,
-decrypt `docs/secrets.txt.enc` with the GitHub Actions `SECRETS_KEY` secret,
-load `CSC_KEY_PASSWORD` and `APPLE_APP_SPECIFIC_PASSWORD`, and then sign with
-the hardened runtime before notarizing and packaging.
+builds load `APPLE_ID` and `APPLE_TEAM_ID` from `.arcnet/arcnet.yaml` and
+select `CSC_LINK`, `CSC_KEY_PASSWORD`, and `APPLE_APP_SPECIFIC_PASSWORD` through
+the ArcNet `desktop` consumer. The project source is encrypted in Forum and
+its `.arcnet/secrets/` snapshot is decrypted by the GitHub Actions
+`ZAPPER_SECRETS_KEY` secret. The build then signs with the hardened runtime
+before notarizing and packaging.
 The build signs nested runtime binaries with
 `apps/macos/Signing/Zapper.entitlements` so the bundled Node/V8 runtime can run
 under the hardened runtime.
 
 ## Documentation Site
 
-The docs website is a VitePress workspace package in `docs`. Keep editing the Markdown files in `docs/`; VitePress turns them into the website, and the raw docs generator publishes agent-friendly files from the same source.
+The docs website is a Fumadocs workspace package in `apps/docs`. Edit the MDX files in `apps/docs/content/docs/`. Its React Router build serves the site and agent-readable docs from the same source.
 
 ```bash
 pnpm dev:docs
 pnpm docs:build
-pnpm docs:preview
+pnpm docs:start
 ```
 
-`pnpm build` runs the docs build through Turbo. The generated site lives in `docs/.vitepress/dist`, and the published raw files are available at `/llms.txt` and `/llms-full.txt` in the built site.
+`pnpm build` runs the docs build through Turbo. The generated client output lives in `apps/docs/build/client`, and the site serves `/llms.txt` and `/llms-full.txt`.
 
 ### E2E in Linux VM (macOS)
 
@@ -196,43 +198,18 @@ Notes:
 
 ## Web Deployment
 
-The landing page lives in `apps/landing-page`, and the docs site lives in `docs`. Both are deployed by `.github/workflows/deploy-web.yml`.
-
-Deployment resources are managed through Terraform in `infra`. Terraform creates separate Vercel projects for the landing page and docs site, plus Cloudflare DNS records for `zapper.mp-lb.dev` and `docs.zapper.mp-lb.dev` by default.
-
-The landing page deploy is built from the repo's root pnpm workspace metadata.
-Keep the root `package.json`, `pnpm-workspace.yaml`, and `pnpm-lock.yaml` as
-the deploy source of truth, and do not commit a separate
-`apps/landing-page/package-lock.json`. A stray npm lockfile in the app
-directory can cause Vercel to detect the wrong package manager for that project.
-
-```bash
-cd infra
-terraform init -backend-config="bucket=<gcp-project-id>-terraform-state" -backend-config="prefix=terraform/state/zapper"
-terraform apply \
-  -var="project_name=zapper" \
-  -var="vercel_api_token=$VERCEL_API_TOKEN" \
-  -var="cloudflare_api_token=$CLOUDFLARE_API_TOKEN"
-```
-
-The workflow provisions the Vercel projects/domains through Terraform, builds `@mp-lb/zapper-landing-page` and `@mp-lb/zapper-docs` for verification, deploys the landing page from the repo root using Vercel's prebuilt output, then deploys the docs site from the `docs` workspace directory.
-The landing page `/download/mac` route redirects to the latest macOS GitHub
-Release zip. Add `GCP_SA_KEY`, `VERCEL_API_TOKEN`, `CLOUDFLARE_API_TOKEN`,
-optional `VERCEL_ORG_ID`, and optional `DESKTOP_RELEASES_GITHUB_TOKEN` to
-`docs/secrets.txt.enc`; GitHub Actions decrypts it with `SECRETS_KEY`.
-`GCP_PROJECT_ID` is derived from the service account JSON when it is not
-provided separately. Terraform resolves the active Cloudflare zone from
-`domain`. Terraform passes the desktop releases token into the Vercel project
-runtime environment when present.
+ArcNet deploys the landing page and docs site through
+[`.github/workflows/deploy-arc.yaml`](../../.github/workflows/deploy-arc.yaml).
+Their Vercel projects, domains, roots, public build variables, and selected
+secrets are declared in [`.arcnet/arcnet.yaml`](../../.arcnet/arcnet.yaml).
+Update that file, run `arcnet check`, and push to `main` to deploy. The landing
+page `/download/mac` route redirects to the latest macOS GitHub Release zip.
 
 ## Release CI Auth
 
-Release publishing runs through `.github/workflows/release.yml`.
-
-- The workflow decrypts `docs/secrets.txt.enc` with the repository
-  `SECRETS_KEY` GitHub Actions secret.
-- `docs/secrets.txt.enc` must contain `NPM_TOKEN` with publish access to
-  `@mp-lb/zapper`.
-- If release CI fails with auth or 2FA errors, confirm `NPM_TOKEN` exists in
-  the encrypted secrets file and belongs to an npm identity with publish rights
-  for the `@mp-lb` scope.
+[`.github/workflows/publish.yaml`](../../.github/workflows/publish.yaml)
+loads the `publish` consumer from ArcNet. The standard encrypted source
+provides `NPM_TOKEN`; its snapshot lives under `.arcnet/secrets/`. The macOS
+release uses the `desktop` consumer and the Zapper project source. After a
+Forum secrets edit, run `arcnet secrets sync` and commit the refreshed encrypted
+snapshot.

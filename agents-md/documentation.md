@@ -1,12 +1,8 @@
 ## Documentation
 
-* **[Docs site / Quick Start](docs/index.md)** — VitePress entrypoint and primary user-facing quick start; update this first for important user workflows
+- [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
+- [Commands](apps/docs/content/docs/commands.mdx), [Configuration](apps/docs/content/docs/configuration.mdx), [Services](apps/docs/content/docs/services.mdx), and [Tasks](apps/docs/content/docs/tasks.mdx) describe supported Zap behavior.
+- [CLI development](docs/tech/cli-development.md), [macOS development](docs/tech/macos-development.md), and [Releases](docs/tech/releases.md) cover this repository's build and release process.
+- [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
 
-* **[Commands](docs/internals/commands.md)**, **[Configuration](docs/internals/configuration.md)**, **[Services](docs/standards/services.md)**, and **[Tasks](docs/internals/tasks.md)** — Comprehensive command and `zap.yaml` field reference; keep these in sync with supported behavior
-
-* **[CLI Development](docs/internals/cli-development.md)** — To see how we run/test/build the CLI
-
-* **[macOS Development](docs/internals/macos-development.md)** — To see how we build/test the menu bar app
-
-Raw agent docs are generated automatically from the docs website Markdown files
-as `/llms.txt` and `/llms-full.txt`.
+The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.

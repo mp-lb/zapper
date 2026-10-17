@@ -24,11 +24,16 @@ vercel:
 variables:
   NEXT_PUBLIC_POSTHOG_KEY: phc_mEt2rmwzxNmkbMc3GNeHbiXYASKkPyZyuQU9Ts6SHwiV
   NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
+  APPLE_ID: hi@felixsebastian.dev
+  APPLE_TEAM_ID: CWZKS7THVN
 secrets:
   sources:
     - key: ARCNET_STANDARD_SECRETS_KEY
       store: mp-lb/mp-lb
       path: /admin/standard-secrets.json.enc
+    - key: ZAPPER_SECRETS_KEY
+      store: mp-lb/mp-lb
+      path: /projects/zapper/secrets.json.enc
   consumers:
     deploy:
       VERCEL_TOKEN: VERCEL_API_TOKEN
@@ -37,3 +42,7 @@ secrets:
       NPM_TOKEN: NPM_TOKEN
       NODE_AUTH_TOKEN: NPM_TOKEN
       pnpm_config_//registry.npmjs.org/:_authToken: NPM_TOKEN
+    desktop:
+      CSC_LINK: CSC_LINK
+      CSC_KEY_PASSWORD: CSC_KEY_PASSWORD
+      APPLE_APP_SPECIFIC_PASSWORD: APPLE_APP_SPECIFIC_PASSWORD

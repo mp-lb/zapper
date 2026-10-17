@@ -81,15 +81,6 @@
       "remoteUpdatedAt": "2026-05-29T18:27:12.451Z",
       "remoteRevisionNumber": 1
     },
-    "docs/secrets.json.enc": {
-      "storageClass": "text",
-      "hash": "sha256:fc7bda43c07fbc2ead8a6c38027371dfbaaa7c1e0825b4f51ab7304b8a76dce0",
-      "lastSyncedAt": "2026-06-01T07:16:15.958Z",
-      "remoteFileId": "7f4f3080-0a9b-49c0-b445-f8c35a1d6a5e",
-      "remotePath": "/secrets.json.enc",
-      "remoteUpdatedAt": "2026-06-01T07:16:16.656Z",
-      "remoteRevisionNumber": 1
-    },
     "docs/skills/AGENTS.md": {
       "storageClass": "text",
       "hash": "sha256:e60b35bd59147cdeca3761ef78caea2b77c7af674db60f575dc04ee02c0282b8",

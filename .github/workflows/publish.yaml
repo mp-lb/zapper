@@ -2,8 +2,9 @@ name: Release npm packages
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   workflow_dispatch:
+
 
 permissions:
   contents: read
@@ -28,8 +29,10 @@ jobs:
       - run: npm install -g pm2
       - run: pnpm build && pnpm docs:check && pnpm lint && pnpm test
       - name: Publish changed package builds
-        run: pnpm exec arcnet env run --consumer publish -- node scripts/auto-publish.mjs
+        run: pnpm exec arcnet env run --consumer publish -- node
+          scripts/auto-publish.mjs
         env:
           ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
+          ZAPPER_SECRETS_KEY: ${{ secrets.ZAPPER_SECRETS_KEY }}
       - name: Verify exact public versions
         run: node scripts/verify-publication.mjs
