@@ -1,9 +1,7 @@
 node_modules/
 dist/
 .turbo/
-# Agent files are compiled from agents-md/index.md via `zap t compile-agents`; not committed.
-/CLAUDE.md
-/AGENTS.md
+# Agent files are compiled from context/index.md via `zap t compile-agents`.
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 *.log

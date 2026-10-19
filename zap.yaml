@@ -34,9 +34,6 @@ tasks:
   context-build:
     cmds:
       - node scripts/context-files.mjs build {{REST}}
-  context-copy:
-    cmds:
-      - node scripts/context-files.mjs copy {{REST}}
   compile-agents:
     cmds:
       - zap task context-build -- {{REST}}

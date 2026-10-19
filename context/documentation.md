@@ -6,3 +6,4 @@
 - [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
 
 The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
+
