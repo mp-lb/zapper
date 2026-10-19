@@ -3,7 +3,7 @@
 # service. Cluster facts (atlas-project-id, cluster-host) belong in the
 # network config's module-defaults.
 defaults:
-  username: "arc-{slug}"
+  username: "arcnet-{slug}-backend"
   database: "{slug}"
 credentials:
   - name: MONGODB_ATLAS_PUBLIC_KEY
