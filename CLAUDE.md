@@ -252,4 +252,3 @@ This project publishes docs, so they're **generated from the source of truth**, 
 - Hand-written narrative (README, guides) lives beside the generated reference: update it when behaviour changes, but never restate signatures or flags — link to the reference instead.
 
 Read `docs/standards/libs.md` for the full model (and `docs/standards/clis.md` if the package ships a `bin`).
-
