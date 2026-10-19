@@ -22,10 +22,10 @@ vercel:
       root: apps/docs
       projectId: prj_hcjUvI2lEiA8b4FPkJWbM5i6SwMz
 variables:
-  NEXT_PUBLIC_POSTHOG_KEY: phc_mEt2rmwzxNmkbMc3GNeHbiXYASKkPyZyuQU9Ts6SHwiV
-  NEXT_PUBLIC_POSTHOG_HOST: https://us.i.posthog.com
-  APPLE_ID: hi@felixsebastian.dev
-  APPLE_TEAM_ID: CWZKS7THVN
+  store: mp-lb/mp-lb
+  paths:
+    - /admin/standard-variables.json
+    - /projects/zapper/variables.json
 secrets:
   sources:
     - key: ARCNET_STANDARD_SECRETS_KEY
