@@ -12,3 +12,6 @@ credentials:
     why: scoped database user on the shared Atlas cluster
 env:
   MONGODB_URL: "{{output.url}}"
+  CONTENT_DB_CONNECTION_URL: "{{output.content_url}}"
+  ADMIN_DB_CONNECTION_URL: "{{output.admin_url}}"
+  USER_DB_CONNECTION_URL: "{{output.user_url}}"

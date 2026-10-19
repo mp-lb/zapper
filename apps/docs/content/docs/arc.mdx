@@ -134,6 +134,14 @@ The bundled library includes `cloud-run-web` (public HTTP container service),
 `aws-s3` (private bucket + scoped IAM user; optional `cors-origins` for browser
 requests using presigned URLs).
 
+`shared-mongo-atlas` grants one scoped Atlas user access to its primary
+`database` and injects `MONGODB_URL` into container services. Set optional
+`content_database`, `admin_database`, or `user_database` parameters when an
+application separates those roles. The module grants access to each selected
+database and also injects `CONTENT_DB_CONNECTION_URL`,
+`ADMIN_DB_CONNECTION_URL`, and `USER_DB_CONNECTION_URL`; omitted roles use the
+primary database. It manages credentials, not the cluster or collection data.
+
 ## Network config
 
 `backend:` and `providers:` in `network.yaml` are passthrough maps rendered

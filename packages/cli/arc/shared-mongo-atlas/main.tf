@@ -32,6 +32,29 @@ variable "database" {
   type = string
 }
 
+# Optional role-specific databases. Omitted roles use the primary database.
+variable "content_database" {
+  type    = string
+  default = ""
+}
+
+variable "admin_database" {
+  type    = string
+  default = ""
+}
+
+variable "user_database" {
+  type    = string
+  default = ""
+}
+
+locals {
+  content_database = var.content_database != "" ? var.content_database : var.database
+  admin_database   = var.admin_database != "" ? var.admin_database : var.database
+  user_database    = var.user_database != "" ? var.user_database : var.database
+  role_databases   = distinct([local.content_database, local.admin_database, local.user_database])
+}
+
 # Additional databases this user may readWrite (e.g. temporarily during a
 # data migration). Remove entries when done.
 variable "extra_databases" {
@@ -57,7 +80,7 @@ resource "mongodbatlas_database_user" "main" {
   }
 
   dynamic "roles" {
-    for_each = toset(var.extra_databases)
+    for_each = toset(distinct(concat(var.extra_databases, [for database in local.role_databases : database if database != var.database])))
     content {
       role_name     = "readWrite"
       database_name = roles.value
@@ -67,5 +90,20 @@ resource "mongodbatlas_database_user" "main" {
 
 output "url" {
   value     = "mongodb+srv://${var.username}:${random_password.main.result}@${var.cluster_host}/${var.database}?retryWrites=true&w=majority"
+  sensitive = true
+}
+
+output "content_url" {
+  value     = "mongodb+srv://${var.username}:${random_password.main.result}@${var.cluster_host}/${local.content_database}?retryWrites=true&w=majority"
+  sensitive = true
+}
+
+output "admin_url" {
+  value     = "mongodb+srv://${var.username}:${random_password.main.result}@${var.cluster_host}/${local.admin_database}?retryWrites=true&w=majority"
+  sensitive = true
+}
+
+output "user_url" {
+  value     = "mongodb+srv://${var.username}:${random_password.main.result}@${var.cluster_host}/${local.user_database}?retryWrites=true&w=majority"
   sensitive = true
 }
