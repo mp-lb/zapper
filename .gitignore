@@ -17,6 +17,7 @@ coverage/
 .eslintcache 
 .fssstack-release-result.json
 .forum/
+tmp/
 **/.zap/
 tests/e2e/fixtures/**/zap-e2e-*.yaml
 tests/e2e/test-data/worktree-fixtures/**
