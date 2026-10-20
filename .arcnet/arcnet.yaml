@@ -5,9 +5,6 @@ repository: mp-lb/zapper
 approved: true
 vercel:
   dnsZone: mp-lb.dev
-  account:
-    type: team
-    id: team_1w5PsP1pNWCex9vAwF4PqvTs
   sites:
     landing-page:
       domain: zapper.mp-lb.dev
