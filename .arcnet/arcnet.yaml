@@ -2,7 +2,6 @@ version: 1
 project: zapper
 environment: mp-lb
 repository: mp-lb/zapper
-approved: true
 vercel:
   dnsZone: mp-lb.dev
   sites:

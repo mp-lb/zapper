@@ -11,8 +11,6 @@ concurrency:
 jobs:
   configuration:
     runs-on: ubuntu-latest
-    outputs:
-      approved: ${{ steps.config.outputs.approved }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,8 +24,7 @@ jobs:
 
   deploy:
     needs: configuration
-    if: needs.configuration.outputs.approved == 'true' && github.ref ==
-      'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     environment: arcnet-production
     runs-on: ubuntu-latest
     timeout-minutes: 30
