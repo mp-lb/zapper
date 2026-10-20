@@ -8,7 +8,7 @@ Read this file before making changes in this repository.
 - Put authoring process, style rules, and templates in `authoring/`.
 - Keep service metadata in hidden service folders such as `.forum/`.
 - Do not add loose files at the repository root unless a tool requires the file at root.
-- Keep `forum.yaml` at the repository root so `fm` can discover checkout sync config.
+- Keep `.forum/sync.yaml` at the repository root so `fm` can discover checkout sync config.
 - Keep `README.md` at the repository root for install and publishing instructions.
 - Treat the public Forum store as the website for this repository:
 `https://app.forumlabs.net/s/felixsebastian/skills/README.md`.
