@@ -28,8 +28,4 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 
 [ui.md](https://hyperdoc.forumlabs.net/c5fb9b24-c301-4ed8-9efe-27aad57d5883)
 
-[documentation-layout.md](https://hyperdoc.forumlabs.net/fffbea40-da1f-4efb-9eb6-527f778b9733)
-
-[doctrine.md](https://hyperdoc.forumlabs.net/141021d5-4861-4446-9b60-503a09c86fca)
-
-[docs-website.md](https://hyperdoc.forumlabs.net/5326d5e4-6f20-47d1-81bc-2be9e0a86d6d)
+@forum-docs.md

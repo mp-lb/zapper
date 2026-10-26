@@ -15,6 +15,9 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 
 The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
 
+The dedicated Forum store `mp-lb/zapper` syncs the entire `docs/` folder. Run `fm sync` from the repository root before and after editing anything under `docs/`; resolve conflicts before continuing. This is the only sync rule. Project engineering notes live under `docs/tech/`. Public website source lives in `apps/docs/content/docs/`.
+
+Read shared standards with `fm read <file>.md --store mp-lb/dev` (list them with `fm ls --store mp-lb/dev`). Read shared extensions with `fm read extensions/<file>.md --store mp-lb/fssstack` (list them with `fm ls extensions --store mp-lb/fssstack`).
 
 ## Documentation Freshness (Required)
 
@@ -75,9 +78,9 @@ Always build with `pnpm build` after making changes if you're on the main branch
 
 A few conventions about these instruction files themselves:
 
-- **The source is `agents-md/` building blocks; the agent files are *compiled* from them.** `agents-md/index.md` composes the blocks — an H1, a short intro, and a flat list of `@<block>.md` imports: the project's own blocks plus shared blocks pulled in via store references (e.g. `@fssstack/<block>.md`). The blocks + `index.md` are the **only** things you hand-edit.
-- **`CLAUDE.md` and `AGENTS.md` are generated outputs, not source.** [`@mp-lb/mdcompile`](https://www.npmjs.com/package/@mp-lb/mdcompile) compiles `index.md` into one flat file per agent — `CLAUDE.md` for Claude, `AGENTS.md` for Codex and the de-facto standard (same content). They're **gitignored — compiled locally, never committed, never hand-edited.** Regenerate with `zap task compile-agents`. No agent's native import syntax is load-bearing, so supporting another agent is just another compile target.
-- **The compiled agent file is small on purpose.** It carries the always-true essentials and *points* at the detailed `docs/standards/*` for the rest — read those on demand rather than expecting everything to be in context.
+- **The source is `context/` building blocks; the agent files are compiled from them.** `context/index.md` composes project-specific `@<block>.md` imports and standalone Forum links for shared blocks. Edit the project blocks and index, not the generated files.
+- **`CLAUDE.md` and `AGENTS.md` are generated and committed outputs.** The context task first resolves local imports with [`@mp-lb/mdcompile`](https://www.npmjs.com/package/@mp-lb/mdcompile), then pipes that Markdown through `fm compile --stdin` to expand Forum links. Regenerate both files with the project’s context task and commit them with their source changes.
+- **The compiled agent file is small on purpose.** It carries the always-true essentials. Read relevant shared standards directly from `mp-lb/dev` on demand with `fm read <file>.md --store mp-lb/dev`.
 
 ## Tools you can expect to be authenticated
 
@@ -87,11 +90,11 @@ A handful of CLI tools are installed and already authenticated on this machine �
 - **Google Cloud CLI (`gcloud`)**
 - **AWS CLI (`aws`)**
 - **Zapper** — our process manager and task runner.
-- **Doctrine** — our document sync system.
+- **Forum** — our document system.
 
 ## Git
 
-Some projects use git and some use Doctrine, so be aware of which kind you're in.
+Some projects also sync project documentation with Forum; check the project's documentation instructions before editing docs.
 
 **Local-first.** Work happens locally. Branches isolate a piece of work before it merges to `main`. We **rarely push to GitHub — only to deploy**, from `main`, as a separate step. We never use PRs.
 
@@ -103,9 +106,9 @@ Some projects use git and some use Doctrine, so be aware of which kind you're in
 
 Many projects deploy via CI when you push `main`. To confirm a deploy landed, lean on `gh`: glance at how long recent runs took, then schedule a recheck on a fitting cadence rather than polling tightly. Specifics vary by project.
 
-## Doctrine
+## Forum
 
-Unlike GitHub there are no branches — there's always a single source of truth. **Sync before you edit:** the source lives in the cloud, so the local copy can be stale, and editing stale is how you get conflicts. Pull latest first. After syncing, we commit the synced files to git too, so they always live in the repo.
+Projects with a dedicated Forum store run `fm sync` before and after editing their mapped docs. Projects without one read shared material directly from Forum and do not need a sync configuration. Follow the project's documentation block for its actual store and layout.
 
 ## Task running
 
@@ -124,11 +127,7 @@ We always keep CLIs built, and make sure the local PATH command is linked to the
 You're rarely the only agent at work — multiple agents run in the same repo, often the same branch, at once.
 
 - **A dirty tree is normal — it doesn't block you.** Do your own work; don't touch the files someone else is changing, and when you commit, stage only your own files. Only **stop** if your change genuinely collides with a file in flight. Unfamiliar edits are almost certainly another agent's — work around them.
-- **Collaboration is often coordinated through RFWs** (below).
-
-## Requests for Work (RFWs)
-
-Discrete work is handed off as **Requests for Work** — a single markdown file carrying the spec for one piece of work: a short header plus **Spec** (definition of done) and **Context**. It's not a ticket — just a clear written spec that travels with the work. Managed in `mgr`: unread `~/Code/mgr/rfw/<project>/<slug>.md`, read `~/Code/mgr/rfw/<project>/read/<slug>.md`. Move it to `read/` as soon as the project picks it up. Template: `~/Code/mgr/processes/rfw.md`.
+- Coordinate work through the project’s current task tracker and explicit handoff instructions.
 
 ## Frontend patterns
 
@@ -212,43 +211,3 @@ Beyond these, the CLI has full built-in help — run `zap --help`, or `zap <comm
 The frontend uses [shadcn/ui](https://ui.shadcn.com/) for UI components. Add new components with `npx shadcn@latest add <component>` from the `apps/frontend` directory.
 
 Always use shadcn/ui where possible, including utilities like `cn` for conditional classnames.
-
-
-## Documentation layout
-
-This project's docs live under `docs/` with a fixed layout — keep to it:
-
-- **Root = project surface.** Only top-level, act-on-it files belong at the root
-  of `docs/`: `README.md`, `STORY.md`, the task board (`*.board.json`), and any
-  studies/positioning you want at eye level. Don't drop loose docs here.
-- **`docs/internals/` = this project's own docs.** Every system/engineering doc —
-  feature docs, architecture notes, setup runbooks, how-things-work explainers —
-  lives here. When you write a doc about how something works, it goes in
-  `docs/internals/`, never loose at the root.
-- **`docs/standards/`, `docs/extensions/`, `docs/examples/`, `docs/skills/` =
-  Fssstack store references.** Shared content composed in via the project's
-  Doctrine store. Read-through; don't fork or edit casually.
-- **`docs/public/`** *(libraries only)* — the opt-in published surface the docs
-  site renders (see `standards/libs.md`). Everything else in `docs/` is
-  unpublished by default.
-
-The compiled `CLAUDE.md`/`AGENTS.md` stays deliberately small — it carries the
-always-true essentials and *points* at `docs/standards/*` for the detail. Read
-those on demand rather than expecting everything to be in context.
-
-
-## Doctrine
-
-Central docs are stored in the cloud using doctrine. You can run commands like `pnpm exec fm read some-file.md` and `pnpm exec fm ls`. Relative file paths are likely to be real files on disk.
-
-
-## Documentation
-
-This project publishes docs, so they're **generated from the source of truth**, not hand-maintained in parallel — they can't drift:
-
-- A library's API reference comes from its **types**; a CLI's command reference comes from its **commander tree**. You don't hand-write these.
-- **After changing public API or CLI commands/flags, run `docs:gen`** to regenerate the reference (and the `llms-full.txt` agent bundle), then commit the result.
-- **`docs:check` runs in CI and fails if the committed docs are stale** — regenerating is not optional.
-- Hand-written narrative (README, guides) lives beside the generated reference: update it when behaviour changes, but never restate signatures or flags — link to the reference instead.
-
-Read `docs/standards/libs.md` for the full model (and `docs/standards/clis.md` if the package ships a `bin`).
