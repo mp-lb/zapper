@@ -1,3 +1,0 @@
-{
-  "extends": "@mp-lb/fssstack-config/tsconfig/base.json"
-}
