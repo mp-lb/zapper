@@ -23,3 +23,4 @@ tmp/
 tests/e2e/fixtures/**/zap-e2e-*.yaml
 tests/e2e/test-data/worktree-fixtures/**
 !tests/e2e/test-data/worktree-fixtures/.gitkeep
+**/.pnpm-store/
