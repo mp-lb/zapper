@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    {
+      "name": "@mp-lb/zapper",
+      "dependencies": [
+        "@mp-lb/zapper-sdk"
+      ]
+    },
+    {
+      "name": "@mp-lb/zapper-docs",
+      "dependencies": []
+    },
+    {
+      "name": "@mp-lb/zapper-landing-page",
+      "dependencies": []
+    },
+    {
+      "name": "@mp-lb/zapper-react",
+      "dependencies": [
+        "@mp-lb/zapper-sdk"
+      ]
+    },
+    {
+      "name": "@mp-lb/zapper-sdk",
+      "dependencies": []
+    }
+  ],
+  "cycles": []
+}

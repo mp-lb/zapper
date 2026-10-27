@@ -20,6 +20,9 @@ importers:
       '@mp-lb/fssstack-testing':
         specifier: 0.1.1
         version: 0.1.1(vitest@4.1.5(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(tsx@4.20.6)(yaml@2.8.1)))
+      '@mp-lb/monolith-mapper':
+        specifier: 0.1.1
+        version: 0.1.1
       '@types/node':
         specifier: 25.6.0
         version: 25.6.0
@@ -5598,6 +5601,24 @@ packages:
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
+
+  '@mp-lb/monolith-mapper@0.1.1':
+    resolution: {integrity: sha512-j2+pQODM30HMSNuC0Fp3iO9J77mLZLIGgmZyghqgOak1lB2xOH4BAiWTzTg10GJH9pw9IYDINlx5h5IWwk0NdA==}
+    hasBin: true
+
+  fast-glob@3.3.3:
+    resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
+    engines: {node: '>=8.6.0'}
+
+  typescript@5.9.3:
+    resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
 
 snapshots:
 
@@ -11658,3 +11679,23 @@ snapshots:
   zod@4.4.3: {}
 
   zwitch@2.0.4: {}
+
+  '@mp-lb/monolith-mapper@0.1.1':
+    dependencies:
+      commander: 14.0.3
+      fast-glob: 3.3.3
+      typescript: 5.9.3
+      yaml: 2.9.1
+      zod: 4.4.3
+
+  fast-glob@3.3.3:
+    dependencies:
+      '@nodelib/fs.stat': 2.0.5
+      '@nodelib/fs.walk': 1.2.8
+      glob-parent: 5.1.2
+      merge2: 1.4.1
+      micromatch: 4.0.8
+
+  typescript@5.9.3: {}
+
+  yaml@2.9.1: {}
