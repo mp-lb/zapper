@@ -21,8 +21,8 @@ importers:
         specifier: 0.1.1
         version: 0.1.1(vitest@4.1.5(@opentelemetry/api@1.9.1)(@types/node@25.6.0)(happy-dom@20.10.5)(vite@8.0.16(@types/node@25.6.0)(esbuild@0.28.0)(jiti@2.6.1)(tsx@4.20.6)(yaml@2.8.1)))
       '@mp-lb/monolith-mapper':
-        specifier: 0.1.1
-        version: 0.1.1
+        specifier: 0.1.2
+        version: 0.1.2
       '@types/node':
         specifier: 25.6.0
         version: 25.6.0
@@ -5602,8 +5602,8 @@ packages:
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
-  '@mp-lb/monolith-mapper@0.1.1':
-    resolution: {integrity: sha512-j2+pQODM30HMSNuC0Fp3iO9J77mLZLIGgmZyghqgOak1lB2xOH4BAiWTzTg10GJH9pw9IYDINlx5h5IWwk0NdA==}
+  '@mp-lb/monolith-mapper@0.1.2':
+    resolution: {integrity: sha512-AyjdojmS6Iqt+9ao2L4M+r8/2m4N75FTvB7fWFTIN5zwe/Iqe7q1n1wnjkvBrxBLiMubWkPEDQvZG0yBAaKWaQ==}
     hasBin: true
 
   fast-glob@3.3.3:
@@ -11680,7 +11680,7 @@ snapshots:
 
   zwitch@2.0.4: {}
 
-  '@mp-lb/monolith-mapper@0.1.1':
+  '@mp-lb/monolith-mapper@0.1.2':
     dependencies:
       commander: 14.0.3
       fast-glob: 3.3.3
