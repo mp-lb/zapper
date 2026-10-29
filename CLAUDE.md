@@ -102,10 +102,6 @@ Some projects also sync project documentation with Forum; check the project's do
 
 **Messages.** No conventions — a short lowercase string. For a follow-up fix, prefix with `fix: `.
 
-## Deployments
-
-Many projects deploy via CI when you push `main`. To confirm a deploy landed, lean on `gh`: glance at how long recent runs took, then schedule a recheck on a fitting cadence rather than polling tightly. Specifics vary by project.
-
 ## Forum
 
 Projects with a dedicated Forum store run `fm sync` before and after editing their mapped docs. Projects without one read shared material directly from Forum and do not need a sync configuration. Follow the project's documentation block for its actual store and layout.
