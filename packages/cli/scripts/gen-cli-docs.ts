@@ -14,6 +14,7 @@ const displayPath = relative(process.cwd(), COMMANDS_DOC_PATH);
 
 if (checkMode) {
   let current = "";
+
   try {
     current = readFileSync(COMMANDS_DOC_PATH, "utf8");
   } catch {
@@ -25,6 +26,7 @@ if (checkMode) {
       `${displayPath} is out of date with the commander tree.\n` +
         "Run `pnpm --filter @mp-lb/zapper docs:gen` and commit the result.",
     );
+
     process.exit(1);
   }
 
