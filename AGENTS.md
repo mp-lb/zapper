@@ -1,9 +1,12 @@
 <!-- Standard -->
+
 ## Agent context
 
 Agent instructions are compiled from reusable blocks in `context/`, with `context/index.md` listing the blocks in order. This keeps shared and project-specific instructions easy to maintain.
 
 Edit the blocks and index in `context/`, then run `zap task context-build` to regenerate `AGENTS.md` and `CLAUDE.md`.
+
+
 
 ## Code style
 
@@ -69,6 +72,12 @@ Remember to `pnpm build` and link (usually already linked). Then cd into the exa
 Mise is the base layer: it selects Node and the package manager. Zapper runs tasks and services on top of those tools. Run `mise trust` and `mise install` for checkout setup, then use an activated mise shell or `mise exec -- zap task <task>`.
 
 Read Node from `.node-version` and pnpm from `package.json#packageManager`; `mise.toml` reads these pins rather than duplicating them. npm projects use npm bundled with Node. Preserve the project's versions and package manager. Keep locally built CLI entrypoints in a version-independent PATH directory so switching Node does not hide `zap` or `fm`.
+
+## Validation
+
+Run the applicable configured checks, tests and builds; use `zap task check`, `zap task test` and `zap task build` where available. Run focused checks and follow project-specific validation instructions; report checks that could not run.
+
+
 ## Validation
 
 Use this verification flow while developing:
@@ -129,9 +138,12 @@ Read shared standards with `fm read <file>.md --store mp-lb/dev` (list them with
 - Update `docs/tech/releases.md` and `docs/tech/cli-development.md` when release or development workflows change.
 - Keep `.arcnet/arcnet.yaml`, its encrypted snapshots, and ArcNet workflows in sync when production delivery changes.
 - Run a docs consistency pass for stale commands, paths, defaults, and examples before finishing.
+
 ## Delivery
 
-Push `main` to deploy configured services and publish changed eligible npm packages; check the GitHub Actions runs.
+Push `main` to run the configured delivery workflows for applications and packages. Check GitHub Actions and follow any project-specific release exceptions.
+
+
 
 <!-- Project types -->
 

@@ -1,5 +1,7 @@
 <!-- Standard -->
-@context.md
+
+[Agent context](https://hyperdoc.forumlabs.net/a89f6f27-3e1a-4186-a7b7-2104576a4577)
+
 
 [MAP Lab code style](https://hyperdoc.forumlabs.net/ad089738-f27b-41ec-b77e-b4342f1773c6)
 
@@ -8,6 +10,9 @@
 [Standards](https://hyperdoc.forumlabs.net/21d43359-696f-476d-aa4a-66802a8e7a14)
 
 @development.md
+
+[Validation](https://hyperdoc.forumlabs.net/e6f1e821-cfb5-4c7c-bd41-390ed322aa6c)
+
 @validation.md
 
 [Scripts](https://hyperdoc.forumlabs.net/8dd67d4b-f36a-45b5-8277-5d468f063665)
@@ -16,7 +21,9 @@
 [Documentation](https://hyperdoc.forumlabs.net/80772fa0-248b-45ac-a690-f4fa086059a9)
 
 @documentation.md
-@delivery.md
+
+[Delivery](https://hyperdoc.forumlabs.net/0a66417d-d743-45af-ba2f-3a56adb43509)
+
 
 <!-- Project types -->
 
