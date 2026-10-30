@@ -10,7 +10,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   configuration:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,7 +26,7 @@ jobs:
     needs: configuration
     if: github.ref == 'refs/heads/main'
     environment: arcnet-production
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2404
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
