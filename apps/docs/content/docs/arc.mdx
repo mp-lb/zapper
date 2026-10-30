@@ -56,6 +56,18 @@ zap arc bootstrap  # one-time network setup
    provider tokens). Override with `zap arc --config` or `ZAP_ARC_CONFIG`.
    GCP auth comes from gcloud application-default credentials.
 
+## Google Cloud organization ownership
+
+The `gcp-project` module accepts `organization-id`. Set it in the network's
+`module-defaults.gcp-project` to give new projects a common organization, or
+in a project's module parameters for an override. Omit it for projects without
+an organization.
+
+Before moving an existing project, configure the same organization ID in
+Terraform and review inherited policies. Keep its project ID and state backend
+unchanged. Review the plan for an in-place parent change; do not recreate the
+project or its resources. Verify public access and CI authentication after moving.
+
 ## The deploy block
 
 ```yaml

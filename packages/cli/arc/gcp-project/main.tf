@@ -19,6 +19,12 @@ variable "project_id" {
   type = string
 }
 
+variable "organization_id" {
+  type        = string
+  default     = ""
+  description = "Organization that owns the project. Leave empty for projects without an organization."
+}
+
 variable "billing_account" {
   type    = string
   default = ""
@@ -43,6 +49,7 @@ variable "apis" {
 resource "google_project" "main" {
   project_id      = var.project_id
   name            = var.project_id
+  org_id          = var.organization_id != "" ? var.organization_id : null
   billing_account = var.billing_account != "" ? var.billing_account : null
 
   labels = {
