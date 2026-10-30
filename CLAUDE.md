@@ -49,7 +49,7 @@ Read the relevant MAP Lab standards before changing the corresponding code. List
 - `crud.md`, `errors.md`, `trpc.md` and `logging.md`: backend APIs, services and error handling; list the store for current available guidance.
 - `event-schema.md` and `event-sourcing.md`: event schemas and event-sourced domains.
 - `libs.md`, `lib-release.md` and `clis.md`: libraries, publishing and command-line tools.
-- `context-files.md`: maintaining agent context.
+- For agent context, read `standards/context-files.md` from `mp-lb/fssstack`.
 
 
 ## Development
