@@ -21,7 +21,10 @@ export default [
       "packages/cli/tests/**",
       "**/vitest.e2e.config.ts",
       // build/dev tooling scripts, run via tsx/node and not part of the build tsconfig
-      "**/scripts/**",
+      "scripts/**",
+      "packages/cli/scripts/**",
+      "packages/sdk/scripts/**",
+      "packages/react/scripts/**",
     ],
   }),
   {

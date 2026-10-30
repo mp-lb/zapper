@@ -31,3 +31,5 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 @forum-docs.md
 
 @delivery.md
+
+@scripts.md

@@ -7,6 +7,15 @@ native:
     cmd: pnpm dev
     env: "*"
 tasks:
+  scripts:
+    desc: Introduce this project
+    cmds:
+      - pnpm --dir packages/scripts exec tsx index.ts
+  scripts-check:
+    desc: Lint and typecheck project scripts
+    cmds:
+      - pnpm exec eslint packages/scripts
+      - pnpm --dir packages/scripts run typecheck
   secrets-unlock:
     cmds:
       - dx decrypt --file docs/env.local.enc > .env
