@@ -40,7 +40,9 @@ tasks:
   lint:
     cmds:
       - pnpm lint
+  context-copy:
+    cmds:
+      - pnpm exec tsx packages/scripts/contextFiles.ts copy {{REST}}
   context-build:
     cmds:
-      - npx -y @mp-lb/mdcompile context/index.md --optional --silent | fm compile --stdin -o AGENTS.md
-      - npx -y @mp-lb/mdcompile context/index.md --optional --silent | fm compile --stdin -o CLAUDE.md
+      - pnpm exec tsx packages/scripts/contextFiles.ts build {{REST}}
