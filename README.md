@@ -22,7 +22,6 @@ Infrastructure as code for your local development environment.
 - **[Commands](docs/commands.md)** — CLI command reference
 - **[Configuration](docs/configuration.md)** — `zap.yaml` field reference
 - **[CLI Development](docs/cli-development.md)** — CLI contributing, testing, and release workflow
-- **[macOS Development](docs/macos-development.md)** — Menu bar app development and packaging
 
 ## Repository Layout
 

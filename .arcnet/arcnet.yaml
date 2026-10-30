@@ -38,7 +38,3 @@ secrets:
       NPM_TOKEN: NPM_TOKEN
       NODE_AUTH_TOKEN: NPM_TOKEN
       pnpm_config_//registry.npmjs.org/:_authToken: NPM_TOKEN
-    desktop:
-      CSC_LINK: CSC_LINK
-      CSC_KEY_PASSWORD: CSC_KEY_PASSWORD
-      APPLE_APP_SPECIFIC_PASSWORD: APPLE_APP_SPECIFIC_PASSWORD

@@ -7,7 +7,6 @@ This is a snapshot of the copy from the pre-redesign landing page in
 
 - `Docs`
 - `Agent docs`
-- `Mac app`
 - `GitHub`
 - `Discord`
 
@@ -69,13 +68,6 @@ $ zap open
   - Body: `Run N agents on N worktrees of the same repo. Each gets its own ports, volumes, and state. Parallel work without coordination overhead.`
 
 - CTA: `Read the agent docs →`
-
-## Mac Menu Bar
-
-- Section label: `MAC MENU BAR`
-- Heading: `Keep every local stack within reach.`
-- Body: `The macOS app shows running projects from the menu bar, with quick start, stop, and open actions for each stack. It uses the same Zapper state as the CLI, so the desktop view and terminal commands stay in sync.`
-- CTA: `Download for Mac`
 
 ## Process Manager Section
 
@@ -161,4 +153,4 @@ docker:
 ## Footer
 
 - `built by MAP Lab`
-- Links: `Docs`, `Agent docs`, `Mac app`, `GitHub`, `Discord`
+- Links: `Docs`, `Agent docs`, `GitHub`, `Discord`

@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-"${APP_ROOT}/bin/build"
-pkill -x Zapper 2>/dev/null || true
-open -n "${APP_ROOT}/build/Zapper.app"
-echo "Started ${APP_ROOT}/build/Zapper.app"

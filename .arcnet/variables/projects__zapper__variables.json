@@ -1,6 +1,4 @@
 {
   "NEXT_PUBLIC_POSTHOG_KEY": "phc_mEt2rmwzxNmkbMc3GNeHbiXYASKkPyZyuQU9Ts6SHwiV",
-  "NEXT_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
-  "APPLE_ID": "hi@felixsebastian.dev",
-  "APPLE_TEAM_ID": "CWZKS7THVN"
+  "NEXT_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"
 }

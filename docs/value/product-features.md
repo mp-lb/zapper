@@ -16,7 +16,6 @@ inputs:
 - It includes one-off tasks with params, preconditions, status checks, nested tasks, silent mode, and interactive mode.
 - It includes repo and project utilities such as `zap clone`, `zap init`, project homepage/links/notes, and link-opening commands.
 - It exposes machine-readable JSON and JSONL command output for automation and tooling.
-- It has a native macOS menu bar app that uses the CLI/system view rather than reading project files directly.
 - The product pitch emphasizes that stack truth lives on disk rather than in one foreground terminal session, so a later human or agent can query the same stack state.
 
 ## Inferences

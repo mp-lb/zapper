@@ -10,7 +10,7 @@ inputs:
 
 - The repo repeatedly describes Zapper as a lightweight dev environment runner for local multi-service projects.
 - The strongest product difference is cross-runtime stack control, not container orchestration alone and not task execution alone.
-- The product also extends beyond the CLI into machine inventory and a macOS menu bar app.
+- The product also extends beyond the CLI into machine inventory.
 - The landing page gives the product an explicit wedge: "The process manager for agents."
 
 ## Inferences

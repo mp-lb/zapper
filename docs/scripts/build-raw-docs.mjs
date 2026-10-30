@@ -20,7 +20,6 @@ const sourceOrder = [
   "local-runtime.md",
   "output.md",
   "cli-development.md",
-  "macos-development.md",
 ];
 
 const entries = (

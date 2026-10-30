@@ -240,7 +240,7 @@ Zapper gaps:
 - No clear cancellation or no-terminal error categories for future prompts.
 
 Recommendation: as new task features land, add explicit error classes. This
-will matter for JSON output and the macOS app.
+will matter for JSON output and CLI integrations.
 
 ## Ideas To Add From Task
 

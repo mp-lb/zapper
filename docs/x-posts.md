@@ -4,7 +4,7 @@ Default attachment strategy: use the landing page link card for most posts:
 `https://zapper.mp-lb.dev`
 
 Use images sparingly. The best image candidates are plain screenshots of the
-landing page, a real terminal session, or the macOS menu bar app. Avoid
+landing page or a real terminal session. Avoid
 polished promo graphics unless the post is explicitly announcing a release.
 
 1. Local dev stacks keep getting less local.
@@ -104,7 +104,7 @@ polished promo graphics unless the post is explicitly announcing a release.
 
 10. A lot of dev setup docs are just a human-readable process manager.
 
-    Zapper moves that into `zap.yaml` so the CLI, desktop app, humans, and agents can all read the same thing.
+    Zapper moves that into `zap.yaml` so the CLI, humans, and agents can all read the same thing.
 
     https://zapper.mp-lb.dev
 
@@ -168,7 +168,7 @@ polished promo graphics unless the post is explicitly announcing a release.
 
     https://zapper.mp-lb.dev
 
-    Attachment: landing page link card. Optional image: macOS menu bar app
+    Attachment: landing page link card. Optional image: CLI status output
     screenshot if it clearly shows multiple running projects.
 
 16. Worktrees are a forcing function for better local dev tooling.
@@ -201,13 +201,13 @@ polished promo graphics unless the post is explicitly announcing a release.
 
     One agent starts it.
     Another checks status later.
-    A human opens the desktop app and sees the same state.
+    A human runs `zap status` and sees the same state.
 
     That is the direction for Zapper.
 
     https://zapper.mp-lb.dev
 
-    Attachment: landing page link card. Optional image: desktop app screenshot,
+    Attachment: landing page link card. Optional image: terminal screenshot,
     but only if it feels like a product-in-use screenshot rather than an ad.
 
 20. Zapper is for the moment when "run the app" has quietly become "run the local system."

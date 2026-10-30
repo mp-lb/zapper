@@ -11,7 +11,7 @@ For the command result and rendering contract, see [Command Output](output.md).
 ## System Registry Storage
 
 System commands inspect machine-wide Zapper state rather than only the current
-repository. They back desktop integrations, project discovery, and orphaned
+repository. They back CLI integrations, project discovery, and orphaned
 resource cleanup.
 
 On macOS, the system registry defaults to

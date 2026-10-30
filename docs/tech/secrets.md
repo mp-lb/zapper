@@ -6,7 +6,7 @@ file is `mp-lb/mp-lb:/projects/zapper/secrets.json.enc`. Their encrypted
 snapshots live under `.arcnet/secrets/`, while each source’s decryption key is
 stored as a GitHub repository secret.
 
-The `deploy`, `publish`, and `desktop` consumer maps select the keys each CI job
+The `deploy` and `publish` consumer maps select the keys each CI job
 may use. Never put credential values in YAML, `.env.production`, or workflow
 logs. To change a value, edit its Forum file, run `arcnet secrets sync`, and
 commit the refreshed encrypted snapshot. Run `arcnet env check --password`

@@ -10,7 +10,7 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 
 - [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
 - [Commands](apps/docs/content/docs/commands.mdx), [Configuration](apps/docs/content/docs/configuration.mdx), [Services](apps/docs/content/docs/services.mdx), and [Tasks](apps/docs/content/docs/tasks.mdx) describe supported Zap behavior.
-- [CLI development](docs/tech/cli-development.md), [macOS development](docs/tech/macos-development.md), and [Releases](docs/tech/releases.md) cover this repository's build and release process.
+- [CLI development](docs/tech/cli-development.md) and [Releases](docs/tech/releases.md) cover this repository's build and release process.
 - [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
 
 The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
@@ -22,7 +22,7 @@ Read shared standards with `fm read <file>.md --store mp-lb/dev` (list them with
 ## Documentation Freshness (Required)
 
 - Update the public MDX files in `apps/docs/content/docs/` when Zap behavior or config changes. `packages/cli/src/config/schemas.ts` is the config source of truth.
-- Update `docs/tech/releases.md`, `docs/tech/cli-development.md`, and `docs/tech/macos-development.md` when release or development workflows change.
+- Update `docs/tech/releases.md` and `docs/tech/cli-development.md` when release or development workflows change.
 - Keep `.arcnet/arcnet.yaml`, its encrypted snapshots, and ArcNet workflows in sync when production delivery changes.
 - Run a docs consistency pass for stale commands, paths, defaults, and examples before finishing.
 
@@ -218,7 +218,6 @@ Push `main` to deploy the services selected in `.arcnet/arcnet.yaml`; check the 
 Packages are selected by their `package.json`: use `private: true` for internal packages and `private: false` with `publishConfig.access: public` for packages intended for npm. The publisher scans immediate children of `packages/` and `apps/`; a missing `private` field also makes a package eligible. GitHub Packages uses its own registry configuration.
 
 The npm workflow on pushes to `main` compares packed package contents with npm and publishes changed packages at the next patch version. ArcNet supplies the configured publishing credential through its `publish` secret consumer; the secret source must contain `NPM_TOKEN`. Check the workflow run to confirm publication. First publication may require an authenticated local publish, depending on npm credentials and trusted-publisher setup.
-The signed macOS app release uses the manually dispatched `release-macos.yaml` workflow; see `docs/tech/releases.md`.
 
 ## Scripts
 

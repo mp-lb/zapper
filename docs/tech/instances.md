@@ -3,7 +3,7 @@
 Zapper is instance-first. A project can have multiple stack instances, and each instance has:
 
 - Its own random `id` (used in native process and Docker names)
-- An optional human `label` for display in status output and the desktop app
+- An optional human `label` for display in status output
 - Its own assigned `ports` map
 - Its own generated Docker `volumes` map for path-only volume mounts
 

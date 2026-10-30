@@ -91,85 +91,6 @@ network, request timeouts, and PostHog errors do not print output or affect
 command exit behavior. Set `ZAPPER_ANALYTICS_DISABLED=1` or `DO_NOT_TRACK=1`
 to disable capture for a process.
 
-## macOS Menu Bar App
-
-The native macOS app lives in `apps/macos`. It is a lightweight SwiftUI
-dashboard hosted by an AppKit menu bar status item. It shells out to the
-bundled `zap` CLI runtime for reads and actions: `zap system projects --json`,
-`zap home --json`, and `zap up`/`zap down`/`zap restart` for instances or
-individual services.
-It does not parse `.zap` state or `zap.yaml` directly.
-
-The first version does not require opening Xcode. Build and run it with:
-
-```bash
-apps/macos/bin/build
-apps/macos/bin/run
-apps/macos/bin/clean
-```
-
-For the short local rebuild/restart loop, see
-[macOS Development](macos-development.md).
-
-The build script uses `swiftc` and writes `apps/macos/build/Zapper.app`. By
-default it also packages a local Node runtime, the built CLI, the built SDK,
-and production runtime dependencies under `Contents/Resources/ZapperRuntime`.
-Run `pnpm build` before `apps/macos/bin/build`. Set
-`PACKAGE_ZAPPER_RUNTIME=0` to skip runtime packaging for local Swift-only
-development.
-
-Release builds prefer the bundled `zap` wrapper so Finder-launched app sessions
-do not require a globally available `node`. `ZAPPER_CLI_PATH` and the in-app CLI
-picker in Settings remain available for development and diagnostics. The main
-dashboard lists stacks, where each stack is one project instance. Default
-instances show as the project name; non-default instances append the instance
-key in parentheses. If multiple stacks would render with the same name, the row
-also includes the instance label and random instance ID, falling back to just the
-ID when no label is set. Stack rows show running-service summaries with a small
-status LED and high-value actions. Expanded stack rows include project path and
-instance identity. Pinning lives in the stack overflow menu.
-The Open control is hidden when no homepage or project links are configured,
-opens directly when there is one target, and becomes a menu when there are
-multiple targets. Pinned stacks are stored in local app preferences and appear
-in a Pinned section above unpinned stacks.
-Missing registry entries appear as one compact, expandable warning with a Prune
-button. Clicking Prune replaces the warning with an inline destructive
-confirmation; accepting runs `zap global prune`.
-The menu bar status item stays compact: it shows the bolt icon and the running
-service count, without status words.
-Unpinned stacks are grouped into Active and Inactive sections using the same
-state as the stack LED: running, pending, or errored stacks are active; gray LED
-stacks are inactive. Expanded stack details group services by native and Docker
-runtime. Service start, stop, and restart controls live in each service overflow
-menu, and actions show immediate stale-state feedback in the stack and service
-rows before converging on the next real CLI refresh. Amber LEDs are reserved for
-real CLI-reported pending state; the spinner means the app knows the displayed
-state is stale. The open popover polls briefly at a faster cadence, settles to a
-slower idle cadence, polls at least every 8 seconds while closed, and polls more
-frequently while action state is stale.
-During refresh, the header keeps showing the last service summary and uses a
-fixed-size spinner/check indicator to avoid layout shifts. Paths, runtime
-metadata, last update time, last action, CLI override controls, refresh, and
-quit are tucked into info menus or the gear menu. The popover uses native macOS
-material and resizes to content up to a capped height before scrolling.
-
-GitHub Actions builds release assets through `.github/workflows/release-macos.yaml`.
-The workflow runs on `v*` tags or manual dispatch, installs Node and pnpm,
-builds the CLI, builds the signed app with the bundled runtime, zips
-`Zapper.app`, and attaches both `Zapper-<tag>-macOS.zip` and the stable
-`Zapper-macOS.zip` asset to the matching GitHub Release.
-
-Local app builds are ad-hoc signed unless `CODESIGN_IDENTITY` is set. Release
-builds load `APPLE_ID` and `APPLE_TEAM_ID` from `.arcnet/arcnet.yaml` and
-select `CSC_LINK`, `CSC_KEY_PASSWORD`, and `APPLE_APP_SPECIFIC_PASSWORD` through
-the ArcNet `desktop` consumer. The project source is encrypted in Forum and
-its `.arcnet/secrets/` snapshot is decrypted by the GitHub Actions
-`ZAPPER_SECRETS_KEY` secret. The build then signs with the hardened runtime
-before notarizing and packaging.
-The build signs nested runtime binaries with
-`apps/macos/Signing/Zapper.entitlements` so the bundled Node/V8 runtime can run
-under the hardened runtime.
-
 ## Documentation Site
 
 The docs website is a Fumadocs workspace package in `apps/docs`. Edit the MDX files in `apps/docs/content/docs/`. Its React Router build serves the site and agent-readable docs from the same source.
@@ -202,14 +123,12 @@ ArcNet deploys the landing page and docs site through
 [`.github/workflows/deploy-arc.yaml`](../../.github/workflows/deploy-arc.yaml).
 Their Vercel projects, domains, roots, public build variables, and selected
 secrets are declared in [`.arcnet/arcnet.yaml`](../../.arcnet/arcnet.yaml).
-Update that file, run `arcnet check`, and push to `main` to deploy. The landing
-page `/download/mac` route redirects to the latest macOS GitHub Release zip.
+Update that file, run `arcnet check`, and push to `main` to deploy.
 
 ## Release CI Auth
 
 [`.github/workflows/publish.yaml`](../../.github/workflows/publish.yaml)
 loads the `publish` consumer from ArcNet. The standard encrypted source
-provides `NPM_TOKEN`; its snapshot lives under `.arcnet/secrets/`. The macOS
-release uses the `desktop` consumer and the Zapper project source. After a
+provides `NPM_TOKEN`; its snapshot lives under `.arcnet/secrets/`. After a
 Forum secrets edit, run `arcnet secrets sync` and commit the refreshed encrypted
 snapshot.

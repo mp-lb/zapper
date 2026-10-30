@@ -23,7 +23,6 @@ inputs:
   - ../../packages/cli/src/config/schemas.ts
   - ../../packages/cli/src/cli/CommanderCli.ts
   - ../../packages/cli/package.json
-  - ../../apps/macos/README.md
 ---
 
 ## Evidence
@@ -38,9 +37,7 @@ inputs:
 - `docs/profiles.md` and `docs/instances.md` describe profile-based service/env selection, isolated stacks, instance-scoped ports, labels, and generated volumes.
 - `docs/env-var-mgmt.md` clarifies the stricter environment-routing story behind landing-page copy such as "whitelisted per service."
 - `docs/project-metadata.md`, `docs/output.md`, and `docs/global-registry.md` describe project links/homepages/notes, structured command output, and a machine-wide registry/system view.
-- `docs/local-runtime.md` and `apps/macos/README.md` describe a native macOS menu bar app that uses a bundled Zapper CLI runtime and stack-oriented controls.
-- `docs/cli-development.md` reinforces that the macOS app shells out to the CLI and does not parse `zap.yaml` or `.zap` state directly.
-- `docs/x-posts.md` captures the repo’s informal product language: less shell history archaeology, less local folklore, and one file that humans, desktop tooling, and agents can all read.
+- `docs/x-posts.md` captures the repo’s informal product language: less shell history archaeology, less local folklore, and one file that humans and agents can all read.
 - `docs/compose-study.md` and `docs/taskfile-study.md` explicitly compare Zapper against Docker Compose and Task, which helps identify likely alternatives and category boundaries.
 - `packages/cli/package.json` shows the published CLI package name `@mp-lb/zapper`.
 

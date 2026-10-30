@@ -12,7 +12,6 @@ export default [
       "**/.zap/**",
       "apps/landing-page/**",
       "apps/docs/**",
-      "apps/macos/**",
       "docs/**",
       "infra/**",
       "**/test-fixtures/**",

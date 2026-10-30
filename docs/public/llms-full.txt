@@ -95,6 +95,3 @@ For the command result and rendering contract, see
 
 For CLI development, testing, and release workflow, see
 [CLI Development](cli-development.md).
-
-For the local menu bar app development loop, see
-[macOS Development](macos-development.md).

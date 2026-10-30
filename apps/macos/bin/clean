@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-APP_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-rm -rf "${APP_ROOT}/build"
-echo "Removed ${APP_ROOT}/build"

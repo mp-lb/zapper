@@ -9,7 +9,7 @@ inputs:
 
 - The product is built for local multi-service projects rather than single-process apps.
 - The docs emphasize mixed native and Docker stacks, profiles, isolated instances, tasks, links, and machine-wide discovery.
-- The landing page explicitly pitches the product to agents, while the docs and macOS app show the same stack model being used by humans, scripts, and desktop tooling.
+- The landing page explicitly pitches the product to agents, while the docs show the same stack model being used by humans and scripts.
 - The repo repeatedly emphasizes handoff scenarios: one actor starts the stack, another checks status later.
 
 ## Inferences
@@ -20,7 +20,7 @@ inputs:
 - High-friction environment:
   - full-stack apps with several services
   - repos with both containerized dependencies and native dev servers
-  - teams that want the same stack visible in terminal workflows, scripts, agents, and a desktop control surface
+  - teams that want the same stack visible in terminal workflows, scripts, and agents
 - Especially strong fit:
   - teams experimenting with coding agents that need to start, inspect, and reuse local stacks without inheriting a specific terminal session
 - Lower-fit customer:

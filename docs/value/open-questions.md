@@ -14,7 +14,6 @@ inputs:
 ## Missing Product Reality
 
 - Which capabilities are fully shipped today versus documented as design direction or near-term roadmap? The repo includes both reference docs and forward-looking design studies.
-- Is the macOS app a core product pillar, a companion UX layer, or mainly an internal/operator convenience?
 - Which local workflow is most important in practice: mixed native-plus-Docker stacks, profile switching, isolated E2E stacks, or machine-wide project discovery?
 - Is "for agents" the primary go-to-market wedge, or a sharper way to describe a broader local-dev product?
 
@@ -29,5 +28,4 @@ inputs:
 ## Missing Commercial Context
 
 - Is Zapper intended to remain an open-source CLI with companion apps, or is there a larger commercial product plan?
-- Are Linux and Windows desktop experiences planned, or is macOS the durable focus for the GUI layer?
 - What proof points exist today: active projects, retention, internal usage, testimonials, or before/after setup time?

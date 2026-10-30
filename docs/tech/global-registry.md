@@ -33,11 +33,10 @@ The recommended design has two related but separate surfaces:
 - An orphaned resources audit that scans the native supervisor and Docker
   directly for live resources that no registered/current project can explain.
 
-The project registry should be the primary source for the desktop app's
-Projects tab. For each registered project, Zapper can load that project and use
+The project registry is the source for project discovery. For each registered project, Zapper can load that project and use
 existing status/list/config paths to report services, ports, and
 `up`/`pending`/`down`. Direct native supervisor and Docker scanning should power
-a separate Orphaned Resources tab, because resources can keep running after a
+a separate orphaned resources audit, because resources can keep running after a
 project name changes, a service is removed, a checkout moves, or local state is
 deleted.
 
@@ -80,8 +79,7 @@ to a repo root, and does not have enough project context to exactly mirror local
 - Use `system` naming for machine-wide commands and environment variables so
   they are clearly separate from repo-local commands and `.zap/state.json`.
 - Treat the registry as a managed, reliable index of known Zapper projects.
-- Use the global registry as the primary project index for the desktop Projects
-  tab.
+- Use the global registry as the primary project index for system commands.
 - Reuse Zapper's existing project-local status behavior when reporting whether
   a service is `up`, `pending`, or `down`.
 - Use a separate direct native supervisor/Docker audit to detect orphaned,
@@ -327,52 +325,7 @@ Suggested orphan audit classifications:
   an instance ID.
 
 Runtime-only resources should not be merged into registered service status by
-custom logic. They should be shown in the Orphaned Resources tab with explicit
-cleanup actions.
-
-## Dashboard Model
-
-The desktop app should present at least two separate tabs.
-
-### Projects
-
-The Projects tab is backed by the global registry and normal Zapper project
-commands. It should present three levels:
-
-1. Project rows:
-   project name, root path if known, state classification, active resource
-   counts, last seen time.
-2. Instance rows:
-   instance key, instance ID, optional label, service status counts, assigned port count.
-3. Service rows:
-   type, service/resource name, Zapper status, enabled/profile-filter state,
-   classification, last known location, reason.
-
-For privacy and performance, the first load should not parse every `zap.yaml`.
-Only parse project config when:
-
-- The dashboard needs exact service status for that project.
-- The project is expanded in the dashboard.
-- A command requires service definitions.
-- The user asks for ports, links, notes, or detailed service metadata.
-
-The central view may show a coarse project row from registry metadata before
-loading config, but service-level names, ports, and `up`/`pending`/`down` should
-come from the same project-local paths used by normal commands.
-
-### Orphaned Resources
-
-The Orphaned Resources tab is backed by direct native supervisor/Docker scans. It
-should show:
-
-- Live Zapper-looking native processes with no registered/current owner.
-- Live Zapper-looking Docker containers with no registered/current owner.
-- Generated Docker volumes that no current project state owns.
-- Legacy resources that use old names without instance IDs.
-- Ambiguous resources that match multiple possible registered projects.
-
-This tab should be action-oriented: inspect, open likely project, stop/delete
-selected resource, or run a confirmation-heavy cleanup command.
+custom logic. They should be reported separately with explicit cleanup actions.
 
 ## Staleness And Pruning
 
