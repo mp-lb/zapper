@@ -41,12 +41,16 @@ tasks:
   lint:
     cmds:
       - pnpm lint
-  context-copy:
-    cmds:
-      - pnpm exec tsx packages/scripts/contextFiles.ts copy {{REST}}
   context-build:
     cmds:
-      - pnpm exec tsx packages/scripts/contextFiles.ts build {{REST}}
+      - |
+        set -eu
+        context_temp=$(mktemp -d)
+        trap 'rm -rf "$context_temp"' EXIT
+        mdcompile context/index.md --silent -o "$context_temp/local.md"
+        fm compile --stdin -o "$context_temp/shared.md" < "$context_temp/local.md"
+        cp "$context_temp/shared.md" AGENTS.md
+        cp "$context_temp/shared.md" CLAUDE.md
   scripts-test:
     cmds:
       - pnpm --dir packages/scripts test

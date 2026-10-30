@@ -1,7 +1,7 @@
 node_modules/
 dist/
 .turbo/
-# Agent files are compiled from context/index.md via `zap t compile-agents`.
+# Agent files are compiled from context/index.md via `zap t context-build`.
 docs/.vitepress/dist/
 docs/.vitepress/cache/
 *.log
