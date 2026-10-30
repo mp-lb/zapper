@@ -7,7 +7,6 @@ Agent instructions are compiled from reusable blocks in `context/`, with `contex
 Edit the blocks and index in `context/`, then run `zap task context-build` to regenerate `AGENTS.md` and `CLAUDE.md`.
 
 
-
 ## Code style
 
 - Use PascalCase for components
@@ -44,17 +43,6 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 
 Shared tooling is developed in sibling checkouts under `~/Work`: Zapper (`zapper`) runs tasks, Forum (`forum`) provides `fm`, Tools (`tools`) provides ArcNet, and Stackforge (`stackforge`) owns setup conventions. When a change belongs in an owned dependency, inspect and update that source repository as needed, follow its `AGENTS.md`, then rebuild/relink the CLI or update the consuming dependency. Verify the command resolves to the intended build.
 
-## Standards
-
-Read the relevant MAP Lab standards before changing the corresponding code. List them with `fm ls --store mp-lb/dev` and read one with `fm read <file>.md --store mp-lb/dev`.
-
-- `style-guide.md` and `component-decomposition.md`: code and component structure.
-- `crud.md`, `errors.md`, `trpc.md` and `logging.md`: backend APIs, services and error handling; list the store for current available guidance.
-- `event-schema.md` and `event-sourcing.md`: event schemas and event-sourced domains.
-- `libs.md`, `lib-release.md` and `clis.md`: libraries, publishing and command-line tools.
-- For agent context, read `standards/context-files.md` from `mp-lb/fssstack`.
-
-
 ## Development
 
 Create example projects for testing:
@@ -67,16 +55,27 @@ Remember to `pnpm build` and link (usually already linked). Then cd into the exa
 
 **Cleanup:** Stop processes and delete `.zap` folders when done.
 
-### Local tool versions
+## Documentation
 
-Mise is the base layer: it selects Node and the package manager. Zapper runs tasks and services on top of those tools. Run `mise trust` and `mise install` for checkout setup, then use an activated mise shell or `mise exec -- zap task <task>`.
+- [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
+- [Commands](apps/docs/content/docs/commands.mdx), [Configuration](apps/docs/content/docs/configuration.mdx), [Services](apps/docs/content/docs/services.mdx), and [Tasks](apps/docs/content/docs/tasks.mdx) describe supported Zap behavior.
+- [CLI development](docs/tech/cli-development.md) and [Releases](docs/tech/releases.md) cover this repository's build and release process.
+- [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
 
-Read Node from `.node-version` and pnpm from `package.json#packageManager`; `mise.toml` reads these pins rather than duplicating them. npm projects use npm bundled with Node. Preserve the project's versions and package manager. Keep locally built CLI entrypoints in a version-independent PATH directory so switching Node does not hide `zap` or `fm`.
+The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
 
-## Validation
+The dedicated Forum store `mp-lb/zapper` syncs the entire `docs/` folder. Run `fm sync` from the repository root before and after editing anything under `docs/`; resolve conflicts before continuing. This is the only sync rule. Project engineering notes live under `docs/tech/`. Public website source lives in `apps/docs/content/docs/`.
 
-Run the applicable configured checks, tests and builds; use `zap task check`, `zap task test` and `zap task build` where available. Run focused checks and follow project-specific validation instructions; report checks that could not run.
+### Documentation Freshness (Required)
 
+- Update the public MDX files in `apps/docs/content/docs/` when Zap behavior or config changes. `packages/cli/src/config/schemas.ts` is the config source of truth.
+- Update `docs/tech/releases.md` and `docs/tech/cli-development.md` when release or development workflows change.
+- Keep `.arcnet/arcnet.yaml`, its encrypted snapshots, and ArcNet workflows in sync when production delivery changes.
+- Run a docs consistency pass for stale commands, paths, defaults, and examples before finishing.
+
+## Project UI
+
+Frontend packages: `apps/landing-page`. Run component installation in the relevant package.
 
 ## Validation
 
@@ -108,10 +107,40 @@ Always build with `pnpm build` after making changes if you're on the main branch
 
 * `pnpm lint:fix` — fix linting issues across workspace projects
 
+## Standards
+
+Read the relevant MAP Lab standards before changing the corresponding code. List them with `fm ls --store mp-lb/dev` and read one with `fm read <file>.md --store mp-lb/dev`.
+
+- `style-guide.md` and `component-decomposition.md`: code and component structure.
+- `crud.md`, `errors.md`, `trpc.md` and `logging.md`: backend APIs, services and error handling; list the store for current available guidance.
+- `event-schema.md` and `event-sourcing.md`: event schemas and event-sourced domains.
+- `libs.md`, `lib-release.md` and `clis.md`: libraries, publishing and command-line tools.
+- For agent context, read `standards/context-files.md` from `mp-lb/fssstack`.
+
+
+## Development
+
+Use Zapper for processes and tasks: `zap status`, `zap up`, `zap logs <service> --no-follow`, and `zap task <task>`. Inspect the existing stack before starting another copy. Services and tasks that need environment variables must receive Zapper's resolved environment.
+
+Keep service names, dynamic ports and task commands in `zap.yaml`; do not hardcode development ports. Non-secret defaults live in `.env.local`; secrets belong in ignored `.env` or the configured secret source. Never put secret values in context.
+
+The canonical tool versions are `.node-version` and `package.json#packageManager`; preserve them when changing local tooling or CI.
+
+### Local tool versions
+
+Mise is the base layer: it selects Node and the package manager. Zapper runs tasks and services on top of those tools. Run `mise trust` and `mise install` for checkout setup, then use an activated mise shell or `mise exec -- zap task <task>`.
+
+Read Node from `.node-version` and pnpm from `package.json#packageManager`; `mise.toml` reads these pins rather than duplicating them. npm projects use npm bundled with Node. Preserve the project's versions and package manager. Keep locally built CLI entrypoints in a version-independent PATH directory so switching Node does not hide `zap` or `fm`.
+
+
+## Validation
+
+Run the applicable configured checks, tests and builds; use `zap task check`, `zap task test` and `zap task build` where available. Run focused checks and follow project-specific validation instructions; report checks that could not run.
+
+
 ## Scripts
 
 Write project scripts in TypeScript in the package that owns the behaviour, or `packages/scripts` when there is no natural owner, and include them in normal lint and typecheck checks. Expose each script as a thin Zap task that invokes it with `tsx` (for example, `zap t somemigration` runs `packages/scripts/somemigration.ts`); keep CI callers aligned when moving scripts.
-
 
 
 ## Documentation
@@ -119,30 +148,9 @@ Write project scripts in TypeScript in the package that owns the behaviour, or `
 Keep project-specific documentation in `docs/` and update it with behavior changes. Follow the project's own instructions for any Forum sync mapping; read shared standards and extension setup from their Forum stores.
 
 
-## Documentation
-
-- [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
-- [Commands](apps/docs/content/docs/commands.mdx), [Configuration](apps/docs/content/docs/configuration.mdx), [Services](apps/docs/content/docs/services.mdx), and [Tasks](apps/docs/content/docs/tasks.mdx) describe supported Zap behavior.
-- [CLI development](docs/tech/cli-development.md) and [Releases](docs/tech/releases.md) cover this repository's build and release process.
-- [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
-
-The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
-
-The dedicated Forum store `mp-lb/zapper` syncs the entire `docs/` folder. Run `fm sync` from the repository root before and after editing anything under `docs/`; resolve conflicts before continuing. This is the only sync rule. Project engineering notes live under `docs/tech/`. Public website source lives in `apps/docs/content/docs/`.
-
-Read shared standards with `fm read <file>.md --store mp-lb/dev` (list them with `fm ls --store mp-lb/dev`). Read shared extensions with `fm read extensions/<extension>/README.md --store mp-lb/fssstack` (list them with `fm ls extensions --store mp-lb/fssstack`).
-
-### Documentation Freshness (Required)
-
-- Update the public MDX files in `apps/docs/content/docs/` when Zap behavior or config changes. `packages/cli/src/config/schemas.ts` is the config source of truth.
-- Update `docs/tech/releases.md` and `docs/tech/cli-development.md` when release or development workflows change.
-- Keep `.arcnet/arcnet.yaml`, its encrypted snapshots, and ArcNet workflows in sync when production delivery changes.
-- Run a docs consistency pass for stale commands, paths, defaults, and examples before finishing.
-
 ## Delivery
 
 Push `main` to run the configured delivery workflows for applications and packages. Check GitHub Actions and follow any project-specific release exceptions.
-
 
 
 <!-- Project types -->
@@ -171,10 +179,6 @@ pnpm dlx shadcn@latest add https://shad.mp-lb.dev/r/ui-states.json
 
 CLI reference: https://ui.shadcn.com/docs/cli.
 
-
-## Project UI
-
-Frontend packages: `apps/landing-page`. Run component installation in the relevant package.
 
 <!-- Extensions -->
 
