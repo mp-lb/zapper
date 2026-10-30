@@ -5,15 +5,15 @@
 
 @project.md
 
-[Standards](https://hyperdoc.forumlabs.net/cc565709-43af-4d81-bfe6-a4ae81a2eddc)
+[Standards](https://hyperdoc.forumlabs.net/21d43359-696f-476d-aa4a-66802a8e7a14)
 
 @development.md
 @validation.md
 
-[Scripts](https://hyperdoc.forumlabs.net/b3243cd0-1b78-49c5-8d28-5b9a6530cfc6)
+[Scripts](https://hyperdoc.forumlabs.net/8dd67d4b-f36a-45b5-8277-5d468f063665)
 
 
-[Documentation](https://hyperdoc.forumlabs.net/804d156d-dd3e-4bd4-9b36-858c213bdcac)
+[Documentation](https://hyperdoc.forumlabs.net/80772fa0-248b-45ac-a690-f4fa086059a9)
 
 @documentation.md
 @delivery.md
