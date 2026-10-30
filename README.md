@@ -30,3 +30,18 @@ Infrastructure as code for your local development environment.
 - `apps/landing-page` — Next.js landing page
 - `docs` — VitePress documentation site and raw agent docs bundle
 - `infra` — Terraform-managed deployment resources for the landing page
+
+## Tool versions
+
+Use the exact Node version in `.node-version` and the pnpm version in
+`package.json#packageManager`. `engines.node` declares the minimum supported
+Node version; it is not a development pin. CI reads `.node-version`.
+
+With mise installed, run `mise trust`, then `mise install`. Use an activated
+mise shell or `mise exec -- <command>` so Zapper inherits these tools.
+For nvm, run `nvm install "$(cat .node-version)"` and
+`nvm use "$(cat .node-version)"`. Dependency policy lives in
+`pnpm-workspace.yaml`; use `workspace:*` for internal dependencies.
+Zapper retains `save-exact=true` in `.npmrc` because its pinned pnpm 10.0.0
+does not read that setting from workspace YAML. Move it to `saveExact: true`
+and remove `.npmrc` when pnpm is upgraded to a version supporting that setting.
