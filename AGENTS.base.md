@@ -17,6 +17,33 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 **Core philosophy:** Processes are processes—you shouldn't need to care if something is native or containerized.
 
 **Status:** WIP, native process and Docker service workflows working.
+## Standards
+
+FSS Stack ships with MAP Lab's public engineering standards. Read relevant standards on demand with `fm read <file>.md --store mp-lb/dev`; list them with `fm ls --store mp-lb/dev`. Public FSS Stack setup standards and extension payloads are also available in Stackforge's `fssstack/` tree, published as `mp-lb/fssstack`.
+
+Keep code focused and well organized, reuse domain schemas and shared components, and prefer sentence case for product copy and documentation. Follow project-specific architecture and validation policies. Record documentation sources and any Forum sync mapping in the documentation block; these standards do not require a project-specific or private Forum store.
+## Code style
+
+- Use PascalCase for components
+- Files should have 1 export, and should be named the same. E.g. MyComponent lives in MyComponent.tsx
+- Use camelCase for constants, functions, mongo collections
+- Use train_case for typed strings
+- File routers are an exception
+- Generally 1 function/class per file
+
+### Functional decomposition
+
+Good functional decomposition is essential. This applies to react components, hooks, backend functions. Continuously abstract and centralise important code. Functions should be small and "do one thing".
+
+### Code organization
+
+Maintain an extreme approach to code organization. Functions/components should never be large or complex. Generally every function should have it's own file. Those files should be well organised. Continuously break down programs and organise files so that it's always crystal clear what modules relate to each other. You have permission to do this at all times. Flag concerns with the developer if unsure.
+
+Take extra care when organizing tests.
+
+### Tech debt
+
+In general, follow the boy scout principle. But if you come across tech debt that's too big to address, add a .md doc to docs/tech-debt and raise it with the user.
 ## Development
 
 Create example projects for testing:
@@ -131,35 +158,10 @@ Configured service domains: `zapper.mp-lb.dev`, `docs.zapper.mp-lb.dev`. Their s
 Commit completed changes promptly, then use follow-up commits for fixes. Commit only your own changes; unrelated edits are normal and do not block work. Follow explicit project/user push preferences, and establish the preference once if unknown. Do not assume a push is harmless: it may trigger delivery.
 
 Use Berth for project work and tasks; use `berth project list` and built-in help to locate the relevant project. Keep locally developed CLI tools built and linked after changing them. Run environment-dependent work through the project's Zap tasks.
-## MapLab standards
-
-Read relevant shared standards on demand with `fm read <file>.md --store mp-lb/dev`; list them with `fm ls --store mp-lb/dev`. Read capability setup at `fm read extensions/<extension>/README.md --store mp-lb/fssstack` and MapLab additions from `mp-lb/augmentations`.
-
-Keep code focused and well organized, reuse domain schemas and shared components, and prefer sentence case for product copy and documentation. Follow project-specific architecture and validation policies. Document the project's actual Forum store/sync mapping in its documentation block; a project without a dedicated store does not need sync configuration.
-## Code style
-
-- Use PascalCase for components
-- Files should have 1 export, and should be named the same. E.g. MyComponent lives in MyComponent.tsx
-- Use camelCase for constants, functions, mongo collections
-- Use train_case for typed strings
-- File routers are an exception
-- Generally 1 function/class per file
-
-### Functional decomposition
-
-Good functional decomposition is essential. This applies to react components, hooks, backend functions. Continuously abstract and centralise important code. Functions should be small and "do one thing".
-
-### Code organization
-
-Maintain an extreme approach to code organization. Functions/components should never be large or complex. Generally every function should have it's own file. Those files should be well organised. Continuously break down programs and organise files so that it's always crystal clear what modules relate to each other. You have permission to do this at all times. Flag concerns with the developer if unsure.
-
-Take extra care when organizing tests.
-
-### Tech debt
-
-In general, follow the boy scout principle. But if you come across tech debt that's too big to address, add a .md doc to docs/tech-debt and raise it with the user.
 ## MapLab toolchain
 
-Use mise to select the project's Node and pnpm versions from `.node-version` and `package.json#packageManager`. Do not duplicate version pins in mise configuration. Run `mise trust` and `mise install` when setting up a checkout; use an activated shell or `mise exec -- zap ...` so tasks inherit the selected tools. Zapper remains the task/process runner.
+Every project using the MapLab augmentation uses mise for local tool selection. Read Node from `.node-version`. For pnpm projects, read pnpm from `package.json#packageManager`; do not duplicate these pins in `mise.toml`. npm projects keep npm and use the version bundled with the selected Node unless they explicitly pin another version. Preserve existing project versions and package managers.
 
-Prefer the installed tools' built-in help and verify authentication when needed; do not assume every cloud service is authenticated. Keep local CLI commands linked to the intended local build.
+Run `mise trust` and `mise install` when setting up a checkout. Use an activated shell or `mise exec -- zap ...` so tasks inherit the selected tools. Zapper remains the task/process runner. Verify the resolved Node and package-manager versions against their canonical sources.
+
+Prefer installed tools' built-in help and verify authentication when needed; do not assume every cloud service is authenticated. Keep local CLI commands linked to the intended local build through a version-independent PATH directory, so changing the selected Node version does not hide `zap` or `fm`.
