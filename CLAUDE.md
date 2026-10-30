@@ -40,9 +40,18 @@ A lightweight dev environment runner. Define your local dev setup in a single `z
 ### Related tooling
 
 Shared tooling is developed in sibling checkouts under `~/Work`: Zapper (`zapper`) runs tasks, Forum (`forum`) provides `fm`, Tools (`tools`) provides ArcNet, and Stackforge (`stackforge`) owns setup conventions. When a change belongs in an owned dependency, inspect and update that source repository as needed, follow its `AGENTS.md`, then rebuild/relink the CLI or update the consuming dependency. Verify the command resolves to the intended build.
+
 ## Standards
 
-List shared standards with `fm ls --store mp-lb/dev`; read one with `fm read <file>.md --store mp-lb/dev`.
+Read the relevant MAP Lab standards before changing the corresponding code. List them with `fm ls --store mp-lb/dev` and read one with `fm read <file>.md --store mp-lb/dev`.
+
+- `style-guide.md` and `component-decomposition.md`: code and component structure.
+- `crud.md`, `errors.md`, `trpc.md` and `logging.md`: backend APIs, services and error handling; list the store for current available guidance.
+- `event-schema.md` and `event-sourcing.md`: event schemas and event-sourced domains.
+- `libs.md`, `lib-release.md` and `clis.md`: libraries, publishing and command-line tools.
+- `context-files.md`: maintaining agent context.
+
+
 ## Development
 
 Create example projects for testing:
@@ -89,9 +98,18 @@ Always build with `pnpm build` after making changes if you're on the main branch
 * `pnpm build` — build all workspace projects
 
 * `pnpm lint:fix` — fix linting issues across workspace projects
+
 ## Scripts
 
 Write project scripts in TypeScript in the package that owns the behaviour, or `packages/scripts` when there is no natural owner, and include them in normal lint and typecheck checks. Expose each script as a thin Zap task that invokes it with `tsx` (for example, `zap t somemigration` runs `packages/scripts/somemigration.ts`); keep CI callers aligned when moving scripts.
+
+
+
+## Documentation
+
+Keep project-specific documentation in `docs/` and update it with behavior changes. Follow the project's own instructions for any Forum sync mapping; read shared standards and extension setup from their Forum stores.
+
+
 ## Documentation
 
 - [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
