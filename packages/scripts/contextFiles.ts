@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, resolve } from "node:path";
+import { basename, delimiter, resolve } from "node:path";
 
 const usage = `usage:
   pnpm exec tsx packages/scripts/contextFiles.ts build [--agents|--claude] [--optional-extra] [extra-context ...]
@@ -29,11 +29,40 @@ const outputs =
 
 if (command === "build") {
   const entry = findEntry();
-  runMdcompile([entry, "-o", "AGENTS.base.md", "--silent"]);
-  writeFileSync(
-    "AGENTS.base.md",
-    `${readFileSync("AGENTS.base.md", "utf8").trimEnd()}\n`,
-  );
+  const dir = mkdtempSync(resolve(tmpdir(), "context-shared-"));
+
+  try {
+    const compiled = resolve(dir, "shared.md");
+    runMdcompile([entry, "-o", compiled, "--silent"]);
+    const local = readFileSync(compiled, "utf8");
+
+    const hasRemote =
+      /^\s*\[[^\]]*\]\(https:\/\/(?:hyperdoc\.forumlabs\.net|dx\.ink|app\.forumlabs\.net)\//m.test(
+        local,
+      );
+
+    const shared = hasRemote
+      ? execFileSync("fm", ["compile", "--stdin"], {
+          input: local,
+          encoding: "utf8",
+          maxBuffer: 10 * 1024 * 1024,
+          // Forum is shared CLI tooling; pnpm exec may prepend an obsolete project-local fm.
+          env: {
+            ...process.env,
+            PATH: (process.env.PATH ?? "")
+              .split(delimiter)
+              .filter(
+                (path) => !/[\\/]node_modules[\\/]\.bin[\\/]?$/.test(path),
+              )
+              .join(delimiter),
+          },
+        })
+      : local;
+
+    writeFileSync("AGENTS.base.md", `${shared.trimEnd()}\n`);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 
   writeLocalFiles(outputs, options.extraContext);
 } else {

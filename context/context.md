@@ -8,4 +8,6 @@ Run `zap task context-build` after changes. Review and commit the source changes
 
 Keep private and machine-specific instructions out of committed context. The compiler supports explicit extra context paths for a local working copy; never commit those additions. `zap task context-copy` restores the root agent files from the shared base.
 
-Extensions are documented at `extensions/<extension>/README.md` in the FSS Stack source (read with `fm read extensions/<extension>/README.md --store mp-lb/fssstack`). Each extension owns its context and other payloads. When installing one, copy its context payload, adapt it to the project, add the import once, and rebuild. Merge updates into existing customized blocks instead of overwriting them.
+Extensions are documented at `extensions/<extension>/README.md` in the FSS Stack source (`fm read extensions/<extension>/README.md --store mp-lb/fssstack`). Add recurring, non-obvious operational instructions only when a capability needs them; a dependency alone does not justify a context file. Keep setup steps in extension documentation and project details in their existing subject files.
+
+MAP Lab code style is a standalone remote link in `context/index.md`. Context compilation expands local imports with mdcompile, then remote links with `fm compile --stdin`. The shared `fm` CLI on PATH (outside project `node_modules/.bin`) and Forum access are required to refresh it; a failed remote fetch must fail the build. Generated root files remain usable offline. Keep project overrides in `project.md` after the shared style import.
