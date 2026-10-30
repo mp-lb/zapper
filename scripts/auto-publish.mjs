@@ -4,6 +4,7 @@
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  appendFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -18,6 +19,15 @@ import { join, resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 
 const dryRun = process.argv.includes("--dry-run");
+
+function outputReport(report) {
+  console.log(JSON.stringify(report, null, 2));
+  if (process.env.GITHUB_OUTPUT)
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `release_report=${JSON.stringify(report)}\n`,
+    );
+}
 
 function run(command, args, cwd = root) {
   const result = spawnSync(command, args, {
@@ -159,6 +169,7 @@ const packages = entries();
 
 if (!packages.length) {
   console.log("No public npm packages found.");
+  outputReport([]);
   process.exit(0);
 }
 
@@ -169,14 +180,10 @@ const originalManifests = new Map(
 );
 
 const report = [];
-const reportPath = join(root, ".fssstack-release-result.json");
 
 function record(name, version, action) {
   report.push({ name, version, action });
-  writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
 }
-
-writeFileSync(reportPath, "[]\n");
 
 try {
   const latest = new Map();
@@ -263,3 +270,5 @@ try {
     writeFileSync(manifest, content);
   rmSync(scratch, { recursive: true, force: true });
 }
+
+outputReport(report);

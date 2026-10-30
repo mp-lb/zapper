@@ -1,14 +1,13 @@
-import { readFileSync } from "node:fs";
-import { URL } from "node:url";
+import process from "node:process";
 import console from "node:console";
 import { setTimeout } from "node:timers/promises";
 
-const report = JSON.parse(
-  readFileSync(
-    new URL("../.fssstack-release-result.json", import.meta.url),
-    "utf8",
-  ),
-);
+const serializedReport = process.env.FSSSTACK_RELEASE_RESULT;
+if (!serializedReport)
+  throw Error(
+    "Pass the publisher's release_report output as FSSSTACK_RELEASE_RESULT.",
+  );
+const report = JSON.parse(serializedReport);
 
 for (const { name, version, action } of report) {
   const url = `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}`;

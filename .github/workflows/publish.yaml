@@ -29,6 +29,7 @@ jobs:
       - run: npm install -g pm2
       - run: pnpm build && pnpm docs:check && pnpm lint && pnpm test
       - name: Publish changed package builds
+        id: publish
         run: pnpm exec arcnet env run --consumer publish -- node
           scripts/auto-publish.mjs
         env:
@@ -36,3 +37,5 @@ jobs:
           ZAPPER_SECRETS_KEY: ${{ secrets.ZAPPER_SECRETS_KEY }}
       - name: Verify exact public versions
         run: node scripts/verify-publication.mjs
+        env:
+          FSSSTACK_RELEASE_RESULT: ${{ steps.publish.outputs.release_report }}
