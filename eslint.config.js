@@ -19,11 +19,6 @@ export default [
       // tsconfig, so type-aware linting can't resolve it.
       "packages/cli/tests/**",
       "**/vitest.e2e.config.ts",
-      // build/dev tooling scripts, run via tsx/node and not part of the build tsconfig
-      "scripts/**",
-      "packages/cli/scripts/**/*.mjs",
-      "packages/sdk/scripts/**",
-      "packages/react/scripts/**",
     ],
   }),
   {
