@@ -5,7 +5,7 @@ import fs from "fs";
 
 const CLI_PATH = path.join(__dirname, "../../dist/index.js");
 const E2E_DATA_DIR = path.join(__dirname, "test-data");
-const SETUP_SCRIPT_PATH = path.join(E2E_DATA_DIR, "create-worktree-fixture.sh");
+const SETUP_SCRIPT_PATH = path.join(__dirname, "../../scripts/createWorktreeFixture.ts");
 const GENERATED_FIXTURES_DIR = path.join(E2E_DATA_DIR, "worktree-fixtures");
 
 interface WorktreeFixturePaths {
@@ -36,8 +36,8 @@ function runZap(args: string[], cwd: string): string {
 
 function setupWorktreeFixture(fixtureName: string): WorktreeFixturePaths {
   const setupOutput = execFileSync(
-    "bash",
-    [SETUP_SCRIPT_PATH, GENERATED_FIXTURES_DIR, fixtureName],
+    process.execPath,
+    ["--import", import.meta.resolve("tsx"), SETUP_SCRIPT_PATH, GENERATED_FIXTURES_DIR, fixtureName],
     { encoding: "utf8" },
   );
 

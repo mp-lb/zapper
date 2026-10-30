@@ -19,14 +19,14 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs && node scripts/inject-analytics-config.mjs && chmod +x dist/index.js",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && tsx ../scripts/addJsExtensions.ts dist && tsx scripts/injectAnalyticsConfig.ts && chmod +x dist/index.js",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "dev:renderer": "NODE_ENV=development tsx src/dev/rendererVibeSheet.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "bash ./etc/e2e_run.sh",
+    "test:e2e": "tsx scripts/e2eRun.ts",
     "test:e2e:local": "pnpm build && vitest run --config vitest.e2e.config.ts",
     "docs:gen": "tsx scripts/gen-cli-docs.ts",
     "docs:check": "tsx scripts/gen-cli-docs.ts --check",

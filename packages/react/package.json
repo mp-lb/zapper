@@ -26,7 +26,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && tsx ../scripts/addJsExtensions.ts dist",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run --environment happy-dom",
     "test:watch": "vitest --environment happy-dom",
@@ -59,6 +59,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "typescript": "6.0.3",
-    "vitest": "4.1.5"
+    "vitest": "4.1.5",
+    "tsx": "4.20.6"
   }
 }

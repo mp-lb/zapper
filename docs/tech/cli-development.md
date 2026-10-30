@@ -1,8 +1,8 @@
-# Local Development
+# Local development
 
 Guide for contributing to zapper.
 
-## Repository Layout
+## Repository layout
 
 Zapper is a pnpm workspace:
 
@@ -13,11 +13,11 @@ Zapper is a pnpm workspace:
 
 ## Prerequisites
 
-- Node.js 18+
-- pnpm
+- Node.js from `.node-version`
+- pnpm from `package.json#packageManager`
 - Docker (for testing docker services)
 
-## Getting Started
+## Getting started
 
 ```bash
 npm uninstall --global zapper-cli @maplab/zapper @mp-lb/zapper  # Start fresh
@@ -35,7 +35,7 @@ Before publishing, run `pnpm build`. The package publish hook checks the built o
 If pnpm says its global bin directory is not on your `PATH`, run `pnpm setup`
 once and restart your shell before retrying the global commands.
 
-## Linking & Unlinking
+## Linking and unlinking
 
 ```bash
 which zap                 # Should show pnpm global path
@@ -60,19 +60,23 @@ pnpm add --global "link:$(pwd)/packages/cli" --config.ignore-scripts=true
 ## Testing
 
 ```bash
-pnpm test                        # Run CLI unit tests
+pnpm test                        # Run script, SDK, React and CLI unit tests
 pnpm test:watch                  # CLI unit test watch mode
 pnpm --filter @mp-lb/zapper test yaml-parser.test.ts    # Specific CLI test file
 pnpm test:e2e                    # E2E in isolated Linux VM (macOS + Lima)
 pnpm dev:renderer                # Renderer vibe sheet (local development preview)
 pnpm dev:landing                 # Landing page dev server
 pnpm dev:docs                    # Fumadocs development server
-pnpm docs:build                  # Build the docs site and generated raw docs
+pnpm docs:build                  # Build the docs site
 ```
 
 For manual CLI testing, use the example projects in `packages/cli/examples/`. After building, cd into one and run `zap up`.
 
-## CLI Analytics
+## Project scripts
+
+Keep scripts in TypeScript in their owning package, or `packages/scripts` for shared tooling, with thin Zap tasks and normal lint/typecheck coverage. `zap t scripts-check` and `zap t scripts-test` validate the tooling; the normal build uses the shared import rewriter and the CLI analytics injector.
+
+## CLI analytics
 
 The CLI sends one best-effort product analytics event, `command.run`, when a
 top-level command handler is invoked. Events use the shared event shape: the
@@ -91,7 +95,7 @@ network, request timeouts, and PostHog errors do not print output or affect
 command exit behavior. Set `ZAPPER_ANALYTICS_DISABLED=1` or `DO_NOT_TRACK=1`
 to disable capture for a process.
 
-## Documentation Site
+## Documentation site
 
 The docs website is a Fumadocs workspace package in `apps/docs`. Edit the MDX files in `apps/docs/content/docs/`. Its React Router build serves the site and agent-readable docs from the same source.
 
@@ -106,18 +110,19 @@ pnpm docs:start
 ### E2E in Linux VM (macOS)
 
 ```bash
-bash ./packages/cli/etc/e2e_setup.sh          # One-time: install Lima + provision base VM
+zap t e2e-setup          # One-time: install Lima + provision base VM
 pnpm test:e2e                    # Each run clones an isolated throwaway VM
 ```
 
 Notes:
 
 - `pnpm test:e2e` runs in an ephemeral cloned VM and auto-deletes it on exit.
+- Setup reads the Node major and pnpm version from the project pins; rerun it when those change.
 - Base VM name defaults to `zapper-e2e-base` (override with `ZAP_E2E_BASE_VM_NAME`).
 - Keep a failed run VM for debugging: `ZAP_E2E_KEEP_VM=1 pnpm test:e2e`.
 - By default, `pnpm test:e2e` is strict and fails if VM setup is missing.
 
-## Web Deployment
+## Web deployment
 
 ArcNet deploys the landing page and docs site through
 [`.github/workflows/deploy-arc.yaml`](../../.github/workflows/deploy-arc.yaml).
@@ -125,7 +130,7 @@ Their Vercel projects, domains, roots, public build variables, and selected
 secrets are declared in [`.arcnet/arcnet.yaml`](../../.arcnet/arcnet.yaml).
 Update that file, run `arcnet check`, and push to `main` to deploy.
 
-## Release CI Auth
+## Release CI auth
 
 [`.github/workflows/publish.yaml`](../../.github/workflows/publish.yaml)
 loads the `publish` consumer from ArcNet. The standard encrypted source

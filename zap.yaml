@@ -14,8 +14,9 @@ tasks:
   scripts-check:
     desc: Lint and typecheck project scripts
     cmds:
-      - pnpm exec eslint packages/scripts
+      - pnpm exec eslint packages/scripts packages/cli/scripts
       - pnpm --dir packages/scripts run typecheck
+      - pnpm --filter @mp-lb/zapper typecheck
   secrets-unlock:
     cmds:
       - dx decrypt --file docs/env.local.enc > .env
@@ -46,3 +47,34 @@ tasks:
   context-build:
     cmds:
       - pnpm exec tsx packages/scripts/contextFiles.ts build {{REST}}
+  scripts-test:
+    cmds:
+      - pnpm --dir packages/scripts test
+      - pnpm --filter @mp-lb/zapper test scripts
+  publish-packages:
+    cmds:
+      - pnpm exec tsx packages/scripts/autoPublish.ts {{REST}}
+  verify-publication:
+    cmds:
+      - pnpm exec tsx packages/scripts/verifyPublication.ts {{REST}}
+  add-js-extensions:
+    cmds:
+      - pnpm exec tsx packages/scripts/addJsExtensions.ts {{REST}}
+  inject-analytics-config:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/injectAnalyticsConfig.ts {{REST}}
+  e2e-setup:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/e2eSetup.ts {{REST}}
+  e2e:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/e2eRun.ts {{REST}}
+  e2e-fixture:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/createWorktreeFixture.ts {{REST}}
+  docs-gen:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/gen-cli-docs.ts {{REST}}
+  docs-check:
+    cmds:
+      - pnpm exec tsx packages/cli/scripts/gen-cli-docs.ts --check {{REST}}

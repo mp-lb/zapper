@@ -68,9 +68,9 @@ Use this verification flow while developing:
 
 * Run end-to-end tests once near the end of a big change, when you think the work is done:
 
-  * `pnpm test:e2e` runs tests inside an isolated Linux VM via `packages/cli/etc/e2e_run.sh` (macOS + Lima).
+  * `pnpm test:e2e` runs tests inside an isolated Linux VM via `packages/cli/scripts/e2eRun.ts` (macOS + Lima).
 
-  * One-time setup for that VM flow: `bash ./packages/cli/etc/e2e_setup.sh`.
+  * One-time setup for that VM flow: `zap t e2e-setup`.
 
   * Then run: `pnpm test:e2e`.
 

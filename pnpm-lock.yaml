@@ -252,6 +252,9 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.7(react@19.2.7)
+      tsx:
+        specifier: 4.20.6
+        version: 4.20.6
       typescript:
         specifier: 6.0.3
         version: 6.0.3

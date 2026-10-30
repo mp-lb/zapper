@@ -21,7 +21,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "rm -rf dist && tsc --project tsconfig.build.json && node scripts/add-js-extensions.mjs",
+    "build": "rm -rf dist && tsc --project tsconfig.build.json && tsx ../scripts/addJsExtensions.ts dist",
     "typecheck": "tsc --project tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

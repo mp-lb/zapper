@@ -8,7 +8,7 @@ End-to-end tests for the Zapper CLI that run against real supervised processes.
 - `tests/e2e/fixtures/` - Fixture projects with simple test configurations
   - `simple-project/` - Multi-service project (server + worker)
   - `minimal-project/` - Single-service project
-- `tests/e2e/test-data/create-worktree-fixture.sh` - Builds a temporary git repo plus a second checkout fixture with a `zap.yaml`
+- `scripts/createWorktreeFixture.ts` - Builds a temporary git repo plus a second checkout fixture with a `zap.yaml`
 - `tests/e2e/test-data/worktree-fixtures/` - Generated checkout fixtures (gitignored)
 
 ## Running E2E Tests
