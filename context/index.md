@@ -12,8 +12,10 @@
 @delivery.md
 
 <!-- Project types -->
+
+[Frontend UI](https://hyperdoc.forumlabs.net/e161b5b1-76b2-4656-84fe-a193af43ae58)
+
 @ui.md
-@library-cli.md
 
 <!-- Extensions -->
 @arcnet.md
