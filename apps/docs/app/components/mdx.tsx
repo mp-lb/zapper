@@ -1,4 +1,4 @@
-import { getMDXComponents, useMDXComponents } from '@mp-lb/tools-fumadocs-preset';
+import { getMDXComponents, useMDXComponents } from '@mp-lb/fumadocs-preset';
 
 export { getMDXComponents, useMDXComponents };
 
