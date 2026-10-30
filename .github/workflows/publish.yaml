@@ -2,9 +2,8 @@ name: Release npm packages
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
-
 
 permissions:
   contents: read
@@ -31,7 +30,7 @@ jobs:
       - name: Publish changed package builds
         id: publish
         run: pnpm exec arcnet env run --consumer publish -- node
-          scripts/auto-publish.mjs
+          scripts/auto-publish.mjs --github-output="$GITHUB_OUTPUT"
         env:
           ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
           ZAPPER_SECRETS_KEY: ${{ secrets.ZAPPER_SECRETS_KEY }}

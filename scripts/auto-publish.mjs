@@ -19,14 +19,15 @@ import { join, resolve } from "node:path";
 const root = resolve(import.meta.dirname, "..");
 
 const dryRun = process.argv.includes("--dry-run");
+const githubOutput =
+  process.argv
+    .find((arg) => arg.startsWith("--github-output="))
+    ?.slice("--github-output=".length) ?? process.env.GITHUB_OUTPUT;
 
 function outputReport(report) {
   console.log(JSON.stringify(report, null, 2));
-  if (process.env.GITHUB_OUTPUT)
-    appendFileSync(
-      process.env.GITHUB_OUTPUT,
-      `release_report=${JSON.stringify(report)}\n`,
-    );
+  if (githubOutput)
+    appendFileSync(githubOutput, `release_report=${JSON.stringify(report)}\n`);
 }
 
 function run(command, args, cwd = root) {
