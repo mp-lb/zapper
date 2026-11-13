@@ -34,6 +34,9 @@ class ZapperSupervisorDaemon {
   private server?: net.Server;
 
   start(): void {
+    // Node mode is only for this daemon, not Electron services it launches.
+    if (process.versions.electron) delete process.env.ELECTRON_RUN_AS_NODE;
+
     mkdirSync(supervisorHome(), { recursive: true });
     this.log(`starting supervisor pid=${process.pid}`);
     this.loadState();

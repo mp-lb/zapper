@@ -44,12 +44,18 @@ With `ambient` (the default), the CLI captures the launch environment used for
 `zap up` and writes supervisor wrapper scripts with that `PATH` — useful from a
 terminal, but only as good as the environment `zap` inherited.
 
-## Native Supervisor
+## Native supervisor
 
 Native services are managed by Zapper's own local supervisor daemon. The
 supervisor starts wrapper scripts as detached process groups, records state under
 `~/.zapper/supervisor`, writes combined logs under each project's `.zap/logs`,
 and exposes the process list back to the CLI.
+
+When the SDK runs inside an Electron desktop app, it starts the supervisor with
+that executable in Node mode (`ELECTRON_RUN_AS_NODE=1`). The host must keep
+Electron's `runAsNode` fuse enabled. The daemon clears this startup flag before
+launching services, so Electron projects still open normally. Project commands
+continue to use their configured runtime, including mise autodetection.
 
 The native supervisor supports macOS, Linux, and WSL2. Native Windows process
 supervision is intentionally unsupported; run Zapper from WSL2 on Windows.

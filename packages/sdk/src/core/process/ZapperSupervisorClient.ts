@@ -122,7 +122,10 @@ export class ZapperSupervisorClient {
 
     const child = spawn(process.execPath, [daemonEntryPoint()], {
       detached: true,
-      env: process.env,
+      // In SDK hosts such as Electron, execPath is the app executable.
+      env: process.versions.electron
+        ? { ...process.env, ELECTRON_RUN_AS_NODE: "1" }
+        : process.env,
       stdio: ["ignore", logFd, logFd],
     });
 
