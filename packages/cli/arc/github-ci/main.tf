@@ -51,7 +51,7 @@ resource "google_iam_workload_identity_pool" "github" {
 
 resource "google_iam_workload_identity_pool_provider" "github_actions" {
   project                            = var.gcp_project_id
-  workload_identity_pool_id         = google_iam_workload_identity_pool.github.workload_identity_pool_id
+  workload_identity_pool_id          = google_iam_workload_identity_pool.github.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-actions"
   display_name                       = "GitHub Actions OIDC"
 
@@ -78,6 +78,20 @@ resource "google_service_account" "deploy" {
 resource "google_project_iam_member" "deploy_editor" {
   project = var.gcp_project_id
   role    = "roles/editor"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+# Editor does not include WIF pool reads or Cloud Run service IAM writes.
+# The authorized first local apply grants these before the identity is used in CI.
+resource "google_project_iam_member" "deploy_wif_viewer" {
+  project = var.gcp_project_id
+  role    = "roles/iam.workloadIdentityPoolViewer"
+  member  = "serviceAccount:${google_service_account.deploy.email}"
+}
+
+resource "google_project_iam_member" "deploy_run_admin" {
+  project = var.gcp_project_id
+  role    = "roles/run.admin"
   member  = "serviceAccount:${google_service_account.deploy.email}"
 }
 

@@ -192,3 +192,9 @@ every extra top-level string key the network config defines (e.g. `region`,
 `gcp-project: mp-lb-{slug}`). `registry:` is the image template arc appends
 `/<service>:<tag>` to. `module-defaults:` feeds network facts (regions,
 billing accounts, cluster hosts) to modules without touching project files.
+
+## GitHub CI module permissions
+
+The `github-ci` module grants the deployment service account project-scoped Editor, Workload Identity Pool Viewer and Cloud Run Admin, plus its state-bucket binding. The latter two project roles cover WIF refresh and Cloud Run service IAM, which Editor alone does not cover. Bootstrap the module with an authorized operator before using the identity in CI; existing projects need an operator apply to adopt new bindings.
+
+Shared quota-project access is explicit: the `network-project` input grants Service Usage Consumer on that project. Leave it empty when the environment operator owns shared IAM, and provision that grant through the environment's bootstrap process instead. The `billing-account` input is also opt-in, only for deployments that manage budgets. No shared-project Editor or Owner grant is required.

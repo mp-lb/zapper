@@ -174,3 +174,9 @@ For the full contract — module.yaml fields, hooks, template scopes, param
 merge order — see the
 [arc reference](https://github.com/mp-lb/zapper/blob/main/docs/tech/arc.md)
 in the repo.
+
+## GitHub CI module permissions
+
+The `github-ci` module grants the deployment service account project-scoped Editor, Workload Identity Pool Viewer and Cloud Run Admin, plus its state-bucket binding. The latter two project roles cover WIF refresh and Cloud Run service IAM, which Editor alone does not cover. Bootstrap the module with an authorized operator before using the identity in CI; existing projects need an operator apply to adopt new bindings.
+
+Shared quota-project access is explicit: the `network-project` input grants Service Usage Consumer on that project. Leave it empty when the environment operator owns shared IAM, and provision that grant through the environment's bootstrap process instead. The `billing-account` input is also opt-in, only for deployments that manage budgets. No shared-project Editor or Owner grant is required.
