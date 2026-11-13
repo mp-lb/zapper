@@ -814,7 +814,8 @@ export class NativeProcessManager {
       const tools = toolArgs.length > 0 ? `${toolArgs} ` : "";
       const command = this.shellQuote(processConfig.cmd);
 
-      return `exec mise exec ${tools}-- bash -lc ${command}\n`;
+      // Login profiles can replace the PATH that mise just resolved.
+      return `exec mise exec ${tools}-- bash -c ${command}\n`;
     }
 
     return `${processConfig.cmd}\n`;

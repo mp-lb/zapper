@@ -30,6 +30,10 @@ present, native supervisor wrapper scripts execute the service command through
 previous captured-`PATH` behavior and reports the ambiguity in `zap runtime`.
 Projects can still set `runtime.provider` explicitly as an escape hatch.
 
+Mise commands run in a non-login Bash shell after tool selection. Shell expressions
+such as `&&` still work, while login profiles cannot replace mise's selected
+`PATH` with a different Node or package manager.
+
 For projects without mise, `runtime.provider: shell` reconstructs a
 login-shell-derived environment: at `zap up`, the CLI spawns the user's shell
 (`$SHELL`, or `runtime.shell`) once as a login + interactive shell, captures

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { execFileSync } from "child_process";
 import {
   existsSync,
   mkdirSync,
@@ -44,6 +45,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllEnvs();
 
     if (existsSync(testDir)) {
       rmSync(testDir, { recursive: true, force: true });
@@ -315,7 +317,7 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const content = readFileSync(path.join(zapDir, wrapperScript!), "utf8");
 
     expect(content).toContain(
-      "exec mise exec 'node@20' 'pnpm@latest' -- bash -lc 'pnpm dev'",
+      "exec mise exec 'node@20' 'pnpm@latest' -- bash -c 'pnpm dev'",
     );
   });
 
@@ -347,8 +349,50 @@ describe("NativeProcessManager - Wrapper Script Lifecycle", () => {
     const content = readFileSync(path.join(zapDir, wrapperScript!), "utf8");
 
     expect(content).toContain(
-      `exec mise exec 'node@lts' -- bash -lc 'node -e "console.log('\\''hello'\\'')"'\n`,
+      `exec mise exec 'node@lts' -- bash -c 'node -e "console.log('\\''hello'\\'')"'\n`,
     );
+  });
+
+  it("runs mise-selected tools and shell expressions without login initialization", async () => {
+    const binDir = path.join(testDir, "bin");
+    const toolsDir = path.join(testDir, "tools");
+    mkdirSync(binDir);
+    mkdirSync(toolsDir);
+    writeFileSync(
+      path.join(binDir, "mise"),
+      '#!/bin/bash\nshift\nwhile [ "$1" != "--" ]; do shift; done\nshift\nexport PATH="$ZAP_TEST_TOOLS:$PATH"\nexec "$@"\n',
+      { mode: 0o755 },
+    );
+
+    writeFileSync(
+      path.join(toolsDir, "node"),
+      '#!/bin/sh\nprintf "selected-node"\n',
+      {
+        mode: 0o755,
+      },
+    );
+
+    vi.stubEnv("PATH", `${binDir}:${process.env.PATH}`);
+    vi.stubEnv("ZAP_TEST_TOOLS", toolsDir);
+
+    await NativeProcessManager.startProcessWithTempEcosystem(
+      "test-project",
+      {
+        name: "test-service",
+        cmd: "if shopt -q login_shell; then exit 42; fi; node --version && printf '|shell expressions work'",
+        runtime: { provider: "mise" },
+      },
+      testDir,
+      "abc123",
+    );
+
+    const wrapper = readdirSync(zapDir).find((file) => file.endsWith(".sh"));
+
+    const output = execFileSync("/bin/bash", [path.join(zapDir, wrapper!)], {
+      encoding: "utf8",
+    });
+
+    expect(output).toBe("selected-node|shell expressions work");
   });
 
   describe("shell runtime provider", () => {
