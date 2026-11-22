@@ -24,9 +24,9 @@ Operators who want reproducible tool versions can pin Terraform in mise
 ## Commands
 
 - `zap arc plan` — render Terraform from the deploy block and show the plan.
-- `zap arc deploy` — run pre-apply hooks, apply project-level modules, build
-  and push images, apply Terraform against central state, run post-apply
-  hooks. `--keep` retains the rendered Terraform on failure.
+- `zap arc deploy` — check that base infrastructure is unchanged, run pre-apply
+  hooks, build and push images, inspect and apply a saved application plan, then
+  run post-apply hooks. `--keep` retains the rendered Terraform on failure.
 - `zap arc destroy` — terraform destroy of everything in state. If the
   deploy block includes a `gcp-project` module, this deletes the project's
   GCP project too (30-day recovery window).
@@ -198,3 +198,19 @@ billing accounts, cluster hosts) to modules without touching project files.
 The `github-ci` module grants the deployment service account project-scoped Editor, Workload Identity Pool Viewer and Cloud Run Admin, plus its state-bucket binding. The latter two project roles cover WIF refresh and Cloud Run service IAM, which Editor alone does not cover. Bootstrap the module with an authorized operator before using the identity in CI; existing projects need an operator apply to adopt new bindings.
 
 Shared quota-project access is explicit: the `network-project` input grants Service Usage Consumer on that project. Leave it empty when the environment operator owns shared IAM, and provision that grant through the environment's bootstrap process instead. The `billing-account` input is also opt-in, only for deployments that manage budgets. No shared-project Editor or Owner grant is required.
+
+## Administrator-managed base
+
+Ordinary deployments plan and inspect the base modules (`prj_gcp`, `prj_ci`,
+`prj_registry`, and `prj_budget`) before hooks, image builds or Terraform writes.
+Any addition, update, replacement or removal stops with an explicit migration
+message. The final application plan is checked again and applied as a saved plan
+so an unchecked replan cannot modify the base. Application-specific project
+modules such as MongoDB remain deployable.
+
+MAP Lab owns these resources in the separate `mp-lb/arcnet-base` repository and
+protected state buckets, applied locally by an authorized administrator. App CI
+uses only its own application state. Existing deployments must transfer state
+before removing their base configuration; removing it alone would request
+deletion. New deployments provision the base first. Changing a local ADC quota
+project does not change CI's identity or its IAM permissions.

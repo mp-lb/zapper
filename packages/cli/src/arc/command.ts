@@ -16,6 +16,9 @@ import {
 import { runHooks, requireModuleCredentials } from "./hooks";
 import { expandVars } from "./template";
 import { NetworkConfig, ProjectManifest } from "./schemas";
+import { planTerraform } from "./planTerraform";
+import { assertFoundationReady } from "./assertFoundationReady";
+import { getFoundationTargets } from "./getFoundationTargets";
 
 // Zap Arc: deploy a zap project to the cloud from its `deploy:` block.
 // Self-contained command group — needs no Zapper runtime context, and reads
@@ -286,32 +289,35 @@ export function createArcCommand(): Command {
         try {
           initAndDiscover(ctx);
 
+          const targets = getFoundationTargets(
+            ctx.deployment.dir,
+            ctx.deployment.projectTargets,
+          );
+
+          if (targets.length > 0) {
+            const foundation = planTerraform(ctx.deployment.dir, targets);
+            assertFoundationReady(
+              foundation.changes,
+              process.env.ZAP_ARC_MIGRATION_COMMAND,
+            );
+          }
+
           await runHooks("pre-apply", {
             projectDir: ctx.projectDir,
             creds: ctx.creds,
             deployment: ctx.deployment,
           });
 
-          // Project-level modules (project factory, registry, …) must exist
-          // before images push or services apply; idempotent and quick.
-          if (ctx.deployment.projectTargets.length > 0) {
-            run(
-              "terraform",
-              [
-                "apply",
-                ...ctx.deployment.projectTargets.map((t) => `-target=${t}`),
-                "-auto-approve",
-                "-input=false",
-                "-lock-timeout=10m",
-              ],
-              { cwd: ctx.deployment.dir },
-            );
-          }
-
           buildAndPushImages(ctx);
+          const plan = planTerraform(ctx.deployment.dir);
+          assertFoundationReady(
+            plan.changes,
+            process.env.ZAP_ARC_MIGRATION_COMMAND,
+          );
+
           run(
             "terraform",
-            ["apply", "-auto-approve", "-input=false", "-lock-timeout=10m"],
+            ["apply", "-input=false", "-lock-timeout=10m", plan.path],
             {
               cwd: ctx.deployment.dir,
             },
