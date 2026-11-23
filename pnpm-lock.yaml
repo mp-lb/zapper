@@ -12,8 +12,8 @@ importers:
         specifier: 9.39.4
         version: 9.39.4
       '@mp-lb/arcnet':
-        specifier: 0.7.24
-        version: 0.7.24
+        specifier: 0.7.26
+        version: 0.7.26
       '@mp-lb/fssstack-config':
         specifier: 0.3.1
         version: 0.3.1(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3))(eslint-config-next@16.2.7(@typescript-eslint/parser@8.59.1(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.4(jiti@2.6.1))(typescript@6.0.3))(eslint@9.39.4(jiti@2.6.1))(prettier@3.8.3)(typescript@6.0.3)
@@ -306,6 +306,12 @@ importers:
         version: 4.20.6
 
 packages:
+
+  '@mp-lb/arcnet@0.7.26':
+    resolution: {integrity: sha512-HVu2xTXOAbo2tD1QjSKnzbLizzExaKGEwOEfY5z2lJ1cxLdvPKm8U5eWWl1VtCFpoKNdJ3EHozYjs7K4YWpeYw==}
+    engines: {node: '>=22'}
+    hasBin: true
+
 
   '@algolia/abtesting@1.18.0':
     resolution: {integrity: sha512-8siuLG+FIns1AjZ/g2SDVwHz9S+ObacDQISEJvS8XsNei1zl3FXqfqQrBpmrG7ACWCyesXHbicMJtvRbg00FEw==}
@@ -5618,6 +5624,14 @@ packages:
     hasBin: true
 
 snapshots:
+
+  '@mp-lb/arcnet@0.7.26':
+    dependencies:
+      '@mp-lb/forum-secrets': 0.2.1
+      commander: 14.0.3
+      yaml: 2.8.1
+      zod: 4.4.1
+
 
   '@algolia/abtesting@1.18.0':
     dependencies:

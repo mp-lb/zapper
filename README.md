@@ -47,6 +47,6 @@ and remove `.npmrc` when pnpm is upgraded to a version supporting that setting.
 
 ## Release reports
 
-Release scripts print their package/version report to the console. CI passes
+ArcNet prints its package/version report to the console. CI passes
 that report through the publisher step’s `release_report` output to verification
-via `FSSSTACK_RELEASE_RESULT`; no release-result file is created in the checkout.
+via `ARCNET_RELEASE_RESULT`; no release-result file is created in the checkout.

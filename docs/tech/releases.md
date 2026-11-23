@@ -4,7 +4,7 @@ Npm packages (`@mp-lb/zapper`, `@mp-lb/zapper-sdk`, and `@mp-lb/zapper-react`) p
 
 Run `zap t publish-packages -- --dry-run` to preview package comparisons. Check the [release workflow](../../.github/workflows/publish.yaml) and `npm view <package-name> version` after CI.
 
-The private `packages/scripts` package owns the typed publisher and publication verifier. CI invokes both through `tsx`; `FSSSTACK_RELEASE_RESULT` supplies the report to `zap t verify-publication`.
+ArcNet owns the publisher and publication verifier. CI invokes `arcnet packages publish` and `arcnet packages verify`; `ARCNET_RELEASE_RESULT` supplies the report to `zap t verify-publication`.
 
 A successful publish does not mean the package is installable immediately. npm
 scans new versions before serving their tarballs; its [published guidance](https://github.blog/changelog/2026-07-28-npm-publish-time-malware-scanning-and-dual-use-metadata/)

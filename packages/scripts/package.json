@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "tsx --test *.test.ts publishing/*.test.ts"
+    "test": "tsx --test *.test.ts"
   },
   "devDependencies": {
     "tsx": "4.20.6"

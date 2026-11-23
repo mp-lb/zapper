@@ -57,10 +57,10 @@ tasks:
       - pnpm --filter @mp-lb/zapper test scripts
   publish-packages:
     cmds:
-      - pnpm exec tsx packages/scripts/autoPublish.ts {{REST}}
+      - pnpm exec arcnet packages publish {{REST}}
   verify-publication:
     cmds:
-      - pnpm exec tsx packages/scripts/verifyPublication.ts {{REST}}
+      - pnpm exec arcnet packages verify {{REST}}
   add-js-extensions:
     cmds:
       - pnpm exec tsx packages/scripts/addJsExtensions.ts {{REST}}

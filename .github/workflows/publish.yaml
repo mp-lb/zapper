@@ -29,12 +29,11 @@ jobs:
       - run: pnpm build && pnpm docs:check && pnpm typecheck && pnpm lint && pnpm test
       - name: Publish changed package builds
         id: publish
-        run: pnpm exec arcnet env run --consumer publish -- pnpm exec tsx
-          packages/scripts/autoPublish.ts --github-output="$GITHUB_OUTPUT"
+        run: pnpm exec arcnet env run --consumer publish -- pnpm exec arcnet packages publish --github-output="$GITHUB_OUTPUT"
         env:
           ARCNET_STANDARD_SECRETS_KEY: ${{ secrets.ARCNET_STANDARD_SECRETS_KEY }}
           ZAPPER_SECRETS_KEY: ${{ secrets.ZAPPER_SECRETS_KEY }}
       - name: Verify exact public versions
-        run: pnpm exec tsx packages/scripts/verifyPublication.ts
+        run: pnpm exec arcnet packages verify
         env:
-          FSSSTACK_RELEASE_RESULT: ${{ steps.publish.outputs.release_report }}
+          ARCNET_RELEASE_RESULT: ${{ steps.publish.outputs.release_report }}
