@@ -30,6 +30,13 @@ function walk(
 }
 
 describe("CLI reference / command tree", () => {
+  it("does not register deployment commands or compatibility aliases", () => {
+    const program = getProgram();
+    expect(findCommand(program, "arc")).toBeUndefined();
+    expect(findCommand(program, "deploy")).toBeUndefined();
+    expect(findCommand(program, "task")).toBeDefined();
+  });
+
   it("gives every command and subcommand a non-empty description", () => {
     const program = getProgram();
     const missing: string[] = [];
