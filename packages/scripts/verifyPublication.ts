@@ -11,11 +11,16 @@ if (!serializedReport)
 const report: { name: string; version: string; action: string }[] =
   JSON.parse(serializedReport);
 
+// npm scans new versions before serving their tarballs; availability can lag
+// publishing by fifteen minutes or more. Keep verification bounded and visible.
+const maxAttempts = 120;
+const retryIntervalMs = 10000;
+
 for (const { name, version, action } of report) {
   const url = `https://registry.npmjs.org/${encodeURIComponent(name)}/${version}`;
   let published = false;
 
-  for (let attempt = 0; attempt < 30; attempt += 1) {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const response = await globalThis.fetch(url, {
       signal: globalThis.AbortSignal.timeout(30000),
       headers: { "Cache-Control": "no-cache" },
@@ -40,10 +45,19 @@ for (const { name, version, action } of report) {
     }
 
     if (published) break;
-    if (attempt < 29) await setTimeout(10000);
+
+    if (attempt < maxAttempts - 1) {
+      console.log(
+        `Waiting for npm to serve ${name}@${version} (${attempt + 1}/${maxAttempts}); checking again in 10 seconds.`,
+      );
+
+      await setTimeout(retryIntervalMs);
+    }
   }
 
   if (!published)
-    throw Error(`${name}@${version} (${action}) is not publicly installable.`);
+    throw Error(
+      `${name}@${version} (${action}) is still not publicly installable after the availability checks. Check npm publish-time processing for this version, then rerun verification once its tarball is available; do not republish the same version.`,
+    );
   console.log(`Verified public package: ${name}@${version} (${action})`);
 }
