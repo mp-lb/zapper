@@ -9,8 +9,7 @@
     "zap": "./dist/index.js"
   },
   "files": [
-    "dist",
-    "arc"
+    "dist"
   ],
   "publishConfig": {
     "access": "public"

@@ -13,5 +13,5 @@ The project’s production delivery settings live in `.arcnet/arcnet.yaml`:
 GitHub stores per-source decryption keys. Production delivery reads the committed
 ArcNet configuration and snapshots.
 
-This describes Zapper’s own delivery configuration. The Zap Arc engine still
-supports a `public-file` for other projects that explicitly configure one.
+These settings deploy Zapper's own website and packages through ArcNet. They do
+not add production deployment behavior to the Zapper CLI or SDK.

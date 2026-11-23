@@ -60,7 +60,7 @@ Remember to `pnpm build` and link (usually already linked). Then cd into the exa
 - [Public quick start](apps/docs/content/docs/index.mdx) and the other MDX files in `apps/docs/content/docs/` are the Fumadocs website source. Update these for user-facing behavior.
 - [Commands](apps/docs/content/docs/commands.mdx), [Configuration](apps/docs/content/docs/configuration.mdx), [Services](apps/docs/content/docs/services.mdx), and [Tasks](apps/docs/content/docs/tasks.mdx) describe supported Zap behavior.
 - [CLI development](docs/tech/cli-development.md) and [Releases](docs/tech/releases.md) cover this repository's build and release process.
-- [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. ArcNet's engine lives in `@mp-lb/arcnet`; Zap Arc stays in this repo.
+- [ArcNet project config](.arcnet/arcnet.yaml) selects production sites, variables, and secret consumers. Production deployment is owned by `@mp-lb/arcnet` in Tools. Zapper contains no deployment engine or Terraform modules.
 
 The docs website also serves `/llms.txt` and `/llms-full.txt` from its MDX source.
 
@@ -107,15 +107,13 @@ Always build with `pnpm build` after making changes if you're on the main branch
 
 * `pnpm lint:fix` — fix linting issues across workspace projects
 
-## Standards
+## Standards and extensions
 
-Read the relevant MAP Lab standards before changing the corresponding code. List them with `fm ls --store mp-lb/dev` and read one with `fm read <file>.md --store mp-lb/dev`.
+When asked to “read the xyz standard”, list the available standards with `fm ls standards --store mp-lb/fssstack`, then read the matching file with `fm read standards/<file>.md --store mp-lb/fssstack`. Read the relevant guidance before changing the corresponding code; do not guess a filename when the match is unclear.
 
-- `style-guide.md` and `component-decomposition.md`: code and component structure.
-- `crud.md`, `errors.md`, `trpc.md` and `logging.md`: backend APIs, services and error handling; list the store for current available guidance.
-- `event-schema.md` and `event-sourcing.md`: event schemas and event-sourced domains.
-- `libs.md`, `lib-release.md` and `clis.md`: libraries, publishing and command-line tools.
-- For agent context, read `standards/context-files.md` from `mp-lb/fssstack`.
+Discover extensions with `fm ls extensions --store mp-lb/fssstack`, then read `fm read extensions/<extension>/README.md --store mp-lb/fssstack` for setup or updates. Follow the installed project's configuration and preserve its specific behavior.
+
+Read guidance remotely as needed. Do not create a project Forum store or `.forum/` documentation sync configuration, or install local mirrors of standards, extensions, skills or examples. Keep project-specific documentation in `docs/`.
 
 
 ## Development
@@ -128,7 +126,7 @@ The canonical tool versions are `.node-version` and `package.json#packageManager
 
 ### Local tool versions
 
-Mise is the base layer: it selects Node and the package manager. Zapper runs tasks and services on top of those tools. Run `mise trust` and `mise install` for checkout setup, then use an activated mise shell or `mise exec -- zap task <task>`.
+Mise is the base layer: it selects Node and the package manager. Zapper runs tasks and services on top of those tools. Run `mise trust` and `mise install` for checkout setup. Run commands normally, such as `zap task <task>`; no mise activation or `mise exec` prefix is required.
 
 Read Node from `.node-version` and pnpm from `package.json#packageManager`; `mise.toml` reads these pins rather than duplicating them. npm projects use npm bundled with Node. Preserve the project's versions and package manager. Keep locally built CLI entrypoints in a version-independent PATH directory so switching Node does not hide `zap` or `fm`.
 
@@ -170,12 +168,6 @@ pnpm dlx shadcn@latest add dialog
 `components.json` defines component aliases and the theme CSS location; resolve its `aliases.ui` through the app's TypeScript aliases to find installed components. Review existing files before installation and preserve local customizations; do not blindly use `--overwrite`.
 
 Use the shared theme tokens and existing component variants for colors, typography, spacing and radii. UI consistency takes priority over making one screen look different. Do not override theme-owned styles in individual components without a concrete reason; make intentional design-system changes at the shared theme or component level.
-
-MAP Lab's public Shad repository provides additional components at `https://shad.mp-lb.dev`. Consult its catalog before building an equivalent, for example:
-
-```sh
-pnpm dlx shadcn@latest add https://shad.mp-lb.dev/r/ui-states.json
-```
 
 CLI reference: https://ui.shadcn.com/docs/cli.
 

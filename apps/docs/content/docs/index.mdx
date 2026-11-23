@@ -71,9 +71,9 @@ zap task console
 
 ## Deploy
 
-The same `zap.yaml` can deploy to the cloud: add an opt-in `deploy:` block and
-run `zap arc deploy` — your services, on your own cloud accounts. See
-[Deploy (Zap Arc)](/docs/arc).
+Zapper runs local services and tasks. Production deployment is configured separately
+using your deployment tooling; Zapper does not infer production infrastructure
+from the local stack.
 
 For full reference docs, see [Commands](/docs/commands),
 [Configuration](/docs/configuration), [Services](/docs/services), and

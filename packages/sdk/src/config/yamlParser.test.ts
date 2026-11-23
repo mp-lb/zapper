@@ -58,7 +58,7 @@ unexpected_key: true
     }
   });
 
-  it("should strip the reserved deploy key without validating its contents", () => {
+  it("should reject deployment configuration as an unknown local-config key", () => {
     const configPath = path.join(testDir, "zap.yaml");
 
     writeFileSync(
@@ -75,10 +75,9 @@ deploy:
 `,
     );
 
-    const parsed = parseYamlFile(configPath);
-
-    expect(parsed.native?.api.cmd).toBe("npm run dev");
-    expect("deploy" in parsed).toBe(false);
+    expect(() => parseYamlFile(configPath)).toThrow(
+      /Unrecognized key: "deploy"/,
+    );
   });
 
   it("should reject root env-files when profiles are configured", () => {

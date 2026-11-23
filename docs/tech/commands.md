@@ -34,38 +34,6 @@ starts, and left in place when the service stops.
 | `-q, --quiet` | Reduce logging output |
 | `-d, --debug` | Enable debug logging |
 
-## `zap arc`
-
-Deploy this zap project to the cloud from its deploy: block
-
-| Option | Description |
-| --- | --- |
-| `--config <file>` | arc operator config file (default ~/.config/zap-arc/config.yaml) |
-
-### `zap arc plan`
-
-Render Terraform from the deploy block and show the plan
-
-### `zap arc deploy`
-
-Deploy: build images, apply Terraform, run module hooks
-
-| Option | Description |
-| --- | --- |
-| `--keep` | keep the rendered Terraform dir on failure for debugging |
-
-### `zap arc destroy`
-
-Tear down everything Terraform manages for this project (including a deploy.project GCP project module, if present)
-
-| Option | Description |
-| --- | --- |
-| `--yes` | skip terraform's confirmation prompt |
-
-### `zap arc bootstrap`
-
-One-time network setup: network GCP project, state bucket, docker auth
-
 ## `zap up [services...]`
 
 **Aliases:** `start`, `s`, `u`

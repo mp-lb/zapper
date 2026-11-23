@@ -1,5 +1,0 @@
-# gcp-budget: monthly spend alerts for the project's GCP project.
-# billing-account and gcp-project belong in the network config's
-# module-defaults (e.g. gcp-project: "{gcp-project}").
-defaults:
-  name: "{slug}"

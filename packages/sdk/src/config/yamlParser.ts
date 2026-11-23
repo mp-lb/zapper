@@ -10,23 +10,6 @@ import {
   WhitelistReferenceError,
 } from "../errors";
 
-// Top-level keys reserved for external tools (e.g. `deploy`, owned by the
-// deployment layer). Stripped at the parse boundary: Zapper does not validate,
-// normalize, or expose their contents anywhere in the codebase.
-const RESERVED_EXTERNAL_KEYS = ["deploy"];
-
-function stripReservedExternalKeys<T>(parsed: T): T {
-  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-    return parsed;
-  }
-
-  for (const key of RESERVED_EXTERNAL_KEYS) {
-    delete (parsed as Record<string, unknown>)[key];
-  }
-
-  return parsed;
-}
-
 export function parseYamlFile(filePath: string): ZapperConfig {
   if (!existsSync(filePath)) {
     throw new ConfigFileNotFoundError(filePath);
@@ -34,7 +17,7 @@ export function parseYamlFile(filePath: string): ZapperConfig {
 
   try {
     const content = readFileSync(filePath, "utf8");
-    const parsed = stripReservedExternalKeys(parse(content));
+    const parsed = parse(content);
     const normalized = normalizeConfig(parsed);
     return ZodConfigValidator.validate(normalized);
   } catch (error) {
