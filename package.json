@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@eslint/js": "9.39.4",
-    "@mp-lb/arcnet": "0.7.11",
+    "@mp-lb/arcnet": "0.7.24",
     "@mp-lb/fssstack-config": "0.3.1",
     "@mp-lb/fssstack-testing": "0.1.1",
     "@mp-lb/monolith-mapper": "0.1.2",
