@@ -330,6 +330,24 @@ describe("ZodConfigValidator", () => {
     );
   });
 
+  it("should accept a tasks-only project", () => {
+    expect(() =>
+      ZodConfigValidator.validate({
+        project: "automations",
+        tasks: { check: { cmds: ["echo checked"] } },
+      }),
+    ).not.toThrow();
+  });
+
+  it("should reject empty tasks without processes", () => {
+    expect(() =>
+      ZodConfigValidator.validate({
+        project: "automations",
+        tasks: {},
+      }),
+    ).toThrow("No processes or tasks defined");
+  });
+
   it("should reject config without any processes", () => {
     const config = {
       project: "myproj",
@@ -338,7 +356,7 @@ describe("ZodConfigValidator", () => {
     expect(() => {
       ZodConfigValidator.validate(config);
     }).toThrow(
-      "Configuration validation failed: No processes defined. Define at least one in native, docker, or processes",
+      "Configuration validation failed: No processes or tasks defined. Define at least one in native, docker, processes, or tasks",
     );
   });
 
@@ -562,7 +580,7 @@ describe("ZodConfigValidator", () => {
     expect(() => {
       ZodConfigValidator.validate(config);
     }).toThrow(
-      "Configuration validation failed: tasks.test.cmds: Task must have at least one command, No processes defined. Define at least one in native, docker, or processes",
+      "Configuration validation failed: tasks.test.cmds: Task must have at least one command",
     );
   });
 

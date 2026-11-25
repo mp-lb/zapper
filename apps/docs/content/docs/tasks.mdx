@@ -2,6 +2,7 @@
 title: "Tasks"
 description: "Tasks are one-off project commands that can use the same env, cwd, and parameter interpolation model as the rest of Zapper."
 ---
+
 Tasks are one-off project commands that can use the same env, cwd, and
 parameter interpolation model as the rest of Zapper.
 
@@ -165,15 +166,15 @@ tasks:
       - 'echo "root={{ROOT_DIR}} cwd={{CWD}} instance={{INSTANCE}}"'
 ```
 
-| Var        | Value                                     |
-| ---------- | ----------------------------------------- |
-| `ROOT_DIR` | Project root containing the loaded config |
-| `CWD`      | Resolved working directory for the task   |
-| `TASK`     | Current task name                         |
-| `PROJECT`  | Current Zapper project name               |
-| `INSTANCE` | Current instance key                      |
+| Var        | Value                                                          |
+| ---------- | -------------------------------------------------------------- |
+| `ROOT_DIR` | Project root containing the loaded config                      |
+| `CWD`      | Resolved working directory for the task                        |
+| `TASK`     | Current task name                                              |
+| `PROJECT`  | Current Zapper project name                                    |
+| `INSTANCE` | Current instance key                                           |
 | `ARGS`     | Shell-quoted pass-through args (preserves argument boundaries) |
-| `CLI_ARGS` | Alias for `ARGS`                          |
+| `CLI_ARGS` | Alias for `ARGS`                                               |
 
 Built-in vars are also available when interpolating nested task `vars`,
 preconditions, and status checks.
@@ -320,3 +321,6 @@ tasks:
       - pnpm vitest run
 ```
 
+## Tasks-only projects
+
+A `zap.yaml` can define only `project` and `tasks`. No native service or Docker container is required. This supports repositories of manually invoked automation scripts.

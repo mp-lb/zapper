@@ -12,10 +12,12 @@ export const processValidation = <T extends z.ZodTypeAny>(schema: T) =>
         (config.docker && Object.keys(config.docker).length > 0) ||
         (config.containers && Object.keys(config.containers).length > 0);
 
-      return hasNative || hasLegacyProcesses || hasDocker;
+      const hasTasks = config.tasks && Object.keys(config.tasks).length > 0;
+
+      return hasNative || hasLegacyProcesses || hasDocker || hasTasks;
     },
     {
       message:
-        "No processes defined. Define at least one in native, docker, or processes",
+        "No processes or tasks defined. Define at least one in native, docker, processes, or tasks",
     },
   );
